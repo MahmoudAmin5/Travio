@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{F83AA883-C5BF-4C61-A102-B01AD4D1F0D8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{E12F73AB-6417-410C-B2A0-95D0EE14A2FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Travio.API", "Travio.API\Travio.API.csproj", "{3BF3A886-9E9A-417E-B58B-E47374D77B40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Travio.Core", "Travio.Core\Travio.Core.csproj", "{962E65E9-6C76-4B36-93A7-9177417FC8ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Travio.Infrastructure", "Travio.Infrastructure\Travio.Infrastructure.csproj", "{B5BB53D5-C868-4570-BAF7-70CD4845A44B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3BF3A886-9E9A-417E-B58B-E47374D77B40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BF3A886-9E9A-417E-B58B-E47374D77B40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BF3A886-9E9A-417E-B58B-E47374D77B40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BF3A886-9E9A-417E-B58B-E47374D77B40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{962E65E9-6C76-4B36-93A7-9177417FC8ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{962E65E9-6C76-4B36-93A7-9177417FC8ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{962E65E9-6C76-4B36-93A7-9177417FC8ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{962E65E9-6C76-4B36-93A7-9177417FC8ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5BB53D5-C868-4570-BAF7-70CD4845A44B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5BB53D5-C868-4570-BAF7-70CD4845A44B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5BB53D5-C868-4570-BAF7-70CD4845A44B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5BB53D5-C868-4570-BAF7-70CD4845A44B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3BF3A886-9E9A-417E-B58B-E47374D77B40} = {F83AA883-C5BF-4C61-A102-B01AD4D1F0D8}
+		{962E65E9-6C76-4B36-93A7-9177417FC8ED} = {F83AA883-C5BF-4C61-A102-B01AD4D1F0D8}
+		{B5BB53D5-C868-4570-BAF7-70CD4845A44B} = {F83AA883-C5BF-4C61-A102-B01AD4D1F0D8}
+	EndGlobalSection
+EndGlobal
