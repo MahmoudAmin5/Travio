@@ -1,0 +1,13 @@
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\bin\Debug\net9.0\Travio.Core.deps.json
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\bin\Debug\net9.0\Travio.Core.dll
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\bin\Debug\net9.0\Travio.Core.pdb
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.csproj.AssemblyReference.cache
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.AssemblyInfoInputs.cache
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.AssemblyInfo.cs
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.csproj.CoreCompileInputs.cache
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.sourcelink.json
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.dll
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\refint\Travio.Core.dll
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\Travio.Core.pdb
+D:\work\Graduation Project\Travio\Travio\Travio.Solution\Travio.Core\obj\Debug\net9.0\ref\Travio.Core.dll

@@ -1,10 +1,50 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\Tarvio\\Travio.Solution\\",
+  "WorkspaceRootPath": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|d:\\tarvio\\travio.solution\\travio.infrastructure\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|solutionrelative:travio.infrastructure\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|solutionrelative:travio.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|solutionrelative:travio.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.infrastructure\\configrations\\applicationroleconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|solutionrelative:travio.infrastructure\\configrations\\applicationroleconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.infrastructure\\configrations\\identitytablesconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|solutionrelative:travio.infrastructure\\configrations\\identitytablesconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.infrastructure\\configrations\\applicationuserconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|solutionrelative:travio.infrastructure\\configrations\\applicationuserconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Migrations\\20251106085354_Intital Migration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Travio.Infrastructure\\Migrations\\20251106085354_Intital Migration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.infrastructure\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B5BB53D5-C868-4570-BAF7-70CD4845A44B}|Travio.Infrastructure\\Travio.Infrastructure.csproj|solutionrelative:travio.infrastructure\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{962E65E9-6C76-4B36-93A7-9177417FC8ED}|Travio.Core\\Travio.Core.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.core\\domain\\entities\\account_mangement\\applicationuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{962E65E9-6C76-4B36-93A7-9177417FC8ED}|Travio.Core\\Travio.Core.csproj|solutionrelative:travio.core\\domain\\entities\\account_mangement\\applicationuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{962E65E9-6C76-4B36-93A7-9177417FC8ED}|Travio.Core\\Travio.Core.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.core\\domain\\entities\\account_mangement\\applicationrole.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{962E65E9-6C76-4B36-93A7-9177417FC8ED}|Travio.Core\\Travio.Core.csproj|solutionrelative:travio.core\\domain\\entities\\account_mangement\\applicationrole.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{962E65E9-6C76-4B36-93A7-9177417FC8ED}|Travio.Core\\Travio.Core.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.core\\travio.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{962E65E9-6C76-4B36-93A7-9177417FC8ED}|Travio.Core\\Travio.Core.csproj|solutionrelative:travio.core\\travio.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.api\\travio.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|solutionrelative:travio.api\\travio.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,8 +54,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 5,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{0ad07096-bba9-4900-a651-0598d26f6d24}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{26341fe2-71dd-46fd-bb1b-2e51a92a0d64}"
@@ -23,14 +79,144 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Class1.cs",
-              "DocumentMoniker": "D:\\Tarvio\\Travio.Solution\\Travio.Infrastructure\\Class1.cs",
-              "RelativeDocumentMoniker": "Travio.Infrastructure\\Class1.cs",
-              "ToolTip": "D:\\Tarvio\\Travio.Solution\\Travio.Infrastructure\\Class1.cs",
-              "RelativeToolTip": "Travio.Infrastructure\\Class1.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\appsettings.json",
+              "RelativeDocumentMoniker": "Travio.API\\appsettings.json",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\appsettings.json",
+              "RelativeToolTip": "Travio.API\\appsettings.json",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAwwAkAAABnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-11-06T08:59:45.716Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "20251106085354_Intital Migration.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Migrations\\20251106085354_Intital Migration.cs",
+              "RelativeDocumentMoniker": "Travio.Infrastructure\\Migrations\\20251106085354_Intital Migration.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Migrations\\20251106085354_Intital Migration.cs",
+              "RelativeToolTip": "Travio.Infrastructure\\Migrations\\20251106085354_Intital Migration.cs",
+              "ViewState": "AgIAAN8AAAAAAAAAAAAgwNoAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-05T06:38:43.878Z",
+              "WhenOpened": "2025-11-06T08:53:54.173Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ApplicationUserConfiguration.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Configrations\\ApplicationUserConfiguration.cs",
+              "RelativeDocumentMoniker": "Travio.Infrastructure\\Configrations\\ApplicationUserConfiguration.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Configrations\\ApplicationUserConfiguration.cs",
+              "RelativeToolTip": "Travio.Infrastructure\\Configrations\\ApplicationUserConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T08:02:35.316Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ApplicationRoleConfiguration.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Configrations\\ApplicationRoleConfiguration.cs",
+              "RelativeDocumentMoniker": "Travio.Infrastructure\\Configrations\\ApplicationRoleConfiguration.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Configrations\\ApplicationRoleConfiguration.cs",
+              "RelativeToolTip": "Travio.Infrastructure\\Configrations\\ApplicationRoleConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAABDAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T08:02:27.148Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "IdentityTablesConfiguration.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Configrations\\IdentityTablesConfiguration.cs",
+              "RelativeDocumentMoniker": "Travio.Infrastructure\\Configrations\\IdentityTablesConfiguration.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\Configrations\\IdentityTablesConfiguration.cs",
+              "RelativeToolTip": "Travio.Infrastructure\\Configrations\\IdentityTablesConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T08:02:40.1Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Travio.Core",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Travio.Core.csproj",
+              "RelativeDocumentMoniker": "Travio.Core\\Travio.Core.csproj",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Travio.Core.csproj",
+              "RelativeToolTip": "Travio.Core\\Travio.Core.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-11-06T08:48:27.06Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\Program.cs",
+              "RelativeDocumentMoniker": "Travio.API\\Program.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\Program.cs",
+              "RelativeToolTip": "Travio.API\\Program.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAAwBUAAAA8AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T07:44:31.67Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Travio.API",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\Travio.API.csproj",
+              "RelativeDocumentMoniker": "Travio.API\\Travio.API.csproj",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\Travio.API.csproj",
+              "RelativeToolTip": "Travio.API\\Travio.API.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-11-06T08:48:13.265Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "ApplicationRole.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationRole.cs",
+              "RelativeDocumentMoniker": "Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationRole.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationRole.cs",
+              "RelativeToolTip": "Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationRole.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T07:55:39.636Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "ApplicationUser.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationUser.cs",
+              "RelativeDocumentMoniker": "Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationUser.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationUser.cs",
+              "RelativeToolTip": "Travio.Core\\Domain\\Entities\\Account_Mangement\\ApplicationUser.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAABDAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T07:55:37.588Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "Travio.Infrastructure\\ApplicationDbContext.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Infrastructure\\ApplicationDbContext.cs",
+              "RelativeToolTip": "Travio.Infrastructure\\ApplicationDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAcAAABXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-06T07:07:27.197Z",
               "EditorCaption": ""
             }
           ]
