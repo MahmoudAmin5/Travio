@@ -1,6 +1,8 @@
 
 using Microsoft.EntityFrameworkCore;
+
 using Travio.API.Middleware;
+
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Infrastructure;
 namespace Travio.API

@@ -19,4 +19,9 @@
     <ProjectReference Include="..\Travio.Infrastructure\Travio.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Travio.Core\Travio.Core.csproj" />
+    <ProjectReference Include="..\Travio.Infrastructure\Travio.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
