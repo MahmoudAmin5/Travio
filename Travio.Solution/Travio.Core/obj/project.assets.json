@@ -792,23 +792,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ezzat\\.nuget\\packages\\": {},
+    "C:\\Users\\pc\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Travio.Core.csproj",
+      "projectUniqueName": "D:\\Tarvio\\Travio.Solution\\Travio.Core\\Travio.Core.csproj",
       "projectName": "Travio.Core",
-      "projectPath": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Travio.Core.csproj",
-      "packagesPath": "C:\\Users\\ezzat\\.nuget\\packages\\",
-      "outputPath": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.Core\\obj\\",
+      "projectPath": "D:\\Tarvio\\Travio.Solution\\Travio.Core\\Travio.Core.csproj",
+      "packagesPath": "C:\\Users\\pc\\.nuget\\packages\\",
+      "outputPath": "D:\\Tarvio\\Travio.Solution\\Travio.Core\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\ezzat\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\pc\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -835,7 +835,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net9.0": {
@@ -862,7 +862,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.101/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
