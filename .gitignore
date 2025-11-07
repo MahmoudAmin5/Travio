@@ -1,7 +1,15 @@
-# Visual Studio
+# VisualStudio files
 .vs/
 *.suo
+*.user
 
 # Build results
 [Bb]in/
 [Oo]bj/
+
+# Rider
+.idea/
+
+# Other
+*.db
+*.cache
