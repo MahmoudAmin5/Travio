@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Travio.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98849e018ee3703afb28ca0c073c08c5ff6a1113")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+27abf0d30c33915ebd2d9c55353a2bc3dd056f0d")]
 [assembly: System.Reflection.AssemblyProductAttribute("Travio.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Travio.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
