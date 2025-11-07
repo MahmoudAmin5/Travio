@@ -21,9 +21,8 @@ namespace Travio.API.Middleware
 
             try
             {
-                _logger.LogError("I am here ");
+                // يارب يشتغل 
                 await _next.Invoke(httpContext);
-                _logger.LogError("Error test! ");
             }
             catch (Exception ex)
             {

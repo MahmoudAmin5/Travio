@@ -1,7 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|d:\\work\\graduation project\\travio\\travio\\travio.solution\\travio.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3BF3A886-9E9A-417E-B58B-E47374D77B40}|Travio.API\\Travio.API.csproj|solutionrelative:travio.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
@@ -30,6 +35,23 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{26341fe2-71dd-46fd-bb1b-2e51a92a0d64}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\Program.cs",
+              "RelativeDocumentMoniker": "Travio.API\\Program.cs",
+              "ToolTip": "D:\\work\\Graduation Project\\Travio\\Travio\\Travio.Solution\\Travio.API\\Program.cs",
+              "RelativeToolTip": "Travio.API\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-07T12:24:34.719Z",
+              "EditorCaption": ""
             }
           ]
         }
