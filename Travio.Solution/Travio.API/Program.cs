@@ -1,5 +1,8 @@
 
 using Microsoft.EntityFrameworkCore;
+
+using Travio.API.Middleware;
+
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Infrastructure;
 namespace Travio.API
@@ -21,12 +24,14 @@ namespace Travio.API
             });
             builder.Services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<ApplicationDbContext>();
             var app = builder.Build();
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
             }
+
 
             app.UseHttpsRedirection();
 
