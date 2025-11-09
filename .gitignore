@@ -12,10 +12,10 @@
 # Build results
 [Bb]in/
 [Oo]bj/
-<<<<<<< HEAD
+
 
 **/.vs/
-=======
+
 [Ll]og/
 [Tt]est[Rr]esult*/
 *.log
@@ -75,4 +75,3 @@ _ReSharper*/
 *.opendb
 *.VC.db
 *.vscode/
->>>>>>> 89ddea2a7edfeb66a48b2619e205e38eaa92ab33
