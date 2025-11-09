@@ -1,9 +1,78 @@
+############################
+# Visual Studio / .NET Ignore File
+############################
+
 # Visual Studio
 .vs/
 *.suo
+*.user
+*.userosscache
+*.sln.docstates
 
 # Build results
 [Bb]in/
 [Oo]bj/
+<<<<<<< HEAD
 
 **/.vs/
+=======
+[Ll]og/
+[Tt]est[Rr]esult*/
+*.log
+
+# Rider / JetBrains
+.idea/
+
+# ASP.NET specific
+wwwroot/
+App_Data/
+node_modules/
+libman.json
+*.Publish.xml
+*.pubxml
+*.pubxml.user
+publish/
+*.config.user
+*.config.backup
+
+# Entity Framework
+
+*.mdf
+*.ldf
+*.sqlite
+*.db
+
+# Environment / Secrets
+.env
+secrets.json
+appsettings.Development.json
+appsettings.Local.json
+
+# Packages
+*.nupkg
+*.snupkg
+packages/
+*.nuspec
+
+# Cache / Temporary files
+*.cache
+*.tmp
+*.bak
+*.swp
+*.pid
+*.seed
+*.gz
+*.zip
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Others
+_ReSharper*/
+*.resharper
+*.opendb
+*.VC.db
+*.vscode/
+>>>>>>> 89ddea2a7edfeb66a48b2619e205e38eaa92ab33
