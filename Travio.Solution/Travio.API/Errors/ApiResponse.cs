@@ -13,9 +13,9 @@
         {
             return Statuscode switch
             {
-                400 => "Bad Request",
-                401 => "Unauthorized",
-                404 => "Not Found",
+                400 => "I'm gonna make you an offer you can't refuse: Fix your request.",
+                401 => "You are not on the guest list for this party.",
+                404 => "I looked under the bed, in the closet, and in the database. It's gone.",
                 500 => "Errors are the path to the dark side, Errors lead to anger, Anger leads to hate, hate leads to career shift ",
                 _ => null
             };
