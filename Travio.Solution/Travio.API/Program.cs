@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -49,6 +50,7 @@ namespace Travio.API
                 });
             builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWTSetting"));
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddTransient<IGoogleAuthService, GoogleAuthService>();
             var app = builder.Build();
             IdentitySeed.SeedRolesAndAdminAsync(app.Services, builder.Configuration).Wait();
 
