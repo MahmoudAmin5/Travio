@@ -22,12 +22,18 @@ namespace Travio.Core.Services
 
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IGoogleAuthService _googleAuthService;
         private readonly JWT _jwt;
 
-        public AuthService(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IOptions<JWT> jwt)
+        public AuthService(
+            UserManager<ApplicationUser> userManager,
+            RoleManager<ApplicationRole> roleManager,
+            IOptions<JWT> jwt,
+            IGoogleAuthService googleAuthService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _googleAuthService = googleAuthService;
             _jwt = jwt.Value;
         }
         public async Task<bool> RevokeTokenAsync(string token)
@@ -221,6 +227,56 @@ namespace Travio.Core.Services
             };
         }
 
-       
+        public async Task<AuthDTO> LoginWithGoogleAsync(string idToken)
+        {
+            var googleUser = await _googleAuthService.VerifyTokenAsync(idToken);
+            var user = await _userManager.FindByEmailAsync(googleUser.Email);
+            if (user is null)
+            {
+                var spaceIndex = googleUser.Name.IndexOf(' ');
+                var firstName = spaceIndex > 0 ? googleUser.Name.Substring(0, spaceIndex) : googleUser.Name;
+                var lastName = spaceIndex > 0 ? googleUser.Name.Substring(spaceIndex + 1) : string.Empty;
+                user = new ApplicationUser()
+                {
+                    Email = googleUser.Email,
+                    UserName = googleUser.Email,
+                    FirstName = spaceIndex > 0 ? googleUser.Name.Substring(0, spaceIndex) : googleUser.Name;
+                    LastName = spaceIndex > 0 ? googleUser.Name.Substring(spaceIndex + 1) : string.Empty;
+                    LoginProvider = "Google",
+                    ProviderKey = googleUser.ProviderKey,
+                    EmailConfirmed = true
+
+                };
+                var result = await _userManager.CreateAsync(user);
+                if (!result.Succeeded)
+                {
+                    var errors = string.Empty;
+                    foreach (var error in result.Errors)
+                        errors += $"{error.Description}, ";
+                    return new AuthDTO() { Message = errors, IsAuthenticated = false };
+                }
+                await _userManager.AddToRoleAsync(user, "User");
+            }
+            var jwtSecurityToken = await JwtSecurityTokenAsync(user);
+
+            var refreshToken = GenerateRefreshToken();
+            if (user.RefreshTokens == null)
+                user.RefreshTokens = new List<RefreshToken>();
+            user.RefreshTokens?.Add(refreshToken);
+            await _userManager.UpdateAsync(user);
+
+            return new AuthDTO
+            {
+                Email = user.Email,
+                ExpiresOn = jwtSecurityToken.ValidTo,
+                IsAuthenticated = true,
+                Roles = new List<string> { "User" },
+                Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
+                Username = user.UserName,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiration = refreshToken.ExpiresOn
+            };
+
+        }
     }
 }
