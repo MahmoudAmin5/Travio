@@ -41,6 +41,13 @@ namespace Travio.API.Controllers
 
             return Ok(result);
         }
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLoginAsync(string idToken)
+        {
+            var result = await _authService.LoginWithGoogleAsync(idToken);
+            if (!result.IsAuthenticated) return BadRequest(new ApiResponse(401, result.Message));
+            return Ok(result);
+        }
        
     }
 }
