@@ -48,6 +48,7 @@ namespace Travio.API.Controllers
             var result = await _authService.LoginWithGoogleAsync(model.IdToken);
             if (!result.IsAuthenticated) return BadRequest(new ApiResponse(401, result.Message));
             return Ok(result);
+            // test
         }
        
     }
