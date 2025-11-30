@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Travio.API.Errors;
 using Travio.Core.Contracts.Services;
 using Travio.Core.DTOs;
 
@@ -25,7 +26,7 @@ namespace Travio.API.Controllers
             var result = await _authService.RegisterAsync(model);
 
             if (!result.IsAuthenticated)
-                return BadRequest(result.Message);
+                return Unauthorized(new ApiResponse(401,result.Message));
 
             return Ok(result);
         }
@@ -36,9 +37,18 @@ namespace Travio.API.Controllers
             var result = await _authService.GetTokenAsync(model);
 
             if (!result.IsAuthenticated)
-                return BadRequest(result.Message);
+                return BadRequest(new ApiResponse(401, result.Message));
 
             return Ok(result);
         }
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLoginAsync([FromBody] GoogleLoginDTO model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var result = await _authService.LoginWithGoogleAsync(model.IdToken);
+            if (!result.IsAuthenticated) return BadRequest(new ApiResponse(401, result.Message));
+            return Ok(result);
+        }
+       
     }
 }

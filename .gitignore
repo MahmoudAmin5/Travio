@@ -12,6 +12,10 @@
 # Build results
 [Bb]in/
 [Oo]bj/
+
+
+**/.vs/
+
 [Ll]og/
 [Tt]est[Rr]esult*/
 *.log

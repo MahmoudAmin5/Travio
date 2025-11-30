@@ -17,5 +17,6 @@ namespace Travio.Core.Contracts.Services
         Task<AuthDTO> RefreshTokenAsync(string token);
         Task<bool> RevokeTokenAsync(string token);
         Task<JwtSecurityToken> JwtSecurityTokenAsync(ApplicationUser User);
+        Task<AuthDTO> LoginWithGoogleAsync(string idToken);
     }
 }
