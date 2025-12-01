@@ -10,11 +10,16 @@ namespace Travio.Core.Domain.Entities.Account_Mangement
     [Owned]
     public class RefreshToken
     {
-        public string Token { get; set; }
+        public string TokenHash { get; set; } = null!;
+        public string UserId { get; set; } = null!;
+        public ApplicationUser? User { get; set; }
+
+        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public DateTime ExpiresOn { get; set; }
-        public bool IsExpired => DateTime.UtcNow >= ExpiresOn;
-        public DateTime CreatedOn { get; set; }
         public DateTime? RevokedOn { get; set; }
-        public bool IsActive => RevokedOn == null && !IsExpired;
+        public string? RevokedByIp { get; set; }
+        public string? RevokeReason { get; set; }
+
+        public bool IsActive => RevokedOn == null && ExpiresOn > DateTime.UtcNow;
     }
 }

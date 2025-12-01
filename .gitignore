@@ -1,4 +1,4 @@
-############################
+ ############################
 # Visual Studio / .NET Ignore File
 ############################
 
@@ -10,8 +10,8 @@
 *.sln.docstates
 
 # Build results
-[Bb]in/
-[Oo]bj/
+bin/
+obj/
 
 
 **/.vs/

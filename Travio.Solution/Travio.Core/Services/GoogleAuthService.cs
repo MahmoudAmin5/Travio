@@ -40,7 +40,7 @@ namespace Travio.Core.Services
 
                 };
             }
-            catch (InvalidJwtException ex) 
+            catch (InvalidJwtException ex)
             {
                 throw new ValidationException($"Invalid Google Token: {ex.Message}");
             }
