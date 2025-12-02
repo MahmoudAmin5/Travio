@@ -25,6 +25,7 @@ namespace Travio.Core.Services
             try
             {
                 var clientId = _confguration["Google:ClientId"];
+                if(clientId is null) throw new ArgumentNullException(nameof(clientId));
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
                     Audience = new List<string> { clientId }
