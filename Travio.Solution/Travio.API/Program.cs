@@ -7,9 +7,11 @@ using System.Text;
 using Travio.API.Middleware;
 using Travio.Core.Contracts.Services;
 using Travio.Core.Domain.Entities.Account_Mangement;
+using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.Services;
 using Travio.Core.Setting;
 using Travio.Infrastructure;
+using Travio.Infrastructure.Repositories;
 namespace Travio.API
 {
     public class Program
@@ -50,6 +52,7 @@ namespace Travio.API
             builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWTSetting"));
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             builder.Services.AddTransient<IGoogleAuthService, GoogleAuthService>();
             builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
             var app = builder.Build();
