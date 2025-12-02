@@ -19,7 +19,6 @@ namespace Travio.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
@@ -49,8 +48,10 @@ namespace Travio.API
                     };
                 });
             builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWTSetting"));
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddTransient<IGoogleAuthService, GoogleAuthService>();
+            builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
             var app = builder.Build();
             IdentitySeed.SeedRolesAndAdminAsync(app.Services, builder.Configuration).Wait();
 
