@@ -13,7 +13,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.Contracts.Services;
 using Travio.Core.Domain.Entities.Account_Mangement;
+using Travio.Core.Domain.Infrastructure.Contract;
+using Travio.Core.Domain.Specifications;
 using Travio.Core.DTOs;
+using Travio.Core.EntityErrors;
+using Travio.Core.Helpers;
 using Travio.Core.Setting;
 
 namespace Travio.Core.Services
@@ -24,17 +28,23 @@ namespace Travio.Core.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IGoogleAuthService _googleAuthService;
+        private readonly IGenericRepository<UserCode> _userCodeRepo;
+        private readonly IEmailSender _emailSender;
         private readonly JWT _jwt;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             IOptions<JWT> jwt,
-            IGoogleAuthService googleAuthService)
+            IGoogleAuthService googleAuthService,
+            IGenericRepository<UserCode> userCodeRepo,
+            IEmailSender emailSender)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _googleAuthService = googleAuthService;
+            _userCodeRepo = userCodeRepo;
+            _emailSender = emailSender;
             _jwt = jwt.Value;
         }
         public async Task<bool> RevokeTokenAsync(string token)
@@ -371,6 +381,38 @@ namespace Travio.Core.Services
         {
             var bytes = RandomNumberGenerator.GetBytes(64); // 64 bytes = strong
             return Convert.ToBase64String(bytes);
+        }
+
+        public async Task<string> ForgotPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user is null) throw new NotFoundException("User not found.");
+            var random = new Random();
+            var OTPCode = random.Next(100000, 999999).ToString();
+            var spec = new ActiveUserCodesSpec(user.Id, Domain.Entities.Enums.AuthCodeType.PasswordReset);
+            var AuthCodes = await _userCodeRepo.ListAsync(spec);
+
+            foreach (var code in AuthCodes)
+            {
+                code.IsRevoked = true;
+            }
+            await _userCodeRepo.UpdateRangeAsync(AuthCodes);
+
+            var AuthCode = new UserCode()
+            {
+                Code = OTPCode,
+                ApplicationUserId = user.Id,
+                CodeType = Domain.Entities.Enums.AuthCodeType.PasswordReset,
+                CreatedOn = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMinutes(15),
+            };
+            await _userCodeRepo.AddAsync(AuthCode);
+            var subject = "Travio - Reset Password Code";
+            var emailBody = OTPEmailGenerator.GeneratePasswordResetEmailBody(user.FirstName?? "Traveler",OTPCode);
+            await _emailSender.SendEmailAsync(user.Email, subject, emailBody);
+
+            return "OTP code sent successfully to your email.";
+
         }
     }
 }
