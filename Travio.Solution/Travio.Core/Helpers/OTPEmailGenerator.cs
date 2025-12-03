@@ -16,46 +16,93 @@ namespace Travio.Core.Helpers
 
             return $@"
     <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: {backgroundColor}; margin: 0; padding: 0; }}
-            .container {{ max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow: hidden; }}
-            .header {{ background-color: {primaryColor}; padding: 20px; text-align: center; color: #ffffff; }}
-            .header h1 {{ margin: 0; font-size: 24px; }}
-            .content {{ padding: 30px; color: #333333; line-height: 1.6; }}
-            .otp-box {{ background-color: #eef6ff; border: 2px dashed {primaryColor}; color: {primaryColor}; font-size: 32px; font-weight: bold; text-align: center; padding: 15px; margin: 20px 0; border-radius: 5px; letter-spacing: 5px; }}
-            .footer {{ background-color: #eeeeee; padding: 15px; text-align: center; font-size: 12px; color: #666666; }}
-            .link {{ color: {primaryColor}; text-decoration: none; }}
-        </style>
-    </head>
-    <body>
-        <div class='container'>
-            <div class='header'>
-                <h1>Travio</h1>
-            </div>
-            <div class='content'>
-                <h2>Password Reset Request</h2>
-                <p>Hi <strong>{userName}</strong>,</p>
-                <p>We received a request to reset your password for your Travio account. Please use the verification code below to complete the process:</p>
-                
-                <div class='otp-box'>
-                    {otpCode}
-                </div>
+<html lang=""en"">
 
-                <p>This code is valid for <strong>15 minutes</strong>.</p>
-                <p>If you did not request a password reset, please ignore this email or contact support if you have questions.</p>
-                <p>Safe travels,<br>The Travio Team</p>
-            </div>
-            <div class='footer'>
-                <p>&copy; {DateTime.UtcNow.Year} Travio Inc. All rights reserved.</p>
-                <p>This is an automated message, please do not reply.</p>
-            </div>
+<head>
+    <meta charset=""UTF-8"" />
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"" />
+    <title>Travio Verification Code</title>
+</head>
+
+<body style=""margin:0; padding:0; background:#f2f2f7; font-family: Arial, Helvetica, sans-serif;"">
+
+    <div style=""
+        max-width: 600px;
+        margin: 30px auto;
+        background: #ffffff;
+        border: 1px solid #e5e5e5;
+        border-radius: 10px;
+        overflow: hidden;
+    "">
+
+        <!-- Header -->
+        <div style=""
+            background: #4A6CF7;
+            padding: 25px 0;
+            text-align: center;
+        "">
+            <h1 style=""
+                margin: 0;
+                font-size: 28px;
+                font-weight: bold;
+                color: #ffffff;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            "">
+                Travio
+            </h1>
         </div>
-    </body>
-    </html>";
+
+        <!-- Body -->
+        <div style=""padding: 30px;"">
+            <p style=""font-size: 16px; color: #333; line-height: 1.6;"">
+                Hello,
+            </p>
+
+            <p style=""font-size: 16px; color: #333; line-height: 1.6;"">
+                Here is your <strong>6-digit verification code</strong> to reset your password:
+            </p>
+
+            <!-- Code Box -->
+            <div style=""
+                margin: 25px 0;
+                font-size: 32px;
+                font-weight: bold;
+                text-align: center;
+                color: #4A6CF7;
+                letter-spacing: 8px;
+            "">
+                {otpCode}
+            </div>
+
+            <p style=""font-size: 15px; color: #555; line-height: 1.6;"">
+                This code will expire in <strong>10 minutes</strong>.  
+                If you did not request this, you can safely ignore this email.
+            </p>
+
+            <p style=""font-size: 15px; color: #555; margin-top: 30px; line-height: 1.6;"">
+                Best regards,<br />
+                <strong>Travio Team</strong>
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style=""
+                background: #f5f5f5;
+                padding: 20px;
+                text-align: center;
+                font-size: 13px;
+                color: #777;
+            "">
+            © 2025 Travio. All rights reserved.
+        </div>
+
+    </div>
+
+</body>
+
+</html>
+";
         }
     }
 }

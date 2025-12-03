@@ -65,7 +65,7 @@ namespace Travio.API
             {
                 app.MapOpenApi();
             }
-
+            app.UseStaticFiles();
 
             app.UseHttpsRedirection();
 
