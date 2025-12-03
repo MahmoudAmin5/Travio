@@ -182,5 +182,11 @@ namespace Travio.API.Controllers
                 return StatusCode(500, $"Sending failed: {ex.Message}");
             }
         }
+        [HttpPost("forgot-password") ]
+        public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDTO model)
+        {
+            var resultMessage = await _authService.ForgotPasswordAsync(model.Email);
+            return Ok(resultMessage);
+        }
     }
 }
