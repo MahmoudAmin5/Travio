@@ -17,6 +17,8 @@ namespace Travio.Infrastructure
 
            // configure identity relation tables (schema + names)
             IdentityTablesConfiguration.Configure(builder);
+           
         }
+        public DbSet<UserCode> UserCodes { get; set; }
     }
 }

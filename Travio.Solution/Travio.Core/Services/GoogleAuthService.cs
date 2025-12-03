@@ -14,17 +14,18 @@ namespace Travio.Core.Services
 {
     public class GoogleAuthService : IGoogleAuthService
     {
-        private readonly IConfiguration _confguration;
+        private readonly IConfiguration _configuration;
 
-        public GoogleAuthService(IConfiguration confguration)
+        public GoogleAuthService(IConfiguration configuration)
         {
-            _confguration = confguration;
+            _configuration = configuration;
         }
         public async Task<GoogleUserDTO> VerifyTokenAsync(string idToken)
         {
             try
             {
-                var clientId = _confguration["Google:ClientId"];
+                var clientId = _configuration["Google:ClientId"];
+                if(clientId is null) throw new ArgumentNullException(nameof(clientId));
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
                     Audience = new List<string> { clientId }

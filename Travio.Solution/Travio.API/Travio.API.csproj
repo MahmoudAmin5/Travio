@@ -24,4 +24,8 @@
     <ProjectReference Include="..\Travio.Infrastructure\Travio.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\Images\logo.jpg" />
+  </ItemGroup>
+
 </Project>
