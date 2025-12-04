@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services;
+using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.DTOs;
 
 namespace Travio.API.Controllers
@@ -182,11 +183,24 @@ namespace Travio.API.Controllers
                 return StatusCode(500, $"Sending failed: {ex.Message}");
             }
         }
-        [HttpPost("forgot-password") ]
+        [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDTO model)
         {
             var resultMessage = await _authService.ForgotPasswordAsync(model.Email);
             return Ok(resultMessage);
         }
+
+        //[HttpPost("send-verify-email-otp")]
+        //public async Task<IActionResult> SendVerifyEmailOtp([FromBody] SendOtpRequestDto model)
+        //{
+        //    if (model == null || string.IsNullOrWhiteSpace(model.Target))
+        //        return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Target is required", null));
+
+            
+        //    var result = await _authService.SendEmailConfirmationAsync(model);
+
+        //    //返回成功 always true for rate-limited / not-existing? adjust in service
+        //    return Ok(new SendOtpResponseDto(true, result.Message, result.ExpiresOn));
+        //}
     }
 }

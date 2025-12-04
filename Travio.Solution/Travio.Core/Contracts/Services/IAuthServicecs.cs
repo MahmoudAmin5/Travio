@@ -19,5 +19,7 @@ namespace Travio.Core.Contracts.Services
         Task<JwtSecurityToken> JwtSecurityTokenAsync(ApplicationUser User);
         Task<AuthDTO> LoginWithGoogleAsync(string idToken);
         Task<string> ForgotPasswordAsync(string email);
+        Task<string> SendEmailConfirmationAsync(ApplicationUser user);
+        Task<VerifyOtpResponseDto> VerifyOtpAsync(string email, string otp);
     }
 }

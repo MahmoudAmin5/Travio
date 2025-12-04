@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.Contracts.Services;
 using Travio.Core.Domain.Entities.Account_Mangement;
+using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.Domain.Specifications;
 using Travio.Core.DTOs;
@@ -408,11 +409,61 @@ namespace Travio.Core.Services
             };
             await _userCodeRepo.AddAsync(AuthCode);
             var subject = "Travio - Reset Password Code";
-            var emailBody = OTPEmailGenerator.GeneratePasswordResetEmailBody(user.FirstName?? "Traveler",OTPCode);
+            var emailBody = OTPEmailGenerator.GenerateEmailBody(user.FirstName ?? "Traveler", OTPCode);
             await _emailSender.SendEmailAsync(user.Email, subject, emailBody);
 
             return "OTP code sent successfully to your email.";
 
+        }
+
+        public async Task<string> SendEmailConfirmationAsync(ApplicationUser user)
+        {
+            if (user is null) throw new NotFoundException("User not found.");
+            var random = new Random();
+            var OTPCode = random.Next(100000, 999999).ToString();
+            var spec = new ActiveUserCodesSpec(user.Id, AuthCodeType.EmailVerification);
+            var AuthCodes = await _userCodeRepo.ListAsync(spec);
+            foreach (var code in AuthCodes)
+            {
+                code.IsRevoked = true;
+            }
+            await _userCodeRepo.UpdateRangeAsync(AuthCodes);
+            var AuthCode = new UserCode()
+            {
+                Code = OTPCode,
+                ApplicationUserId = user.Id,
+                CodeType = AuthCodeType.EmailVerification,
+                CreatedOn = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMinutes(15),
+            };
+            await _userCodeRepo.AddAsync(AuthCode);
+            var subject = "Travio - Confirm Email Code";
+            var emailBody = OTPEmailGenerator.GenerateEmailBody(user.FirstName ?? "Traveler", OTPCode);
+            await _emailSender.SendEmailAsync(user.Email, subject, emailBody);
+            return "OTP code sent successfully to your email.";
+        }
+
+        public async Task<VerifyOtpResponseDto> VerifyOtpAsync(string email, string otp)
+        {
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(otp))
+            {
+                return new VerifyOtpResponseDto(VerifyOtpStatus.Invalid, "Invalid Operation.");
+            }
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user is null)
+            {
+                return new VerifyOtpResponseDto(VerifyOtpStatus.UserNotFound, "User not found.");
+
+            }
+            var spec = new VerifyOtpSpec(user.Id, otp, AuthCodeType.EmailVerification);
+            var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
+            if (code is null || code.ExpiryDate <= DateTime.UtcNow)
+            {
+                return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "The code is expired.");
+            }
+            code.IsRevoked = true;
+            await _userCodeRepo.UpdateAsync(code);
+            return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.");
         }
     }
 }

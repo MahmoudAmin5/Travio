@@ -9,11 +9,12 @@ using Travio.Core.Domain.Entities.Enums;
 
 namespace Travio.Core.Domain.Specifications
 {
-    public class ActiveUserCodesSpec : Specification<UserCode>
+    public class VerifyOtpSpec : Specification<UserCode>
     {
-        public ActiveUserCodesSpec(string UserId , AuthCodeType type)
+        public VerifyOtpSpec(string UserId, string OtpCode, AuthCodeType type)
         {
-            Query.Where(u => u.ApplicationUserId == UserId && !u.IsRevoked  && u.CodeType == type);
+
+            Query.Where(u => u.ApplicationUserId == UserId && !u.IsRevoked && u.CodeType == type && u.Code == OtpCode);
         }
     }
 }
