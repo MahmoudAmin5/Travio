@@ -8,7 +8,7 @@ namespace Travio.Core.Helpers
 {
     public static class OTPEmailGenerator
     {
-        public static string GeneratePasswordResetEmailBody(string userName, string otpCode)
+        public static string GenerateEmailBody(string userName, string otpCode)
         {
             // You can change these colors to match your App's colors
             string primaryColor = "#007BFF"; // Travio Blue
