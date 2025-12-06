@@ -14,7 +14,14 @@ namespace Travio.Core.Domain.Specifications
         public VerifyOtpSpec(string UserId, string OtpCode, AuthCodeType type)
         {
 
-            Query.Where(u => u.ApplicationUserId == UserId && !u.IsRevoked && u.CodeType == type && u.Code == OtpCode);
+            Query.Where(c =>
+                c.ApplicationUserId == UserId &&
+                !c.IsRevoked &&
+                c.CodeType == type &&
+                c.Code == OtpCode &&
+                c.ExpiryDate > DateTime.UtcNow)
+             .OrderByDescending(c => c.CreatedOn)
+             .Take(1);
         }
     }
 }
