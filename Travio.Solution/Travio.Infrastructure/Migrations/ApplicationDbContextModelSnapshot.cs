@@ -253,6 +253,44 @@ namespace Travio.Infrastructure.Migrations
                     b.ToTable("Users", "Account_Schema");
                 });
 
+            modelBuilder.Entity("Travio.Core.Domain.Entities.Account_Mangement.UserCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CodeType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.ToTable("UserCodes", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Travio.Core.Domain.Entities.Account_Mangement.ApplicationRole", null)
@@ -347,6 +385,17 @@ namespace Travio.Infrastructure.Migrations
                         });
 
                     b.Navigation("RefreshTokens");
+                });
+
+            modelBuilder.Entity("Travio.Core.Domain.Entities.Account_Mangement.UserCode", b =>
+                {
+                    b.HasOne("Travio.Core.Domain.Entities.Account_Mangement.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

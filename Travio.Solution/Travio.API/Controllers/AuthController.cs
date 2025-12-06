@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
@@ -73,6 +74,7 @@ namespace Travio.API.Controllers
             return Ok(result);
         }
         [HttpPost("Logout")]
+        [Authorize]
         public async Task<IActionResult> RevokeToken([FromBody] LogoutDTO model)
         {
             var token = model.Token ?? Request.Cookies["refreshToken"];
@@ -107,7 +109,7 @@ namespace Travio.API.Controllers
             if (string.IsNullOrWhiteSpace(to)) return BadRequest("Provide ?to=email@example.com");
 
             var subject = "Travio — Test Email Connection";
-            var currentTime = DateTime.UtcNow.ToString("f"); // تنسيق وقت مقروء
+            var currentTime = DateTime.UtcNow.ToString("f");
 
             var html = $$"""
                 <!DOCTYPE html>
@@ -190,17 +192,22 @@ namespace Travio.API.Controllers
             return Ok(resultMessage);
         }
 
-        //[HttpPost("send-verify-email-otp")]
-        //public async Task<IActionResult> SendVerifyEmailOtp([FromBody] SendOtpRequestDto model)
-        //{
-        //    if (model == null || string.IsNullOrWhiteSpace(model.Target))
-        //        return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Target is required", null));
+        [HttpPost("send-verify-email-otp")]
+        public async Task<IActionResult> SendVerifyEmailOtp([FromBody] SendOtpRequestDto model)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(model.Target))
+                return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Target is required", null));
 
-            
-        //    var result = await _authService.SendEmailConfirmationAsync(model);
-
-        //    //返回成功 always true for rate-limited / not-existing? adjust in service
-        //    return Ok(new SendOtpResponseDto(true, result.Message, result.ExpiresOn));
-        //}
+            var result = await _authService.SendEmailConfirmationAsync(model);
+            return Ok(result);
+        }
+        [HttpPost("Verify-Email")]
+        public async Task<ActionResult> VerifyEmailAsync(VerifyOtpRequestDto model)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(model.Target) || string.IsNullOrWhiteSpace(model.Otp))
+                return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
+            var result = await _authService.ConfirmEmailAsync(model);
+            return Ok(result);
+        }
     }
 }

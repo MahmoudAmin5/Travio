@@ -242,7 +242,8 @@ namespace Travio.Core.Services
                 UserName = model.Username,
                 Email = model.Email,
                 FirstName = model.FirstName,
-                LastName = model.LastName
+                LastName = model.LastName,
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -309,16 +310,6 @@ namespace Travio.Core.Services
 
             return token;
         }
-        private RefreshToken CreateRefreshTokenEntity(string tokenPlain, int daysValid = 10)
-        {
-            return new RefreshToken
-            {
-                TokenHash = HashToken(tokenPlain),
-                CreatedOn = DateTime.UtcNow,
-                ExpiresOn = DateTime.UtcNow.AddDays(daysValid)
-            };
-        }
-
         public async Task<AuthDTO> LoginWithGoogleAsync(string idToken)
         {
             var googleUser = await _googleAuthService.VerifyTokenAsync(idToken);
@@ -371,19 +362,6 @@ namespace Travio.Core.Services
             };
 
         }
-        private static string HashToken(string token)
-        {
-            using var sha = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(token);
-            var hash = sha.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
-        }
-        private string GenerateRandomTokenPlain()
-        {
-            var bytes = RandomNumberGenerator.GetBytes(64); // 64 bytes = strong
-            return Convert.ToBase64String(bytes);
-        }
-
         public async Task<string> ForgotPasswordAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
@@ -415,9 +393,13 @@ namespace Travio.Core.Services
             return "OTP code sent successfully to your email.";
 
         }
-
-        public async Task<string> SendEmailConfirmationAsync(ApplicationUser user)
+        public async Task<SendOtpResponseDto> SendEmailConfirmationAsync(SendOtpRequestDto model)
         {
+            if (string.IsNullOrWhiteSpace(model.Target))
+            {
+                throw new NotFoundException("Email Is Required");
+            }
+            var user = await _userManager.FindByEmailAsync(model.Target);
             if (user is null) throw new NotFoundException("User not found.");
             var random = new Random();
             var OTPCode = random.Next(100000, 999999).ToString();
@@ -440,22 +422,26 @@ namespace Travio.Core.Services
             var subject = "Travio - Confirm Email Code";
             var emailBody = OTPEmailGenerator.GenerateEmailBody(user.FirstName ?? "Traveler", OTPCode);
             await _emailSender.SendEmailAsync(user.Email, subject, emailBody);
-            return "OTP code sent successfully to your email.";
+            return new SendOtpResponseDto(VerifyOtpStatus.Success, "OTP code sent successfully to your email.", AuthCode.ExpiryDate);
         }
-
-        public async Task<VerifyOtpResponseDto> VerifyOtpAsync(string email, string otp)
+        public async Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(otp))
+            if (string.IsNullOrWhiteSpace(model.Target) || string.IsNullOrWhiteSpace(model.Otp))
             {
-                return new VerifyOtpResponseDto(VerifyOtpStatus.Invalid, "Invalid Operation.");
+                throw new NotFoundException("Email and Code Is Required");
             }
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await _userManager.FindByEmailAsync(model.Target);
             if (user is null)
             {
-                return new VerifyOtpResponseDto(VerifyOtpStatus.UserNotFound, "User not found.");
-
+                throw new NotFoundException("User not found.");
             }
-            var spec = new VerifyOtpSpec(user.Id, otp, AuthCodeType.EmailVerification);
+            return await VerifyOtpAsync(user, model.Otp);
+        }
+        public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp)
+        {
+            // use for Verify Otp in General not for Confirm Email only (Genaric)
+
+            var spec = new VerifyOtpSpec(user.Id, Otp, AuthCodeType.EmailVerification);
             var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
             if (code is null || code.ExpiryDate <= DateTime.UtcNow)
             {
@@ -464,6 +450,27 @@ namespace Travio.Core.Services
             code.IsRevoked = true;
             await _userCodeRepo.UpdateAsync(code);
             return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.");
+        }
+        private RefreshToken CreateRefreshTokenEntity(string tokenPlain, int daysValid = 10)
+        {
+            return new RefreshToken
+            {
+                TokenHash = HashToken(tokenPlain),
+                CreatedOn = DateTime.UtcNow,
+                ExpiresOn = DateTime.UtcNow.AddDays(daysValid)
+            };
+        }
+        private static string HashToken(string token)
+        {
+            using var sha = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(token);
+            var hash = sha.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
+        }
+        private string GenerateRandomTokenPlain()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(64); // 64 bytes = strong
+            return Convert.ToBase64String(bytes);
         }
     }
 }
