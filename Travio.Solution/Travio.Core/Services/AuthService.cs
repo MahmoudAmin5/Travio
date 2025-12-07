@@ -1,16 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Travio.Core.Contracts.Services;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Enums;
@@ -395,11 +389,11 @@ namespace Travio.Core.Services
         }
         public async Task<SendOtpResponseDto> SendEmailConfirmationAsync(SendOtpRequestDto model)
         {
-            if (string.IsNullOrWhiteSpace(model.Target))
+            if (string.IsNullOrWhiteSpace(model.Email))
             {
                 throw new NotFoundException("Email Is Required");
             }
-            var user = await _userManager.FindByEmailAsync(model.Target);
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null) throw new NotFoundException("User not found.");
             var random = new Random();
             var OTPCode = random.Next(100000, 999999).ToString();
@@ -426,16 +420,16 @@ namespace Travio.Core.Services
         }
         public async Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model)
         {
-            if (string.IsNullOrWhiteSpace(model.Target) || string.IsNullOrWhiteSpace(model.Otp))
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
             {
                 throw new NotFoundException("Email and Code Is Required");
             }
-            var user = await _userManager.FindByEmailAsync(model.Target);
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null)
             {
                 throw new NotFoundException("User not found.");
             }
-            var result = await VerifyOtpAsync(user, model.Otp,AuthCodeType.EmailVerification);
+            var result = await VerifyOtpAsync(user, model.Otp, AuthCodeType.EmailVerification);
             if (result?.status == VerifyOtpStatus.Success)
             {
                 user.EmailConfirmed = true;
@@ -443,7 +437,7 @@ namespace Travio.Core.Services
             }
             return result;
         }
-        public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp,AuthCodeType CodeTyp)
+        public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp, AuthCodeType CodeTyp)
         {
             // use for Verify Otp in General not for Confirm Email only (Genaric)
 

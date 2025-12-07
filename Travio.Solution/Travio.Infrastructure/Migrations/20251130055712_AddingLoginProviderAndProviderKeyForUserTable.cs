@@ -25,7 +25,7 @@ namespace Travio.Infrastructure.Migrations
                 type: "nvarchar(max)",
                 nullable: true);
 
-            
+
         }
 
         /// <inheritdoc />
