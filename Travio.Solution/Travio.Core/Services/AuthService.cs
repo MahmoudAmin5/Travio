@@ -435,13 +435,19 @@ namespace Travio.Core.Services
             {
                 throw new NotFoundException("User not found.");
             }
-            return await VerifyOtpAsync(user, model.Otp);
+            var result = await VerifyOtpAsync(user, model.Otp,AuthCodeType.EmailVerification);
+            if (result?.status == VerifyOtpStatus.Success)
+            {
+                user.EmailConfirmed = true;
+                await _userManager.UpdateAsync(user);
+            }
+            return result;
         }
-        public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp)
+        public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp,AuthCodeType CodeTyp)
         {
             // use for Verify Otp in General not for Confirm Email only (Genaric)
 
-            var spec = new VerifyOtpSpec(user.Id, Otp, AuthCodeType.EmailVerification);
+            var spec = new VerifyOtpSpec(user.Id, Otp, CodeTyp);
             var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
             if (code is null || code.ExpiryDate <= DateTime.UtcNow)
             {

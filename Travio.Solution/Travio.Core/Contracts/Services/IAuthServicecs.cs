@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.Domain.Entities.Account_Mangement;
+using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.DTOs;
 
 namespace Travio.Core.Contracts.Services
@@ -21,6 +22,6 @@ namespace Travio.Core.Contracts.Services
         Task<string> ForgotPasswordAsync(string email);
         Task<SendOtpResponseDto> SendEmailConfirmationAsync(SendOtpRequestDto model);
         Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model);
-        Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp);
+        Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp, AuthCodeType CodeType);
     }
 }
