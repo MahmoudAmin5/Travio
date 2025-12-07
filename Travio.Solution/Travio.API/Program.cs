@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using System.Text;
 using Travio.API.Middleware;
+using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -55,6 +57,11 @@ namespace Travio.API
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             builder.Services.AddTransient<IGoogleAuthService, GoogleAuthService>();
             builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
+            builder.Services.AddOpenApi(options =>
+            {
+                options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+
+            });
             var app = builder.Build();
             IdentitySeed.SeedRolesAndAdminAsync(app.Services, builder.Configuration).Wait();
 
@@ -64,6 +71,7 @@ namespace Travio.API
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+              app.MapScalarApiReference();
             }
             app.UseStaticFiles();
 

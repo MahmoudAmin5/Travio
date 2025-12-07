@@ -6,7 +6,9 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "http://localhost:5116"
+      "applicationUrl": "http://localhost:5116",
+      "launchBrowser": true,
+      "launchUrl": "scalar/v1"
     },
     "https": {
       "commandName": "Project",
@@ -14,14 +16,17 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:7219;http://localhost:5116"
+      "applicationUrl": "https://localhost:7219;http://localhost:5116",
+      "launchBrowser": true,
+      "launchUrl": "scalar/v1"
     },
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "launchBrowser": true,
+      "launchUrl": "scalar/v1"
     }
   },
   "$schema": "https://json.schemastore.org/launchsettings.json",
