@@ -29,6 +29,8 @@ namespace Travio.Core.DTOs
         [Required(ErrorMessage = "Password is required")]
         [StringLength(256, MinimumLength = 8, ErrorMessage = "Password must be at least 6 characters")]
         [DataType(DataType.Password)]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$",
+            ErrorMessage = "Password must have 1 Uppercase, 1 Lowercase, 1 Number, and 1 Special Character")]
         public string Password { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Confirm Password is required")]
