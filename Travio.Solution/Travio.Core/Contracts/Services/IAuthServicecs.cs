@@ -22,5 +22,6 @@ namespace Travio.Core.Contracts.Services
         Task<SendOtpResponseDto> SendEmailConfirmationAsync(SendOtpRequestDto model);
         Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model);
         Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp);
+
     }
 }
