@@ -1,117 +1,115 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services;
 using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.DTOs;
 
-namespace Travio.API.Controllers
+namespace Travio.API.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+
+    private readonly IAuthService _authService;
+    private readonly IEmailSender _emailSender;
+
+    public AuthController(IAuthService authService, IEmailSender emailSender)
+    {
+        _authService = authService;
+        _emailSender = emailSender;
+    }
+
+
+    [HttpPost("register")]
+    public async Task<IActionResult> RegisterAsync([FromBody] RegisterDTO model)
     {
 
-        private readonly IAuthService _authService;
-        private readonly IEmailSender _emailSender;
+        var result = await _authService.RegisterAsync(model);
 
-        public AuthController(IAuthService authService, IEmailSender emailSender)
+        if (!result.IsAuthenticated)
+            return Unauthorized(new ApiResponse(401, result.Message));
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
+        return Ok(result);
+    }
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginAsync([FromBody] LoginDTO model)
+    {
+
+        var result = await _authService.GetTokenAsync(model);
+
+        if (!result.IsAuthenticated)
+            return BadRequest(new ApiResponse(401, result.Message));
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
+        return Ok(result);
+    }
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLoginAsync([FromBody] GoogleLoginDTO model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var result = await _authService.LoginWithGoogleAsync(model.IdToken);
+        if (!result.IsAuthenticated) return BadRequest(new ApiResponse(401, result.Message));
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
+        return Ok(result);
+
+    }
+    [HttpGet("refreshToken")]
+    public async Task<IActionResult> RefreshToken()
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+
+        var result = await _authService.RefreshTokenAsync(refreshToken);
+
+        if (!result.IsAuthenticated)
+            return BadRequest(result);
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
+
+        return Ok(result);
+    }
+    [HttpPost("Logout")]
+    [Authorize]
+    public async Task<IActionResult> RevokeToken([FromBody] LogoutDTO model)
+    {
+        var token = model.Token ?? Request.Cookies["refreshToken"];
+
+        if (string.IsNullOrEmpty(token))
+            return BadRequest("Token is required!");
+
+        var result = await _authService.RevokeTokenAsync(token);
+
+        if (!result)
+            return BadRequest("Token is invalid!");
+
+        return Ok();
+    }
+
+    private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
+    {
+        var cookieOptions = new CookieOptions
         {
-            _authService = authService;
-            _emailSender = emailSender;
-        }
+            HttpOnly = true,
+            Expires = expires.ToLocalTime(),
+            Secure = true,
+            IsEssential = true,
+            SameSite = SameSiteMode.None
+        };
 
+        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+    }
+    [HttpPost("send-test")]
+    public async Task<IActionResult> SendTest([FromQuery] string to)
+    {
+        if (string.IsNullOrWhiteSpace(to)) return BadRequest("Provide ?to=email@example.com");
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync([FromBody] RegisterDTO model)
-        {
+        var subject = "Travio — Test Email Connection";
+        var currentTime = DateTime.UtcNow.ToString("f");
 
-            var result = await _authService.RegisterAsync(model);
-
-            if (!result.IsAuthenticated)
-                return Unauthorized(new ApiResponse(401, result.Message));
-            if (!string.IsNullOrEmpty(result.RefreshToken))
-                SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
-            return Ok(result);
-        }
-        [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync([FromBody] LoginDTO model)
-        {
-
-            var result = await _authService.GetTokenAsync(model);
-
-            if (!result.IsAuthenticated)
-                return BadRequest(new ApiResponse(401, result.Message));
-            if (!string.IsNullOrEmpty(result.RefreshToken))
-                SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
-            return Ok(result);
-        }
-        [HttpPost("google-login")]
-        public async Task<IActionResult> GoogleLoginAsync([FromBody] GoogleLoginDTO model)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var result = await _authService.LoginWithGoogleAsync(model.IdToken);
-            if (!result.IsAuthenticated) return BadRequest(new ApiResponse(401, result.Message));
-            if (!string.IsNullOrEmpty(result.RefreshToken))
-                SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
-            return Ok(result);
-
-        }
-        [HttpGet("refreshToken")]
-        public async Task<IActionResult> RefreshToken()
-        {
-            var refreshToken = Request.Cookies["refreshToken"];
-
-            var result = await _authService.RefreshTokenAsync(refreshToken);
-
-            if (!result.IsAuthenticated)
-                return BadRequest(result);
-            if (!string.IsNullOrEmpty(result.RefreshToken))
-                SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
-
-            return Ok(result);
-        }
-        [HttpPost("Logout")]
-        [Authorize]
-        public async Task<IActionResult> RevokeToken([FromBody] LogoutDTO model)
-        {
-            var token = model.Token ?? Request.Cookies["refreshToken"];
-
-            if (string.IsNullOrEmpty(token))
-                return BadRequest("Token is required!");
-
-            var result = await _authService.RevokeTokenAsync(token);
-
-            if (!result)
-                return BadRequest("Token is invalid!");
-
-            return Ok();
-        }
-
-        private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
-        {
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = expires.ToLocalTime(),
-                Secure = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.None
-            };
-
-            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
-        }
-        [HttpPost("send-test")]
-        public async Task<IActionResult> SendTest([FromQuery] string to)
-        {
-            if (string.IsNullOrWhiteSpace(to)) return BadRequest("Provide ?to=email@example.com");
-
-            var subject = "Travio — Test Email Connection";
-            var currentTime = DateTime.UtcNow.ToString("f");
-
-            var html = $$"""
+        var html = $$"""
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -174,40 +172,39 @@ namespace Travio.API.Controllers
                 </html>
                 """;
 
-            try
-            {
-                await _emailSender.SendEmailAsync(to, subject, html);
-                return Ok("Email sent successfully with HTML template.");
-            }
-            catch (Exception ex)
-            {
-
-                return StatusCode(500, $"Sending failed: {ex.Message}");
-            }
-        }
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDTO model)
+        try
         {
-            var resultMessage = await _authService.ForgotPasswordAsync(model.Email);
-            return Ok(resultMessage);
+            await _emailSender.SendEmailAsync(to, subject, html);
+            return Ok("Email sent successfully with HTML template.");
         }
-
-        [HttpPost("send-verify-email-otp")]
-        public async Task<IActionResult> SendVerifyEmailOtp(SendOtpRequestDto model)
+        catch (Exception ex)
         {
-            if (model == null || string.IsNullOrWhiteSpace(model.Email))
-                return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
 
-            var result = await _authService.SendEmailConfirmationAsync(model);
-            return Ok(result);
+            return StatusCode(500, $"Sending failed: {ex.Message}");
         }
-        [HttpPost("Verify-Email")]
-        public async Task<ActionResult> VerifyEmailAsync(VerifyOtpRequestDto model)
-        {
-            if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
-                return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
-            var result = await _authService.ConfirmEmailAsync(model);
-            return Ok(result);
-        }
+    }
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDTO model)
+    {
+        var resultMessage = await _authService.ForgotPasswordAsync(model.Email);
+        return Ok(resultMessage);
+    }
+
+    [HttpPost("send-verify-email-otp")]
+    public async Task<IActionResult> SendVerifyEmailOtp(SendOtpRequestDto model)
+    {
+        if (model == null || string.IsNullOrWhiteSpace(model.Email))
+            return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
+
+        var result = await _authService.SendEmailConfirmationAsync(model);
+        return Ok(result);
+    }
+    [HttpPost("Verify-Email")]
+    public async Task<ActionResult> VerifyEmailAsync(VerifyOtpRequestDto model)
+    {
+        if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
+            return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
+        var result = await _authService.ConfirmEmailAsync(model);
+        return Ok(result);
     }
 }
