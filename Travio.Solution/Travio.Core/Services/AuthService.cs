@@ -395,11 +395,11 @@ namespace Travio.Core.Services
         }
         public async Task<SendOtpResponseDto> SendEmailConfirmationAsync(SendOtpRequestDto model)
         {
-            if (string.IsNullOrWhiteSpace(model.Target))
+            if (string.IsNullOrWhiteSpace(model.Email))
             {
                 throw new NotFoundException("Email Is Required");
             }
-            var user = await _userManager.FindByEmailAsync(model.Target);
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null) throw new NotFoundException("User not found.");
             var random = new Random();
             var OTPCode = random.Next(100000, 999999).ToString();
@@ -426,11 +426,11 @@ namespace Travio.Core.Services
         }
         public async Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model)
         {
-            if (string.IsNullOrWhiteSpace(model.Target) || string.IsNullOrWhiteSpace(model.Otp))
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
             {
                 throw new NotFoundException("Email and Code Is Required");
             }
-            var user = await _userManager.FindByEmailAsync(model.Target);
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null)
             {
                 throw new NotFoundException("User not found.");
@@ -449,7 +449,11 @@ namespace Travio.Core.Services
 
             var spec = new VerifyOtpSpec(user.Id, Otp, CodeTyp);
             var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
-            if (code is null || code.ExpiryDate <= DateTime.UtcNow)
+            if (code is null) 
+            {
+                return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "Code is invalid! ");
+            }
+            if (code.ExpiryDate <= DateTime.UtcNow)
             {
                 return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "The code is expired.");
             }

@@ -195,7 +195,7 @@ namespace Travio.API.Controllers
         [HttpPost("send-verify-email-otp")]
         public async Task<IActionResult> SendVerifyEmailOtp(SendOtpRequestDto model)
         {
-            if (model == null || string.IsNullOrWhiteSpace(model.Target))
+            if (model == null || string.IsNullOrWhiteSpace(model.Email))
                 return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
 
             var result = await _authService.SendEmailConfirmationAsync(model);
@@ -204,7 +204,7 @@ namespace Travio.API.Controllers
         [HttpPost("Verify-Email")]
         public async Task<ActionResult> VerifyEmailAsync(VerifyOtpRequestDto model)
         {
-            if (model == null || string.IsNullOrWhiteSpace(model.Target) || string.IsNullOrWhiteSpace(model.Otp))
+            if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
                 return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
             var result = await _authService.ConfirmEmailAsync(model);
             return Ok(result);
