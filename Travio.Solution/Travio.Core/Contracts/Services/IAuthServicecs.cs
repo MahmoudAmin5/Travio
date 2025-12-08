@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IdentityModel.Tokens.Jwt;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.DTOs;
@@ -23,5 +18,6 @@ namespace Travio.Core.Contracts.Services
         Task<SendOtpResponseDto> SendEmailConfirmationAsync(SendOtpRequestDto model);
         Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model);
         Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp, AuthCodeType CodeType);
+        Task DeleteOtps();
     }
 }

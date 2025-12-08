@@ -179,7 +179,6 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-
             return StatusCode(500, $"Sending failed: {ex.Message}");
         }
     }
