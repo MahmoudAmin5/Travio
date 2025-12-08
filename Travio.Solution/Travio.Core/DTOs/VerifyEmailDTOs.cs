@@ -10,5 +10,5 @@ namespace Travio.Core.DTOs
     public record SendOtpRequestDto(string Email); 
     public record SendOtpResponseDto(VerifyOtpStatus Status, string Message, DateTime? ExpiresOn);
     public record VerifyOtpRequestDto(string Email, string Otp);
-    public record VerifyOtpResponseDto(VerifyOtpStatus status, string Message);
+    public record VerifyOtpResponseDto(VerifyOtpStatus status, string Message,string? ResetToken = null);
 }
