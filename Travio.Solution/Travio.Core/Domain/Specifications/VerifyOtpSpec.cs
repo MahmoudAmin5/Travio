@@ -16,7 +16,7 @@ namespace Travio.Core.Domain.Specifications
 
             Query.Where(c =>
                 c.ApplicationUserId == UserId &&
-                !c.IsRevoked &&
+                !c.IsRevoked && !c.IsUsed &&
                 c.CodeType == type &&
                 c.Code == OtpCode &&
                 c.ExpiryDate > DateTime.UtcNow)
