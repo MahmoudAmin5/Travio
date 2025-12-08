@@ -360,8 +360,7 @@ namespace Travio.Core.Services
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user is null) throw new NotFoundException("User not found.");
-            var random = new Random();
-            var OTPCode = random.Next(100000, 999999).ToString();
+            var OTPCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
             var spec = new ActiveUserCodesSpec(user.Id, Domain.Entities.Enums.AuthCodeType.PasswordReset);
             var AuthCodes = await _userCodeRepo.ListAsync(spec);
 
@@ -373,7 +372,7 @@ namespace Travio.Core.Services
 
             var AuthCode = new UserCode()
             {
-                Code = OTPCode,
+                Code = OtpHasher.Hash(OTPCode),
                 ApplicationUserId = user.Id,
                 CodeType = Domain.Entities.Enums.AuthCodeType.PasswordReset,
                 CreatedOn = DateTime.UtcNow,
@@ -440,8 +439,8 @@ namespace Travio.Core.Services
         public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp, AuthCodeType CodeTyp)
         {
             // use for Verify Otp in General not for Confirm Email only (Genaric)
-
-            var spec = new VerifyOtpSpec(user.Id, Otp, CodeTyp);
+            var HashedCode = OtpHasher.Hash(Otp);
+            var spec = new VerifyOtpSpec(user.Id, HashedCode, CodeTyp);
             var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
             if (code is null) 
             {
