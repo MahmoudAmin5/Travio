@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services;
+using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.DTOs;
 
@@ -14,11 +16,13 @@ public class AuthController : ControllerBase
 
     private readonly IAuthService _authService;
     private readonly IEmailSender _emailSender;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public AuthController(IAuthService authService, IEmailSender emailSender)
+    public AuthController(IAuthService authService, IEmailSender emailSender, UserManager<ApplicationUser> userManager)
     {
         _authService = authService;
         _emailSender = emailSender;
+        _userManager = userManager;
     }
 
 
@@ -198,7 +202,7 @@ public class AuthController : ControllerBase
         var result = await _authService.SendEmailConfirmationAsync(model);
         return Ok(result);
     }
-    [HttpPost("Verify-Email")]
+    [HttpPost("verify-email")]
     public async Task<ActionResult> VerifyEmailAsync(VerifyOtpRequestDto model)
     {
         if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
@@ -206,4 +210,19 @@ public class AuthController : ControllerBase
         var result = await _authService.ConfirmEmailAsync(model);
         return Ok(result);
     }
+    [HttpPost("verify-reset-password-otp")]
+    public async Task<ActionResult> VerifyResetPasswordOTPAsync(VerifyOtpRequestDto model)
+    {
+        if (model == null || string.IsNullOrWhiteSpace(model.Email))
+            return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
+        if(string.IsNullOrEmpty(model.Otp)) 
+            return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "OTP is required", null));
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        var result = await _authService.VerifyOtpAsync(user, model.Otp, AuthCodeType.PasswordReset);
+        return Ok(result);
+
+        
+
+    }
+    
 }

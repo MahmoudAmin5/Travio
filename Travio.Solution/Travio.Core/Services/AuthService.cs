@@ -14,6 +14,7 @@ using Travio.Core.DTOs;
 using Travio.Core.EntityErrors;
 using Travio.Core.Helpers;
 using Travio.Core.Setting;
+using static Travio.Core.DTOs.VerifyResetPasswordOtp;
 
 namespace Travio.Core.Services
 {
@@ -360,8 +361,7 @@ namespace Travio.Core.Services
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user is null) throw new NotFoundException("User not found.");
-            var random = new Random();
-            var OTPCode = random.Next(100000, 999999).ToString();
+            var OTPCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
             var spec = new ActiveUserCodesSpec(user.Id, Domain.Entities.Enums.AuthCodeType.PasswordReset);
             var AuthCodes = await _userCodeRepo.ListAsync(spec);
 
@@ -373,7 +373,7 @@ namespace Travio.Core.Services
 
             var AuthCode = new UserCode()
             {
-                Code = OTPCode,
+                Code = OtpHasher.Hash(OTPCode),
                 ApplicationUserId = user.Id,
                 CodeType = Domain.Entities.Enums.AuthCodeType.PasswordReset,
                 CreatedOn = DateTime.UtcNow,
@@ -395,8 +395,7 @@ namespace Travio.Core.Services
             }
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null) throw new NotFoundException("User not found.");
-            var random = new Random();
-            var OTPCode = random.Next(100000, 999999).ToString();
+            var OTPCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString(); ;
             var spec = new ActiveUserCodesSpec(user.Id, AuthCodeType.EmailVerification);
             var AuthCodes = await _userCodeRepo.ListAsync(spec);
             foreach (var code in AuthCodes)
@@ -406,7 +405,7 @@ namespace Travio.Core.Services
             await _userCodeRepo.UpdateRangeAsync(AuthCodes);
             var AuthCode = new UserCode()
             {
-                Code = OTPCode,
+                Code = OtpHasher.Hash(OTPCode),
                 ApplicationUserId = user.Id,
                 CodeType = AuthCodeType.EmailVerification,
                 CreatedOn = DateTime.UtcNow,
@@ -440,15 +439,30 @@ namespace Travio.Core.Services
         public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp, AuthCodeType CodeTyp)
         {
             // use for Verify Otp in General not for Confirm Email only (Genaric)
-
-            var spec = new VerifyOtpSpec(user.Id, Otp, CodeTyp);
+            if (user is null)
+            {
+                throw new NotFoundException("User not found.");
+            }
+            var HashedCode = OtpHasher.Hash(Otp);
+            var spec = new VerifyOtpSpec(user.Id, HashedCode, CodeTyp);
             var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
-            if (code is null || code.ExpiryDate <= DateTime.UtcNow)
+            if (code is null) 
+            {
+                return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "Code is invalid! ");
+            }
+            if (code.ExpiryDate <= DateTime.UtcNow)
             {
                 return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "The code is expired.");
             }
             code.IsRevoked = true;
             await _userCodeRepo.UpdateAsync(code);
+            if(CodeTyp == AuthCodeType.PasswordReset)
+            {
+              var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+              return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.",resetToken);
+
+            }
+
             return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.");
         }
         private RefreshToken CreateRefreshTokenEntity(string tokenPlain, int daysValid = 10)

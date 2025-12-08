@@ -11,9 +11,15 @@ namespace Travio.Core.Domain.Specifications
 {
     public class ActiveUserCodesSpec : Specification<UserCode>
     {
-        public ActiveUserCodesSpec(string UserId , AuthCodeType type)
+        public ActiveUserCodesSpec(string userId, AuthCodeType type)
         {
-            Query.Where(u => u.ApplicationUserId == UserId && !u.IsRevoked  && u.CodeType == type);
+            Query.Where(u =>
+                u.ApplicationUserId == userId &&
+                u.CodeType == type &&
+                !u.IsRevoked &&
+                !u.IsUsed &&
+                u.ExpiryDate > DateTime.UtcNow);
         }
+
     }
 }
