@@ -1,5 +1,5 @@
-
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Hangfire;
+using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -63,6 +63,11 @@ namespace Travio.API
                 options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 
             });
+            builder.Services.AddHangfire(configuration => configuration
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
             var app = builder.Build();
             IdentitySeed.SeedRolesAndAdminAsync(app.Services, builder.Configuration).Wait();
 
@@ -72,8 +77,21 @@ namespace Travio.API
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
-              app.MapScalarApiReference();
+                app.MapScalarApiReference();
             }
+            app.UseHangfireDashboard("/jobs", new DashboardOptions
+            {
+                DashboardTitle = "Travio Jobs",
+                Authorization = [ new   HangfireCustomBasicAuthenticationFilter {
+                        User = app.Configuration.GetValue<string>("Hangfire:user"),
+                        Pass =  app.Configuration.GetValue<string>("Hangfire:pass")
+                }]
+            });
+            var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+            using var scope = scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+
+            RecurringJob.AddOrUpdate("DeleteOtpAuthService", () => authService.DeleteOtps(), Cron.Daily);
             app.UseStaticFiles();
 
             app.UseHttpsRedirection();

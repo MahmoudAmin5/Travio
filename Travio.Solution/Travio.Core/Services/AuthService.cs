@@ -486,5 +486,14 @@ namespace Travio.Core.Services
             var bytes = RandomNumberGenerator.GetBytes(64); // 64 bytes = strong
             return Convert.ToBase64String(bytes);
         }
+
+        public async Task DeleteOtps()
+        {
+            // here we will delete expired OTP codes from the database
+            var spec = new GetExpiredOtpsSpec();
+            var expiredOtps = await _userCodeRepo.ListAsync(spec);
+            await _userCodeRepo.SaveChangesAsync();
+            await _userCodeRepo.DeleteRangeAsync(expiredOtps);
+        }
     }
 }
