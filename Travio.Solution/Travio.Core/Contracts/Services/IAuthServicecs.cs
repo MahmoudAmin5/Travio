@@ -10,7 +10,7 @@ namespace Travio.Core.Contracts.Services
         Task<AuthDTO> RegisterAsync(RegisterDTO model);
         Task<AuthDTO> GetTokenAsync(LoginDTO model);
         Task<string> AddRoleAsync(AddRoleDTO model);
-        Task<AuthDTO> RefreshTokenAsync(string token);
+        Task<AuthDTO> RefreshTokenAsync(RefreshTokenRequestDto token);
         Task<bool> RevokeTokenAsync(string token);
         Task<JwtSecurityToken> JwtSecurityTokenAsync(ApplicationUser User);
         Task<AuthDTO> LoginWithGoogleAsync(string idToken);
