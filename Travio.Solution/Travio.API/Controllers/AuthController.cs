@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services;
@@ -34,8 +33,6 @@ public class AuthController : ControllerBase
 
         if (!result.IsAuthenticated)
             return Unauthorized(new ApiResponse(401, result.Message));
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
         return Ok(result);
     }
     [HttpPost("login")]
@@ -46,8 +43,6 @@ public class AuthController : ControllerBase
 
         if (!result.IsAuthenticated)
             return BadRequest(new ApiResponse(401, result.Message));
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
         return Ok(result);
     }
     [HttpPost("google-login")]
@@ -56,30 +51,21 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var result = await _authService.LoginWithGoogleAsync(model.IdToken);
         if (!result.IsAuthenticated) return BadRequest(new ApiResponse(401, result.Message));
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
         return Ok(result);
 
     }
-    [HttpGet("refreshToken")]
-    public async Task<IActionResult> RefreshToken()
+    [HttpPost("refreshToken")]
+    public async Task<IActionResult> RefreshToken(RefreshTokenRequestDto refreshToken)
     {
-        var refreshToken = Request.Cookies["refreshToken"];
-
         var result = await _authService.RefreshTokenAsync(refreshToken);
-
         if (!result.IsAuthenticated)
-            return BadRequest(result);
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
-
+            return Unauthorized(result);
         return Ok(result);
     }
     [HttpPost("Logout")]
-    [Authorize]
     public async Task<IActionResult> RevokeToken([FromBody] LogoutDTO model)
     {
-        var token = model.Token ?? Request.Cookies["refreshToken"];
+        var token = model.Token;
 
         if (string.IsNullOrEmpty(token))
             return BadRequest("Token is required!");
@@ -90,20 +76,6 @@ public class AuthController : ControllerBase
             return BadRequest("Token is invalid!");
 
         return Ok();
-    }
-
-    private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
-    {
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Expires = expires.ToLocalTime(),
-            Secure = true,
-            IsEssential = true,
-            SameSite = SameSiteMode.None
-        };
-
-        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
     }
     [HttpPost("send-test")]
     public async Task<IActionResult> SendTest([FromQuery] string to)
@@ -215,14 +187,11 @@ public class AuthController : ControllerBase
     {
         if (model == null || string.IsNullOrWhiteSpace(model.Email))
             return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "Email is required", null));
-        if(string.IsNullOrEmpty(model.Otp)) 
+        if (string.IsNullOrEmpty(model.Otp))
             return BadRequest(new SendOtpResponseDto(VerifyOtpStatus.Invalid, "OTP is required", null));
         var user = await _userManager.FindByEmailAsync(model.Email);
         var result = await _authService.VerifyOtpAsync(user, model.Otp, AuthCodeType.PasswordReset);
         return Ok(result);
-
-        
-
     }
-    
+
 }

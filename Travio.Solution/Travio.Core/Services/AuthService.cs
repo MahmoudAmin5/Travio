@@ -14,7 +14,6 @@ using Travio.Core.DTOs;
 using Travio.Core.EntityErrors;
 using Travio.Core.Helpers;
 using Travio.Core.Setting;
-using static Travio.Core.DTOs.VerifyResetPasswordOtp;
 
 namespace Travio.Core.Services
 {
@@ -70,9 +69,10 @@ namespace Travio.Core.Services
 
             return true;
         }
-        public async Task<AuthDTO> RefreshTokenAsync(string token)
+        public async Task<AuthDTO> RefreshTokenAsync(RefreshTokenRequestDto RefreshToken)
         {
             var authModel = new AuthDTO();
+            var token = RefreshToken.RefreshToken;
             if (string.IsNullOrWhiteSpace(token))
             {
                 authModel.Message = "Token is required";
@@ -177,7 +177,6 @@ namespace Travio.Core.Services
             var active = user.RefreshTokens.FirstOrDefault(t => t.IsActive);
             if (active != null)
             {
-                authModel.RefreshTokenExpiration = active.ExpiresOn;
                 var newPlain = GenerateRandomTokenPlain();
                 var newEntity = CreateRefreshTokenEntity(newPlain, daysValid: 10);
                 active.RevokedOn = DateTime.UtcNow;
@@ -446,7 +445,7 @@ namespace Travio.Core.Services
             var HashedCode = OtpHasher.Hash(Otp);
             var spec = new VerifyOtpSpec(user.Id, HashedCode, CodeTyp);
             var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
-            if (code is null) 
+            if (code is null)
             {
                 return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "Code is invalid! ");
             }
@@ -456,10 +455,10 @@ namespace Travio.Core.Services
             }
             code.IsRevoked = true;
             await _userCodeRepo.UpdateAsync(code);
-            if(CodeTyp == AuthCodeType.PasswordReset)
+            if (CodeTyp == AuthCodeType.PasswordReset)
             {
-              var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-              return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.",resetToken);
+                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.", resetToken);
 
             }
 
