@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Travio.Core.Domain.Entities.Account_Mangement;
 
-namespace Travio.Infrastructure.Configrations
+namespace Travio.Infrastructure.Configrations.UserMangement
 {
     internal class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
     {

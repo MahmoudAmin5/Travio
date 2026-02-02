@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Travio.Infrastructure.Configrations
+namespace Travio.Infrastructure.Configrations.UserMangement
 {
     internal class IdentityTablesConfiguration
     {
