@@ -14,15 +14,15 @@ namespace Travio.Core.DTOs
         [EmailAddress]
         public  string Email { get; set; }
         [Required]
-        public string OTPCode{ get; set; }
-        [Required]
         [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$",
             ErrorMessage = "Password must have 1 Uppercase, 1 Lowercase, 1 Number, and 1 Special Character")]
-        public string NewPasssword { get; set; }
+        public string NewPassword { get; set; }
         [Required]
         [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
         public string ConfirmNewPassword { get; set; }
+        [Required]
+        public string Token { get; set; }
 
     }
 }

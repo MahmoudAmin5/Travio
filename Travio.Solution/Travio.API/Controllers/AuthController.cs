@@ -193,5 +193,12 @@ public class AuthController : ControllerBase
         var result = await _authService.VerifyOtpAsync(user, model.Otp, AuthCodeType.PasswordReset);
         return Ok(result);
     }
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPasswordAsync(ResetPasswordDTO model)
+    {
+        var result = await _authService.ResetPasswordAsync(model);
+        if (!result.Success) return BadRequest(new ApiResponse(400, "Password reset failed"));
+        return Ok(result);
+    }
 
 }
