@@ -19,5 +19,6 @@ namespace Travio.Core.Contracts.Services
         Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model);
         Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp, AuthCodeType CodeType);
         Task DeleteOtps();
+        Task<ServiceResponse<string>> ResetPasswordAsync(ResetPasswordDTO Model);
     }
 }

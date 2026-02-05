@@ -494,5 +494,23 @@ namespace Travio.Core.Services
             await _userCodeRepo.SaveChangesAsync();
             await _userCodeRepo.DeleteRangeAsync(expiredOtps);
         }
+
+        public async Task<ServiceResponse<string>> ResetPasswordAsync(ResetPasswordDTO Model)
+        {
+            var User = await _userManager.FindByEmailAsync(Model.Email);
+            if (User == null) return new ServiceResponse<string>("Email is Invalid") { Success = false };
+           var result = await _userManager.ResetPasswordAsync(User, Model.Token, Model.NewPassword);
+            if (!result.Succeeded)
+            {
+                var Errors = result.Errors.Select(e=>e.Description).ToList();
+                return new ServiceResponse<string>("Password reset failed")
+                {
+                    Success = false,
+                    Errors = Errors
+                };
+            }
+            return new ServiceResponse<string>(data: "Password reset successfully", message: "Success");
+        }
     }
+
 }
