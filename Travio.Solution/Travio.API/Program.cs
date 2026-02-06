@@ -56,6 +56,7 @@ namespace Travio.API
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            builder.Services.AddScoped(typeof(IProfileService), typeof(ProfileService));
             builder.Services.AddTransient<IGoogleAuthService, GoogleAuthService>();
             builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
             builder.Services.AddOpenApi(options =>
