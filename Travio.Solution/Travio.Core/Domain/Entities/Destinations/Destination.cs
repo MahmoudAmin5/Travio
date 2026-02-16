@@ -8,9 +8,12 @@ public class Destination
     public int CityID { get; set; } // FK
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
+    public double Rating { get; set; }
+    public int TotalReviews { get; set; }
 
     [Column(TypeName = "decimal(18, 10)")]
     public decimal Latitude { get; set; }
+
     [Column(TypeName = "decimal(18, 10)")]
     public decimal Longitude { get; set; }
 

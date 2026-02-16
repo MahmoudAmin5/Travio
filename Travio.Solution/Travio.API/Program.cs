@@ -1,17 +1,20 @@
 using Hangfire;
 using HangfireBasicAuthenticationFilter;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Reflection;
 using System.Text;
 using Travio.API.Middleware;
 using Travio.API.OpenApiTransformers;
-using Travio.Core.Contracts.Services;
+using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
-using Travio.Core.Services;
+using Travio.Core.Services.Auth;
 using Travio.Core.Setting;
 using Travio.Infrastructure;
 using Travio.Infrastructure.Repositories;
@@ -69,11 +72,31 @@ namespace Travio.API
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
+            var mappingConfiguration = TypeAdapterConfig.GlobalSettings;
+            mappingConfiguration.Scan(Assembly.GetExecutingAssembly());
+            builder.Services.AddSingleton<IMapper>(new Mapper(mappingConfiguration));
+            #region DataSeeding and Apply Pending Migrations
             var app = builder.Build();
-            IdentitySeed.SeedRolesAndAdminAsync(app.Services, builder.Configuration).Wait();
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); // ask the clr to give me the instance of StoreContext
+            var LoggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+
+            try
+            {
+                context.Database.Migrate(); // apply any pending migrations
+                WorldCitiesSeed.SeedAsync(context).Wait(); // seed the database
+                //var googleSeeder = new DataGeneratorForDestenation();
+                //DestenationSeed.SeedAsync(context, googleSeeder).Wait();
+                IdentitySeed.SeedRolesAndAdminAsync(app.Services, builder.Configuration).Wait();
+            }
+            catch (Exception ex)
+            {
+                var logger = LoggerFactory.CreateLogger<Program>();
+                logger.LogError(ex, "An error occurred during migration");
+            }
+            #endregion
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
-
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -89,8 +112,8 @@ namespace Travio.API
                 }]
             });
             var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
-            using var scope = scopeFactory.CreateScope();
-            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            using var scopee = scopeFactory.CreateScope();
+            var authService = scopee.ServiceProvider.GetRequiredService<IAuthService>();
 
             RecurringJob.AddOrUpdate("DeleteOtpAuthService", () => authService.DeleteOtps(), Cron.Daily);
             app.UseStaticFiles();

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
-using Travio.Core.Contracts.Services;
+using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Helpers;
 using Travio.Core.Services;
 

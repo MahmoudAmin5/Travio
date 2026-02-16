@@ -3,7 +3,7 @@ using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.DTOs;
 
-namespace Travio.Core.Contracts.Services
+namespace Travio.Core.Contracts.Services.Auth
 {
     public interface IAuthService
     {

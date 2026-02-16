@@ -5,7 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Travio.Core.Contracts.Services;
+using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -15,7 +15,7 @@ using Travio.Core.EntityErrors;
 using Travio.Core.Helpers;
 using Travio.Core.Setting;
 
-namespace Travio.Core.Services
+namespace Travio.Core.Services.Auth
 {
     public class AuthService : IAuthService
     {
@@ -499,10 +499,10 @@ namespace Travio.Core.Services
         {
             var User = await _userManager.FindByEmailAsync(Model.Email);
             if (User == null) return new ServiceResponse<string>("Email is Invalid") { Success = false };
-           var result = await _userManager.ResetPasswordAsync(User, Model.Token, Model.NewPassword);
+            var result = await _userManager.ResetPasswordAsync(User, Model.Token, Model.NewPassword);
             if (!result.Succeeded)
             {
-                var Errors = result.Errors.Select(e=>e.Description).ToList();
+                var Errors = result.Errors.Select(e => e.Description).ToList();
                 return new ServiceResponse<string>("Password reset failed")
                 {
                     Success = false,
