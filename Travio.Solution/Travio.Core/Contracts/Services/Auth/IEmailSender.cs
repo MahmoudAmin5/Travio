@@ -1,6 +1,4 @@
-﻿
-
-namespace Travio.Core.Contracts.Services
+﻿namespace Travio.Core.Contracts.Services.Auth
 {
     public interface IEmailSender
     {

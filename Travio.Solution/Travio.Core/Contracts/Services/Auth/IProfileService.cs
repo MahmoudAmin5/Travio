@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Travio.Core.DTOs;
 using Travio.Core.DTOs.ProfileDTOs;
 
-namespace Travio.Core.Contracts.Services
+namespace Travio.Core.Contracts.Services.Auth
 {
     public interface IProfileService
     {

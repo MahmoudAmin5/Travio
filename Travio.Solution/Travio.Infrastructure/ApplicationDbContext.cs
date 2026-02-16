@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Travio.Core.Domain.Entities.Account_Mangement;
+using Travio.Core.Domain.Entities.Destinations;
 using Travio.Infrastructure.Configrations.UserMangement;
 
 namespace Travio.Infrastructure
@@ -20,5 +21,11 @@ namespace Travio.Infrastructure
 
         }
         public DbSet<UserCode> UserCodes { get; set; }
+        public DbSet<City> Cities { get; set; }
+        public DbSet<Continent> Continents { get; set; }
+        public DbSet<Country> Countries { get; set; }
+        public DbSet<Destination> Destinations { get; set; }
+        public DbSet<Interest> Interests { get; set; }
+
     }
 }
