@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,6 +66,41 @@ namespace Travio.Core.Services.Auth
             };
 
             return new ServiceResponse<UserProfileDTO>(updatedDto, "Profile updated successfully");
+        }
+
+        public async Task<ServiceResponse<string>> UploadProfileImageAsync(string userId, IFormFile file)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return new ServiceResponse<string>("User not found") { Success = false };
+
+            if (file == null || file.Length == 0)
+                return new ServiceResponse<string>("No image file provided") { Success = false };
+
+            
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+
+            var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadFolder))
+                Directory.CreateDirectory(uploadFolder);
+
+            var filePath = Path.Combine(uploadFolder, fileName);
+
+            
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            
+            var fileUrl = $"/uploads/{fileName}";
+            user.ProfilePictureURL = fileUrl;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return new ServiceResponse<string>("Failed to update profile picture") { Success = false };
+
+            return new ServiceResponse<string>(data: fileUrl, message: "Image uploaded successfully");
         }
     }
 }

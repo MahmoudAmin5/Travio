@@ -13,5 +13,6 @@ namespace Travio.Core.Contracts.Services.Auth
     {
         Task<ServiceResponse<UserProfileDTO>> GetUserProfileAsync(string UserId);
         Task<ServiceResponse<UserProfileDTO>> UpdateProfileAsync(string userId, UpdateProfileDTO model);
+        Task<ServiceResponse<string>> UploadProfileImageAsync(string userId, IFormFile file);
     }
 }
