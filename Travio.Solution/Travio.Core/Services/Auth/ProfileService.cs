@@ -77,7 +77,7 @@ namespace Travio.Core.Services.Auth
                 return new ServiceResponse<string>("No image file provided") { Success = false };
 
             
-            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var fileName = $"{Guid.CreateVersion7()}{Path.GetExtension(file.FileName)}";
 
             var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
             if (!Directory.Exists(uploadFolder))
