@@ -16,9 +16,5 @@ namespace Travio.Core.DTOs.ProfileDTOs
         [Required(ErrorMessage = "Last Name is required")]
         [MaxLength(50, ErrorMessage = "Last Name cannot exceed 50 characters")]
         public string LastName { get; set; }
-
-        // Optional: The user might want to clear their country or hasn't selected one yet.
-        // We use int? (nullable) to allow nulls.
-        public int? NationalityCountryId { get; set; }
     }
 }
