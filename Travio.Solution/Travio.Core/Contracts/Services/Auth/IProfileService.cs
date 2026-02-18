@@ -1,4 +1,5 @@
-﻿using Org.BouncyCastle.Bcpg;
+﻿using Microsoft.AspNetCore.Http;
+using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,5 +13,7 @@ namespace Travio.Core.Contracts.Services.Auth
     public interface IProfileService
     {
         Task<ServiceResponse<UserProfileDTO>> GetUserProfileAsync(string UserId);
+        Task<ServiceResponse<UserProfileDTO>> UpdateProfileAsync(string userId, UpdateProfileDTO model);
+        Task<ServiceResponse<string>> UploadProfileImageAsync(string userId, IFormFile file);
     }
 }
