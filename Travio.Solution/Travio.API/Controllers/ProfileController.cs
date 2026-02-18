@@ -28,7 +28,7 @@ namespace Travio.API.Controllers
             if (result is null) return BadRequest(new ApiResponse(400, "Invalid User"));
             return Ok(result);
         }
-        [HttpPut("update")]
+        [HttpPut("update-profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO model)
         {
             
@@ -45,6 +45,20 @@ namespace Travio.API.Controllers
                 return BadRequest(result);
 
             
+            return Ok(result);
+        }
+        [HttpPost("upload-image")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            
+            var userId = User.GetUserId();
+
+           
+            var result = await _profileService.UploadProfileImageAsync(userId, file);
+
+            if (!result.Success)
+                return BadRequest(result);
+
             return Ok(result);
         }
     }
