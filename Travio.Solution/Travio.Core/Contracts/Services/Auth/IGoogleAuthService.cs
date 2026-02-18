@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.DTOs;
 
-namespace Travio.Core.Contracts.Services
+namespace Travio.Core.Contracts.Services.Auth
 {
     public interface IGoogleAuthService
     {

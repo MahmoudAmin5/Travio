@@ -7,10 +7,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Travio.Core.Contracts.Services;
+using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.DTOs;
 
-namespace Travio.Core.Services
+namespace Travio.Core.Services.Auth
 {
     public class GoogleAuthService : IGoogleAuthService
     {

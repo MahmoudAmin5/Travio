@@ -9,9 +9,9 @@ using MailKit.Net.Smtp;
 using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.Setting;
-using Travio.Core.Contracts.Services;
+using Travio.Core.Contracts.Services.Auth;
 
-namespace Travio.Core.Services
+namespace Travio.Core.Services.Auth
 {
     public class MailKitEmailSender : IEmailSender
     {

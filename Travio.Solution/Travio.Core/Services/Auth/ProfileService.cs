@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Travio.Core.Contracts.Services;
+using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.DTOs;
 using Travio.Core.DTOs.ProfileDTOs;
 
-namespace Travio.Core.Services
+namespace Travio.Core.Services.Auth
 {
     public class ProfileService : IProfileService
     {
