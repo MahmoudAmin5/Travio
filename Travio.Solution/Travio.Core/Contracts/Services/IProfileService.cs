@@ -12,5 +12,6 @@ namespace Travio.Core.Contracts.Services
     public interface IProfileService
     {
         Task<ServiceResponse<UserProfileDTO>> GetUserProfileAsync(string UserId);
+        Task<ServiceResponse<UserProfileDTO>> UpdateProfileAsync(string userId, UpdateProfileDTO model);
     }
 }
