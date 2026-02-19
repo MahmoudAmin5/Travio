@@ -16,5 +16,7 @@ namespace Travio.Core.DTOs.ProfileDTOs
         [Required(ErrorMessage = "Last Name is required")]
         [MaxLength(50, ErrorMessage = "Last Name cannot exceed 50 characters")]
         public string LastName { get; set; }
+        [Required(ErrorMessage = "Last Name is required")]
+        public string UserName { get; set; }
     }
 }

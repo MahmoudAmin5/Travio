@@ -29,6 +29,7 @@ namespace Travio.Core.Services.Auth
                 Email = User.Email,
                 FirstName = User.FirstName,
                 LastName = User.LastName,
+                UserName = User.UserName,
                 ProfilePictureUrl = User.ProfilePictureURL
             };
             return new ServiceResponse<UserProfileDTO>(profile) { Success = true };
@@ -45,6 +46,7 @@ namespace Travio.Core.Services.Auth
            
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
+            user.UserName = model.UserName;
 
             
 
@@ -62,6 +64,7 @@ namespace Travio.Core.Services.Auth
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
+                UserName= user.UserName,
                 ProfilePictureUrl = user.ProfilePictureURL
             };
 

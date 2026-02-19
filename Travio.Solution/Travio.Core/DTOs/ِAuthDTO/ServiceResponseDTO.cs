@@ -14,13 +14,13 @@ namespace Travio.Core.DTOs
         public string Message { get; set; } = string.Empty;
         public List<string> Errors { get; set; } 
 
-        // Constructor 1: Empty (Success by default)
+        
         public ServiceResponse() 
         {
             Errors = new List<string>();
         }
 
-        // Constructor 2: Success with Data (and optional message)
+        
         public ServiceResponse(T data, string message = "")
         {
             Success = true;
@@ -29,7 +29,7 @@ namespace Travio.Core.DTOs
             Errors = new List<string>();
         }
 
-        // Constructor 3: Failure with Message
+        
         public ServiceResponse(string message)
         {
             Success = false;
