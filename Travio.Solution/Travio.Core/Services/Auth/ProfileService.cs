@@ -43,12 +43,9 @@ namespace Travio.Core.Services.Auth
             if (user == null)
                 return new ServiceResponse<UserProfileDTO>("User not found") { Success = false };
 
-           
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
             user.UserName = model.UserName;
-
-            
 
             var result = await _userManager.UpdateAsync(user);
 
