@@ -1,0 +1,114 @@
+using Hangfire;
+using Mapster;
+using MapsterMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
+using System.Text;
+using Travio.API.OpenApiTransformers;
+using Travio.Core.Contracts.Services.Auth;
+using Travio.Core.Contracts.Services.Destination;
+using Travio.Core.Domain.Entities.Account_Mangement;
+using Travio.Core.Domain.Infrastructure.Contract;
+using Travio.Core.Services.Auth;
+using Travio.Core.Services.Destinations;
+using Travio.Core.Setting;
+using Travio.Infrastructure;
+using Travio.Infrastructure.Repositories;
+
+namespace Travio.API.Extensions;
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+        return services;
+    }
+
+    public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services)
+    {
+        services.AddIdentity<ApplicationUser, ApplicationRole>()
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
+
+        return services;
+    }
+
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<JWT>(configuration.GetSection("JWTSetting"));
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = false;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidIssuer = configuration["JWTSetting:Issuer"],
+                ValidAudience = configuration["JWTSetting:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWTSetting:Key"]!)),
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+
+        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IDestinationService, DestinationService>();
+        services.AddTransient<IGoogleAuthService, GoogleAuthService>();
+        services.AddTransient<IEmailSender, MailKitEmailSender>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMapsterConfiguration(this IServiceCollection services)
+    {
+        var mappingConfiguration = TypeAdapterConfig.GlobalSettings;
+        mappingConfiguration.Scan(Assembly.GetExecutingAssembly());
+        services.AddSingleton<IMapper>(new Mapper(mappingConfiguration));
+
+        return services;
+    }
+
+    public static IServiceCollection AddHangfireConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection")));
+
+        return services;
+    }
+
+    public static IServiceCollection AddOpenApiConfiguration(this IServiceCollection services)
+    {
+        services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+        });
+
+        return services;
+    }
+}
