@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Travio.Core.DTOs;
+using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.DTOs.ProfileDTOs;
 
 namespace Travio.Core.Contracts.Services.Auth

@@ -2,6 +2,7 @@
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.DTOs;
+using Travio.Core.DTOs.GenericResponse;
 
 namespace Travio.Core.Contracts.Services.Auth
 {
