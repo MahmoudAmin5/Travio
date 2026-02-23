@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
-using Travio.Core.DTOs;
+using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.DTOs.ProfileDTOs;
 
 namespace Travio.Core.Services.Auth

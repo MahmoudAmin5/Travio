@@ -11,6 +11,7 @@ using Travio.Core.Domain.Entities.Enums;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.Domain.Specifications;
 using Travio.Core.DTOs;
+using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.EntityErrors;
 using Travio.Core.Helpers;
 using Travio.Core.Setting;
