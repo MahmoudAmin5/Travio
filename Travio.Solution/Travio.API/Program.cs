@@ -20,10 +20,19 @@ namespace Travio.API
 
             // App
             var app = builder.Build();
-            await app.ApplyMigrationsAndSeedAsync();
-            app.ConfigureMiddleware();
-            app.ConfigureHangfire();
-            app.Run();
+            try
+            {
+                await app.ApplyMigrationsAndSeedAsync();
+                app.ConfigureMiddleware();
+                app.ConfigureHangfire();
+                app.Run();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (using your preferred logging framework)
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                throw; // Re-throw the exception after logging it
+            }
         }
     }
 }

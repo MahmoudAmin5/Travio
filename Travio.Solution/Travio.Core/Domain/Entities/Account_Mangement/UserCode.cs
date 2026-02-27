@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
-using Travio.Core.Domain.Entities.Enums;
+using Travio.Core.Domain.Enums;
 
 namespace Travio.Core.Domain.Entities.Account_Mangement
 {

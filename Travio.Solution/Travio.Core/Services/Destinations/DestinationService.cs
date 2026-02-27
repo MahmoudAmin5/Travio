@@ -12,10 +12,14 @@ namespace Travio.Core.Services.Destinations;
 public class DestinationService : IDestinationService
 {
     private readonly IGenericRepository<Destination> _destinationRepository;
+    private readonly IGenericRepository<Country> _countryRepository;
 
-    public DestinationService(IGenericRepository<Destination> destinationRepository)
+    public DestinationService(
+        IGenericRepository<Destination> destinationRepository,
+        IGenericRepository<Country> countryRepository)
     {
         _destinationRepository = destinationRepository;
+        _countryRepository = countryRepository;
     }
 
     public async Task<Pagination<DestinationDto>> GetAllAsync(int pageIndex, int pageSize, int? cityId, int? interestId, DestinationSortBy sortBy = DestinationSortBy.Newest)
@@ -59,5 +63,12 @@ public class DestinationService : IDestinationService
         var spec = new NearbyDestinationsSpec(latitude, longitude, radiusKm, count);
         var destinations = await _destinationRepository.ListAsync(spec);
         return destinations.Adapt<IEnumerable<DestinationDto>>();
+    }
+
+    public async Task<IEnumerable<CountryDto>> GetFamousCountriesAsync()
+    {
+        var spec = new CountriesWithDestinationsSpec();
+        var countries = await _countryRepository.ListAsync(spec);
+        return countries.Adapt<IEnumerable<CountryDto>>();
     }
 }

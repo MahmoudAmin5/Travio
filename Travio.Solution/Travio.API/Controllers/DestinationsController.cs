@@ -24,7 +24,7 @@ namespace Travio.API.Controllers
             [FromQuery] int pageSize = 10,
             [FromQuery] int? cityId = null,
             [FromQuery] int? interestId = null,
-            [FromQuery] DestinationSortBy sortBy = DestinationSortBy.Newest)
+            [FromQuery] DestinationSortBy sortBy = DestinationSortBy.Rating)
         {
             var result = await _destinationService.GetAllAsync(pageIndex, pageSize, cityId, interestId, sortBy);
             return Ok(result);
@@ -62,10 +62,17 @@ namespace Travio.API.Controllers
         public async Task<ActionResult<IEnumerable<DestinationDto>>> GetNearby(
             [FromQuery] decimal latitude,
             [FromQuery] decimal longitude,
-            [FromQuery] double radiusKm = 50,
+            [FromQuery] double radiusKm = 200,
             [FromQuery] int count = 10)
         {
             var result = await _destinationService.GetNearbyAsync(latitude, longitude, radiusKm, count);
+            return Ok(result);
+        }
+
+        [HttpGet("famous-countries")]
+        public async Task<ActionResult<IEnumerable<CountryDto>>> GetFamousCountries()
+        {
+            var result = await _destinationService.GetFamousCountriesAsync();
             return Ok(result);
         }
     }

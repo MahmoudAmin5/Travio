@@ -11,4 +11,5 @@ public interface IDestinationService
     Task<IEnumerable<DestinationDto>> GetTopRatedAsync(int count = 10);
     Task<Pagination<DestinationDto>> SearchByNameAsync(string keyword, int pageIndex, int pageSize);
     Task<IEnumerable<DestinationDto>> GetNearbyAsync(decimal latitude, decimal longitude, double radiusKm, int count = 10);
+    Task<IEnumerable<CountryDto>> GetFamousCountriesAsync();
 }
