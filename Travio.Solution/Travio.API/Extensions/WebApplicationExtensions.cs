@@ -18,14 +18,19 @@ public static class WebApplicationExtensions
 
         try
         {
-            await context.Database.MigrateAsync();
+            if (app.Environment.IsDevelopment())
+            {
+                await context.Database.MigrateAsync();
+            }
+
             await WorldCitiesSeed.SeedAsync(context);
+            await DestinationSeed.SeedAsync(context);
             await IdentitySeed.SeedRolesAndAdminAsync(app.Services, app.Configuration);
         }
         catch (Exception ex)
         {
             var logger = loggerFactory.CreateLogger<Program>();
-            logger.LogError(ex, "An error occurred during migration");
+            logger.LogError(ex, "An error occurred during migration/seeding");
         }
     }
 
@@ -41,6 +46,7 @@ public static class WebApplicationExtensions
 
         app.UseStaticFiles();
         app.UseHttpsRedirection();
+        app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 

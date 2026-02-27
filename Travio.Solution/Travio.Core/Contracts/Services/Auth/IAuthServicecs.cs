@@ -1,6 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using Travio.Core.Domain.Entities.Account_Mangement;
-using Travio.Core.Domain.Entities.Enums;
+using Travio.Core.Domain.Enums;
 using Travio.Core.DTOs;
 using Travio.Core.DTOs.GenericResponse;
 

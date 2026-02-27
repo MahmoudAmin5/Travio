@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
-using Travio.Core.Domain.Entities.Enums;
+using Travio.Core.Domain.Enums;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.Domain.Specifications;
 using Travio.Core.DTOs;
@@ -362,7 +362,7 @@ namespace Travio.Core.Services.Auth
             var user = await _userManager.FindByEmailAsync(email);
             if (user is null) throw new NotFoundException("User not found.");
             var OTPCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-            var spec = new ActiveUserCodesSpec(user.Id, Domain.Entities.Enums.AuthCodeType.PasswordReset);
+            var spec = new ActiveUserCodesSpec(user.Id, AuthCodeType.PasswordReset);
             var AuthCodes = await _userCodeRepo.ListAsync(spec);
 
             foreach (var code in AuthCodes)
@@ -375,7 +375,7 @@ namespace Travio.Core.Services.Auth
             {
                 Code = OtpHasher.Hash(OTPCode),
                 ApplicationUserId = user.Id,
-                CodeType = Domain.Entities.Enums.AuthCodeType.PasswordReset,
+                CodeType = AuthCodeType.PasswordReset,
                 CreatedOn = DateTime.UtcNow,
                 ExpiryDate = DateTime.UtcNow.AddMinutes(15),
             };

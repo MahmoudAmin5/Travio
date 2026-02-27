@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
-using Travio.Core.Domain.Entities.Enums;
+using Travio.Core.Domain.Enums;
 using Travio.Core.DTOs;
 
 namespace Travio.API.Controllers;

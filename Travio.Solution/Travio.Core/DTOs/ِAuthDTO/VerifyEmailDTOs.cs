@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Travio.Core.Domain.Entities.Enums;
+using Travio.Core.Domain.Enums;
 
 namespace Travio.Core.DTOs
 {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Travio.Core.Domain.Entities.Enums
+namespace Travio.Core.Domain.Enums
 {
     public enum VerifyOtpStatus
     {

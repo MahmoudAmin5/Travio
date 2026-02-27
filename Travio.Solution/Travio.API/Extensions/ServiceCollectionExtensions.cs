@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Reflection;
 using System.Text;
 using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services.Auth;
@@ -60,7 +59,9 @@ public static class ServiceCollectionExtensions
                 ValidateLifetime = true,
                 ValidIssuer = configuration["JWTSetting:Issuer"],
                 ValidAudience = configuration["JWTSetting:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWTSetting:Key"]!)),
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(configuration["JWTSetting:Key"]
+                        ?? throw new InvalidOperationException("JWT Key is not configured."))),
                 ClockSkew = TimeSpan.Zero
             };
         });
@@ -70,9 +71,13 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
+        // Configuration
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
 
+        // Repositories
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+        // Services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IDestinationService, DestinationService>();
@@ -84,9 +89,9 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddMapsterConfiguration(this IServiceCollection services)
     {
-        var mappingConfiguration = TypeAdapterConfig.GlobalSettings;
-        mappingConfiguration.Scan(Assembly.GetExecutingAssembly());
-        services.AddSingleton<IMapper>(new Mapper(mappingConfiguration));
+        var config = TypeAdapterConfig.GlobalSettings;
+        config.Scan(typeof(Travio.Core.Services.Destinations.DestinationService).Assembly);
+        services.AddSingleton<IMapper>(new Mapper(config));
 
         return services;
     }
@@ -98,6 +103,8 @@ public static class ServiceCollectionExtensions
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection")));
+
+        services.AddHangfireServer();
 
         return services;
     }

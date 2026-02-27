@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.Serialization;
 
-namespace Travio.Core.Domain.Entities.Enums
+namespace Travio.Core.Domain.Enums
 {
     public enum AuthCodeType
     {
