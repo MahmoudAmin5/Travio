@@ -13,7 +13,7 @@ namespace Travio.Infrastructure.Configrations.Communtiy
     {
         public void Configure(EntityTypeBuilder<Post> builder)
         {
-            builder.ToTable("Posts");
+            builder.ToTable("Posts", "Community");
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Title)
                 .IsRequired();
