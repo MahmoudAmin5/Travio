@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Travio.Core.Domain.Entities.Account_Mangement;
+using Travio.Core.Domain.Entities.Community;
 using Travio.Core.Domain.Entities.Destinations;
 using Travio.Infrastructure.Configrations.UserMangement;
 
@@ -27,5 +28,9 @@ namespace Travio.Infrastructure
         public DbSet<Destination> Destinations { get; set; }
         public DbSet<Interest> Interests { get; set; }
 
+        public DbSet<Post> Posts { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<PostLike> PostLikes { get; set; }
+        public DbSet<PostImage> PostImages { get; set; }
     }
 }
