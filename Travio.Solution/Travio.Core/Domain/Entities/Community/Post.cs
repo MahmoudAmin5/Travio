@@ -16,6 +16,9 @@ namespace Travio.Core.Domain.Entities.Community
         public DateTime CreatedOn { get; set; } = DateTime.Now;
 
         public ApplicationUser User { get; set; }
+        public ICollection<PostImage> Images { get; set; } = new List<PostImage>();
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
 
 
 
