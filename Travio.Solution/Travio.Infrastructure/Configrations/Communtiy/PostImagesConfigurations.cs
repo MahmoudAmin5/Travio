@@ -13,7 +13,7 @@ namespace Travio.Infrastructure.Configrations.Communtiy
     {
         public void Configure(EntityTypeBuilder<PostImage> builder)
         {
-            builder.ToTable("PostImages");
+            builder.ToTable("PostImages", "Community");
             builder.HasKey(x => x.Id);
             builder.Property(i => i.ImageUrl)
                 .IsRequired()
