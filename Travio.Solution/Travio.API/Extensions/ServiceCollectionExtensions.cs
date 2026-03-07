@@ -10,11 +10,13 @@ using System.Diagnostics;
 using System.Text;
 using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services.Auth;
+using Travio.Core.Contracts.Services.Community;
 using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.DTOs.CommunityDTO;
 using Travio.Core.Services.Auth;
+using Travio.Core.Services.Community;
 using Travio.Core.Services.Destinations;
 using Travio.Core.Setting;
 using Travio.Core.Validators;
@@ -86,6 +88,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IDestinationService, DestinationService>();
+        services.AddScoped<ICommunityService, CommunityService>();
         services.AddTransient<IGoogleAuthService, GoogleAuthService>();
         services.AddTransient<IEmailSender, MailKitEmailSender>();
 
