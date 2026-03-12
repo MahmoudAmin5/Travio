@@ -52,5 +52,41 @@ namespace Travio.Core.Services.Community
             
         }
 
+        public async Task<ServiceResponse<IEnumerable<PostResponseDTO>>> GetCommunityFeedAsync(string CurrentUserId)
+        {
+            try
+            {
+                var spec = new CommunityFeedSpec();
+                var posts = await _postRepo.ListAsync(spec);
+
+                var feed = new List<PostResponseDTO>();
+
+                foreach (var post in posts)
+                {
+                    var dto = post.Adapt<PostResponseDTO>();
+
+                    if (post.Likes is not null)
+                    {
+                        dto.IsLikedByCurrentUser = post.Likes.Any(l => l.UserId == CurrentUserId);
+                    }
+                    feed.Add(dto);
+                }
+                return new ServiceResponse<IEnumerable<PostResponseDTO>>
+                {
+                    Success = true,
+                    Message = "Feed retrieved successfully.",
+                    Data = feed
+                };
+            }
+            catch (Exception ex)
+            {
+                // Log the exception in a real scenario
+                return new ServiceResponse<IEnumerable<PostResponseDTO>>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching the community feed."
+                };
+            }
+        }
     }
 }
