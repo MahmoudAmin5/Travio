@@ -31,20 +31,20 @@ namespace Travio.API.Controllers
 
             var userId = User.GetUserId();
 
-            if (userId is null) 
+            if (userId is null)
             {
                 return Unauthorized(new ApiResponse(401, "InvalidToken"));
             }
             var createdPost = await _communityService.CreatePostAsync(userId, model);
 
             if (!createdPost.Success) return BadRequest(new ApiResponse(400));
-            
+
             return Ok(createdPost);
 
 
         }
         [HttpGet("feed")]
-        public async Task<ActionResult> GetCommunityFeed([FromQuery] int pageNumber , [FromQuery] int pageSize)
+        public async Task<ActionResult> GetCommunityFeed([FromQuery] int pageNumber = 0, [FromQuery] int pageSize = 10)
         {
             var userId = User.GetUserId();
 
