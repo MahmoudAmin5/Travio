@@ -10,13 +10,15 @@ namespace Travio.Core.Domain.Specifications.Community
 {
     public class CommunityFeedSpec : Specification<Post>
     {
-        public CommunityFeedSpec()
+        public CommunityFeedSpec(int pageNumber, int pageSize)
         {
             Query.Include(x => x.User)
                 .Include(x => x.Images)
                 .Include(x => x.Comments)
                 .Include(x => x.Likes)
                 .OrderByDescending(x => x.CreatedOn)
+                .Skip((pageNumber-1) * pageSize)
+                .Take(pageSize)
                 .AsNoTracking();
         }
     }
