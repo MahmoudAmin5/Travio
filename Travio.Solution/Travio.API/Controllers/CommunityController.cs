@@ -43,6 +43,18 @@ namespace Travio.API.Controllers
 
 
         }
+        [HttpGet("feed")]
+        public async Task<ActionResult> GetCommunityFeed([FromQuery] int pageNumber , [FromQuery] int pageSize)
+        {
+            var userId = User.GetUserId();
 
+            if (userId is null) return Unauthorized(new ApiResponse(401, "InvalidToken"));
+
+            var feedResponse = await _communityService.GetCommunityFeedAsync(userId, pageNumber, pageSize);
+
+            if (!feedResponse.Success) return BadRequest(new ApiResponse(400, feedResponse.Message));
+
+            return Ok(feedResponse);
+        }
     }
 }
