@@ -52,11 +52,11 @@ namespace Travio.Core.Services.Community
             
         }
 
-        public async Task<ServiceResponse<IEnumerable<PostResponseDTO>>> GetCommunityFeedAsync(string CurrentUserId)
+        public async Task<ServiceResponse<IEnumerable<PostResponseDTO>>> GetCommunityFeedAsync(string CurrentUserId, int pageNumber = 1, int pageSize = 10)
         {
             try
             {
-                var spec = new CommunityFeedSpec();
+                var spec = new CommunityFeedSpec(pageNumber, pageSize);
                 var posts = await _postRepo.ListAsync(spec);
 
                 var feed = new List<PostResponseDTO>();
