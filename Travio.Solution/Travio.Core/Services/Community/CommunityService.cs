@@ -51,5 +51,30 @@ namespace Travio.Core.Services.Community
             };
             
         }
+
+        public async Task<ServiceResponse<IEnumerable<PostResponseDTO>>> GetCommunityFeedAsync(string CurrentUserId, int pageNumber = 1, int pageSize = 10)
+        {
+            try
+            {
+                var spec = new CommunityFeedSpec(CurrentUserId,pageNumber, pageSize);
+                var feed = await _postRepo.ListAsync(spec);
+  
+                return new ServiceResponse<IEnumerable<PostResponseDTO>>
+                {
+                    Success = true,
+                    Message = "Feed retrieved successfully.",
+                    Data = feed
+                };
+            }
+            catch (Exception ex)
+            {
+                // Log the exception in a real scenario
+                return new ServiceResponse<IEnumerable<PostResponseDTO>>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching the community feed."
+                };
+            }
+        }
     }
 }

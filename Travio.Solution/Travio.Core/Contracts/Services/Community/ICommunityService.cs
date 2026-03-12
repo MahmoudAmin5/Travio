@@ -11,5 +11,6 @@ namespace Travio.Core.Contracts.Services.Community
     public interface ICommunityService
     {
         Task<ServiceResponse<PostResponseDTO>> CreatePostAsync(string UerId, CreatePostDTO model);
+        Task<ServiceResponse<IEnumerable<PostResponseDTO>>> GetCommunityFeedAsync(string CurrentUserId, int pageNumber = 1, int pageSize = 10);
     }
 }
