@@ -56,21 +56,9 @@ namespace Travio.Core.Services.Community
         {
             try
             {
-                var spec = new CommunityFeedSpec(pageNumber, pageSize);
-                var posts = await _postRepo.ListAsync(spec);
-
-                var feed = new List<PostResponseDTO>();
-
-                foreach (var post in posts)
-                {
-                    var dto = post.Adapt<PostResponseDTO>();
-
-                    if (post.Likes is not null)
-                    {
-                        dto.IsLikedByCurrentUser = post.Likes.Any(l => l.UserId == CurrentUserId);
-                    }
-                    feed.Add(dto);
-                }
+                var spec = new CommunityFeedSpec(CurrentUserId,pageNumber, pageSize);
+                var feed = await _postRepo.ListAsync(spec);
+  
                 return new ServiceResponse<IEnumerable<PostResponseDTO>>
                 {
                     Success = true,
