@@ -68,7 +68,7 @@ namespace Travio.Core.Services.Community
             }
             catch (Exception ex)
             {
-                // Log the exception in a real scenario
+                
                 return new ServiceResponse<IEnumerable<PostResponseDTO>>
                 {
                     Success = false,
@@ -76,5 +76,45 @@ namespace Travio.Core.Services.Community
                 };
             }
         }
+        
+        public async Task<ServiceResponse<bool>> DeletePostAsync(int postId, string userId)
+        {
+            try
+            {
+                var spec = new GetPostByIdSpec(postId);
+                var post = await _postRepo.FirstOrDefaultAsync(spec);
+                if (post is null) return new ServiceResponse<bool>()
+                {
+                    Success = false,
+                    Message = "Post Not Found"
+                };
+
+                if (post.UserId != userId) return new ServiceResponse<bool>()
+                {
+                    Success = false,
+                    Message = "You are not Authorized to delete this post "
+                };
+
+                await _postRepo.DeleteAsync(post);
+
+                return new ServiceResponse<bool>()
+                {
+                    Success = true,
+                    Message = "Post deleted successfully."
+                    Data = true
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ServiceResponse<bool>()
+                {
+                    Success = false,
+                    Message = "An error occurred while attempting to delete the post."
+                };
+            }
+
+
+        }
+
     }
 }
