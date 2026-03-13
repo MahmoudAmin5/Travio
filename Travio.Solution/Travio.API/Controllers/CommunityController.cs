@@ -16,11 +16,16 @@ namespace Travio.API.Controllers
     {
         private readonly IValidator<CreatePostDTO> _createPostDtoValidator;
         private readonly ICommunityService _communityService;
+        private readonly IValidator<UploadPostImageDTO> _uploadPostImageValidator;
 
-        public CommunityController(IValidator<CreatePostDTO> createPostDtoValidator, ICommunityService communityService)
+        public CommunityController(
+            IValidator<CreatePostDTO> createPostDtoValidator,
+            ICommunityService communityService,
+            IValidator<UploadPostImageDTO> uploadPostImageValidator)
         {
             _createPostDtoValidator = createPostDtoValidator;
             _communityService = communityService;
+            _uploadPostImageValidator = uploadPostImageValidator;
         }
         [HttpPost("create-post")]
         public async Task<ActionResult> CreatePostAsync(CreatePostDTO model)
@@ -69,6 +74,33 @@ namespace Travio.API.Controllers
 
             return Ok(Response);
         }
-    }
+        [HttpPost("posts/{postId}/images")]
+        public async Task<ActionResult> UploadPostImage(int postId,[FromForm] UploadPostImageDTO dto)
+        {
+            var validationResult = await _uploadPostImageValidator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
 
+            // 2. Authenticate User
+            var userId = User.GetUserId();
+            if (userId is null)
+            {
+                return Unauthorized(new ApiResponse(401, "InvalidToken"));
+            }
+
+
+            var response = await _communityService.AddPostImageAsync(postId, userId, dto.image);
+
+            if (!response.Success)
+            {
+                return BadRequest(new ApiResponse(400, response.Message));
+            }
+
+            return Ok(response);
+        }
+    }
 }
+
+
