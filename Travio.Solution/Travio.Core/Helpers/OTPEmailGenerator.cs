@@ -66,7 +66,7 @@
                                 <tr>
                                     <td align=""center"" style=""padding: 32px;"">
                                         <div style=""font-family: 'Courier New', monospace; font-size: 36px; font-weight: bold; color: #1a7c7e; letter-spacing: 12px; line-height: 1;"">
-                                            {otpCode}
+                                            {otpCode} 
                                         </div>
                                         <p style=""margin: 16px 0 0 0; font-size: 13px; color: #999999;"">
                                             Valid for 15 minutes

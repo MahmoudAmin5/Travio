@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,7 @@ namespace Travio.Core.Contracts.Services.Community
     {
         Task<ServiceResponse<PostResponseDTO>> CreatePostAsync(string UerId, CreatePostDTO model);
         Task<ServiceResponse<IEnumerable<PostResponseDTO>>> GetCommunityFeedAsync(string CurrentUserId, int pageNumber = 1, int pageSize = 10);
-        Task<ServiceResponse<bool>> DeletePostAsync(int postId, string userId); 
+        Task<ServiceResponse<bool>> DeletePostAsync(int postId, string userId);
+        Task<ServiceResponse<string>> AddPostImageAsync(int postId, string UserId, IFormFile image);
     }
 }

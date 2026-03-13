@@ -15,7 +15,7 @@ namespace Travio.Infrastructure.Configrations.Communtiy
         {
             builder.ToTable("Posts", "Community");
             builder.HasKey(x => x.Id);
-            builder.Property(x => x.Title)
+            builder.Property(x => x.Location)
                 .IsRequired();
             builder.Property(x=>x.Content)
                 .IsRequired();

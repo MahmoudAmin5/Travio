@@ -8,7 +8,7 @@ namespace Travio.Core.DTOs.CommunityDTO
 {
     public class CreatePostDTO
     {
-        public string Title { get; set; } = null!;
+        public string Location { get; set; } = null!;
         public string Content { get; set; } = null!;
     }
 }
