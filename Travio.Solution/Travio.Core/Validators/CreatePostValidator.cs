@@ -12,8 +12,8 @@ namespace Travio.Core.Validators
     {
         public CreatePostValidator()
         {
-            RuleFor(x => x.Title)
-                 .NotEmpty().WithMessage("Post title is required.");
+            RuleFor(x => x.Location)
+                 .NotEmpty().WithMessage("Post Location is required.");
             RuleFor(x => x.Content)
                 .NotEmpty().WithMessage("Post content is required.");
         }
