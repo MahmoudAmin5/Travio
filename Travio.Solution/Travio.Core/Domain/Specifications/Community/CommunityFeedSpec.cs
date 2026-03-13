@@ -19,7 +19,7 @@ public class CommunityFeedSpec
         Query.Select(post => new PostResponseDTO
         {
             Id = post.Id,
-            Title = post.Title,
+            Location = post.Location,
             Content = post.Content,
             CreationDate = post.CreatedOn,
 
