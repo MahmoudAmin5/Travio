@@ -56,5 +56,19 @@ namespace Travio.API.Controllers
 
             return Ok(feedResponse);
         }
+        [HttpDelete("posts/{postId}")]
+        public async Task<ActionResult> DeletePost(int postId)
+        {
+            var userId = User.GetUserId();
+
+            if (userId is null) return BadRequest(new ApiResponse(400, "Invalid Token"));
+
+            var Response = await _communityService.DeletePostAsync(postId, userId);
+
+            if (!Response.Success) return BadRequest(new ApiResponse(400, Response.Message));
+
+            return Ok(Response);
+        }
     }
+
 }
