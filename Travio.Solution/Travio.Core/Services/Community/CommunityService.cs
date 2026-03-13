@@ -100,7 +100,7 @@ namespace Travio.Core.Services.Community
                 return new ServiceResponse<bool>()
                 {
                     Success = true,
-                    Message = "Post deleted successfully."
+                    Message = "Post deleted successfully.",
                     Data = true
                 };
             }
