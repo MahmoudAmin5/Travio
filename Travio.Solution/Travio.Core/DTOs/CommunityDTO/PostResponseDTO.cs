@@ -9,7 +9,7 @@ namespace Travio.Core.DTOs.CommunityDTO
     public class PostResponseDTO
     {
         public int Id { get; set; }
-        public string Title { get; set; }
+        public string Location { get; set; }
         public string Content { get; set; }
         public DateTime CreationDate { get; set; }
         //Auther
