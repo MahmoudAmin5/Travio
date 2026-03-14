@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 
 namespace Travio.Core.DTOs.CommunityDTO
 {
-    public record UploadPostImageDTO (IFormFile image);
+    public record UploadPostImageDTO (List<IFormFile> Images);
    
 }
