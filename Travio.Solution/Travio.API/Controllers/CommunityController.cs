@@ -75,7 +75,8 @@ namespace Travio.API.Controllers
             return Ok(Response);
         }
         [HttpPost("posts/{postId}/images")]
-        public async Task<ActionResult> UploadPostImage(int postId,[FromForm] UploadPostImageDTO dto)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult> UploadPostImage(int postId, [FromForm]UploadPostImageDTO dto)
         {
             var validationResult = await _uploadPostImageValidator.ValidateAsync(dto);
             if (!validationResult.IsValid)
@@ -91,7 +92,7 @@ namespace Travio.API.Controllers
             }
 
 
-            var response = await _communityService.AddPostImageAsync(postId, userId, dto.image);
+            var response = await _communityService.AddPostImageAsync(postId, userId, dto.Images);
 
             if (!response.Success)
             {

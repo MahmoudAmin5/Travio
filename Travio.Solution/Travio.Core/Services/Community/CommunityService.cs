@@ -120,63 +120,62 @@ namespace Travio.Core.Services.Community
 
         }
 
-        public async Task<ServiceResponse<string>> AddPostImageAsync(int postId, string UserId, IFormFile image)
+        public async Task<ServiceResponse<List<string>>> AddPostImageAsync(int postId, string UserId, List<IFormFile> images)
         {
             try
             {
                 var postSpec = new GetPostByIdSpec(postId);
                 var post = await _postRepo.FirstOrDefaultAsync(postSpec);
-                if (post is null) return new ServiceResponse<string>()
-                {
-                    Success = false,
-                    Message = "Post Not Found ."
-                };
-                if (post.UserId != UserId) return new ServiceResponse<string>() { Success = false, Message = "UnAuthrized" };
-                if (image is null || image.Length == 0) return new ServiceResponse<string>() { Success = false, Message = "No image file provided." };
-                var fileExtension = Path.GetExtension(image.FileName);
-                var uniqueFileName = $"{Guid.CreateVersion7()}{fileExtension}";
 
-                // Define where the file will be saved on the server
+                if (post == null) return new ServiceResponse<List<string>> { Success = false, Message = "Post not found." };
+                if (post.UserId != UserId) return new ServiceResponse<List<string>> { Success = false, Message = "Unauthorized." };
+
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "posts");
-                Directory.CreateDirectory(uploadsFolder); // Ensures the folder exists
+                Directory.CreateDirectory(uploadsFolder);
 
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                var uploadedUrls = new List<string>();
+                var postImagesToSave = new List<PostImage>();
 
-                // Actually copy the file to the hard drive
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                
+                foreach (var image in images)
                 {
-                    await image.CopyToAsync(stream);
+                    var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                   
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    var imageUrl = $"/images/posts/{uniqueFileName}";
+                    uploadedUrls.Add(imageUrl);
+
+                   
+                    postImagesToSave.Add(new PostImage
+                    {
+                        PostId = postId,
+                        ImageUrl = imageUrl
+                    });
                 }
 
-                // 4. Save the URL to the Database
-                // In a real app, you'd use your actual domain (e.g., https://api.travio.com/images/posts/...)
-                // For now, we save the relative path so the frontend can append the base URL
-                var imageUrl = $"/images/posts/{uniqueFileName}";
+                
+                await _postImageRepo.AddRangeAsync(postImagesToSave);
 
-                var postImage = new PostImage
-                {
-                    PostId = postId,
-                    ImageUrl = imageUrl
-                };
-
-                await _postImageRepo.AddAsync(postImage); // Ardalis handles the SaveChanges!
-
-                return new ServiceResponse<string>
+                return new ServiceResponse<List<string>>
                 {
                     Success = true,
-                    Message = "Image uploaded successfully.",
-                    Data = imageUrl // Return the URL so the Flutter app can display it immediately
+                    Message = "Images uploaded successfully.",
+                    Data = uploadedUrls
                 };
             }
             catch (Exception ex)
             {
-                return new ServiceResponse<string>
-                {
-                    Success = false,
-                    Message = "An error occurred while uploading the image."
-                };
+                return new ServiceResponse<List<string>> { Success = false, Message = "An error occurred during upload." };
             }
-
         }
+
+       
     }
 }
+

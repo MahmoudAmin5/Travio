@@ -13,11 +13,13 @@ namespace Travio.Core.Validators
         {
             public AddPostImageDtoValidator()
             {
-                RuleFor(dto => dto.image)
-                    .NotNull().WithMessage("An image file is required.")
-                    .Must(BeAValidSize).WithMessage("The image size must not exceed 5MB.")
-                    .Must(BeAValidExtension).WithMessage("Only .jpg, .jpeg, and .png files are allowed.");
-            }
+            RuleFor(dto => dto.Images)
+                .NotNull().WithMessage("An image file is required.");
+            RuleForEach(dto => dto.Images)
+            .Must(BeAValidSize).WithMessage("Each image must not exceed 5MB.")
+            .Must(BeAValidExtension).WithMessage("Only .jpg, .jpeg, and .png files are allowed.");
+
+        }
 
             private bool BeAValidSize(IFormFile file)
             {
