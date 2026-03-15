@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.Contracts.Services.Community;
@@ -19,11 +20,15 @@ namespace Travio.Core.Services.Community
     {
         private readonly IGenericRepository<Post> _postRepo;
         private readonly IGenericRepository<PostImage> _postImageRepo;
+        private readonly IGenericRepository<PostLike> _postLikeRepo;
 
-        public CommunityService(IGenericRepository<Post> postRepo, IGenericRepository<PostImage> postImageRepo)
+        public CommunityService(IGenericRepository<Post> postRepo,
+            IGenericRepository<PostImage> postImageRepo,
+            IGenericRepository<PostLike> postLikeRepo)
         {
             _postRepo = postRepo;
             _postImageRepo = postImageRepo;
+            _postLikeRepo = postLikeRepo;
         }
         public async Task<ServiceResponse<PostResponseDTO>> CreatePostAsync(string UerId, CreatePostDTO model)
         {
@@ -136,13 +141,13 @@ namespace Travio.Core.Services.Community
                 var uploadedUrls = new List<string>();
                 var postImagesToSave = new List<PostImage>();
 
-                
+
                 foreach (var image in images)
                 {
                     var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-                   
+
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await image.CopyToAsync(stream);
@@ -151,7 +156,7 @@ namespace Travio.Core.Services.Community
                     var imageUrl = $"/images/posts/{uniqueFileName}";
                     uploadedUrls.Add(imageUrl);
 
-                   
+
                     postImagesToSave.Add(new PostImage
                     {
                         PostId = postId,
@@ -159,7 +164,7 @@ namespace Travio.Core.Services.Community
                     });
                 }
 
-                
+
                 await _postImageRepo.AddRangeAsync(postImagesToSave);
 
                 return new ServiceResponse<List<string>>
@@ -175,7 +180,53 @@ namespace Travio.Core.Services.Community
             }
         }
 
-       
+        public async Task<ServiceResponse<bool>> ToggleLikeAsync(int postId, string userId)
+        {
+            try
+            {
+
+                var postFound = await _postRepo.FirstOrDefaultAsync(new GetPostByIdSpec(postId));
+                if (postFound is null) return new ServiceResponse<bool> { Success = false, Message = "Post Not Found ." };
+
+                var spec = new PostLikeSpec(postId, userId);
+                var isLike = await _postLikeRepo.FirstOrDefaultAsync(spec);
+                if (isLike is not null)
+                {
+                    await _postLikeRepo.DeleteAsync(isLike);
+                    return new ServiceResponse<bool>
+                    {
+                        Success = true,
+                        Message = "Post unliked successfully.",
+                        Data = false
+                    };
+                }
+                else
+                {
+                    var newLike = new PostLike
+                    {
+                        PostId = postId,
+                        UserId = userId,
+
+                    };
+                    await _postLikeRepo.AddAsync(newLike);
+                    return new ServiceResponse<bool>
+                    {
+                        Success = true,
+                        Message = "Post liked successfully.",
+                        Data = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while toggling the like status."
+                };
+            }
+        }
     }
 }
+
 
