@@ -15,5 +15,6 @@ namespace Travio.Core.Contracts.Services.Community
         Task<ServiceResponse<IEnumerable<PostResponseDTO>>> GetCommunityFeedAsync(string CurrentUserId, int pageNumber = 1, int pageSize = 10);
         Task<ServiceResponse<bool>> DeletePostAsync(int postId, string userId);
         Task<ServiceResponse<List<string>>> AddPostImageAsync(int postId, string UserId, List<IFormFile> image);
+        Task<ServiceResponse<bool>> ToggleLikeAsync(int postId, string userId);
     }
 }
