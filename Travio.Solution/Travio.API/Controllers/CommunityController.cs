@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services.Community;
 using Travio.Core.DTOs.CommunityDTO;
+using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.Helpers;
 
 namespace Travio.API.Controllers
@@ -28,6 +29,10 @@ namespace Travio.API.Controllers
             _uploadPostImageValidator = uploadPostImageValidator;
         }
         [HttpPost("create-post")]
+        [ProducesResponseType(typeof(ServiceResponse<PostResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+
         public async Task<ActionResult> CreatePostAsync(CreatePostDTO model)
         {
             var ValidationResult = await _createPostDtoValidator.ValidateAsync(model);
@@ -99,6 +104,19 @@ namespace Travio.API.Controllers
                 return BadRequest(new ApiResponse(400, response.Message));
             }
 
+            return Ok(response);
+        }
+
+        [HttpPost("posts/{postId}/toggle-like")]
+        [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult> ToggleLike(int postId)
+        {
+            var userId = User.GetUserId();
+            if (userId is null) return BadRequest(new ApiResponse(400, "Invalid Token"));
+            var response = await _communityService.ToggleLikeAsync(postId, userId);
+            if(!response.Success) return BadRequest(new ApiResponse(400, response.Message));
             return Ok(response);
         }
     }
