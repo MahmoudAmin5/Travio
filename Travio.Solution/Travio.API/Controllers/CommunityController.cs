@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services.Community;
 using Travio.Core.DTOs.CommunityDTO;
+using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.Helpers;
 
 namespace Travio.API.Controllers
@@ -28,6 +29,10 @@ namespace Travio.API.Controllers
             _uploadPostImageValidator = uploadPostImageValidator;
         }
         [HttpPost("create-post")]
+        [ProducesResponseType(typeof(ServiceResponse<PostResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+
         public async Task<ActionResult> CreatePostAsync(CreatePostDTO model)
         {
             var ValidationResult = await _createPostDtoValidator.ValidateAsync(model);
