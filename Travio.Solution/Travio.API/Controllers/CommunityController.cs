@@ -106,6 +106,19 @@ namespace Travio.API.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("posts/{postId}/toggle-like")]
+        [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult> ToggleLike(int postId)
+        {
+            var userId = User.GetUserId();
+            if (userId is null) return BadRequest(new ApiResponse(400, "Invalid Token"));
+            var response = await _communityService.ToggleLikeAsync(postId, userId);
+            if(!response.Success) return BadRequest(new ApiResponse(400, response.Message));
+            return Ok(response);
+        }
     }
 }
 
