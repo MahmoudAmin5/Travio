@@ -120,6 +120,18 @@ namespace Travio.API.Controllers
             if(!response.Success) return BadRequest(new ApiResponse(400, response.Message));
             return Ok(response);
         }
+        [HttpGet("posts/{postId}")]
+        [ProducesResponseType(typeof(ServiceResponse<PostDetailsResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult> GetPostById(int postId)
+        {
+            var userId = User.GetUserId();
+            if (userId is null) return BadRequest(new ApiResponse(400, "Token Is Invalid"));
+            var postResponse = await _communityService.GetPostByIdAsync(postId, userId);
+            if (postResponse == null) return BadRequest(new ApiResponse(400, postResponse.Message));
+            return Ok(postResponse);
+        }
     }
 }
 
