@@ -296,6 +296,39 @@ namespace Travio.Core.Services.Community
                 return new ServiceResponse<CommentResponseDTO> { Success = false, Message = "An error occurred while adding the comment." };
             }
         }
+        public async Task<ServiceResponse<bool>> DeleteCommentAsync(int commentId, string userId)
+        {
+            try
+            {
+                var spec = new GetCommentByIdSpec(commentId);
+                var comment = await _postCommentRepo.FirstOrDefaultAsync(spec);
+
+                // Safety Check 1: Does it exist?
+                if (comment == null)
+                {
+                    return new ServiceResponse<bool> { Success = false, Message = "Comment not found." };
+                }
+
+                // Safety Check 2: Does this user own the comment?
+                if (comment.UserId != userId)
+                {
+                    return new ServiceResponse<bool> { Success = false, Message = "You are not authorized to delete this comment." };
+                }
+
+                await _postCommentRepo.DeleteAsync(comment);
+
+                return new ServiceResponse<bool>
+                {
+                    Success = true,
+                    Message = "Comment deleted successfully.",
+                    Data = true
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<bool> { Success = false, Message = "An error occurred while deleting the comment." };
+            }
+        }
     }
 }
 

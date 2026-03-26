@@ -18,5 +18,7 @@ namespace Travio.Core.Contracts.Services.Community
         Task<ServiceResponse<bool>> ToggleLikeAsync(int postId, string userId);
         Task<ServiceResponse<PostDetailsResponseDTO>> GetPostByIdAsync(int postId, string userId);
         Task<ServiceResponse<CommentResponseDTO>> AddCommentAsync(int postId, string userId, CreateCommentDTO dto);
+        Task<ServiceResponse<bool>> DeleteCommentAsync(int commentId, string userId);
+
     }
 }

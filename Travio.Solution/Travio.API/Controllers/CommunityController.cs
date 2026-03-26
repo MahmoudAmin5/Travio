@@ -155,6 +155,20 @@ namespace Travio.API.Controllers
 
             return Ok(response);
         }
+        [HttpDelete("comments/{commentId}")]
+        [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> DeleteComment(int commentId)
+        {
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized(new ApiResponse(401, "InvalidToken"));
+
+            var response = await _communityService.DeleteCommentAsync(commentId, userId);
+
+            if (!response.Success) return BadRequest(new ApiResponse(400, response.Message));
+
+            return Ok(response);
+        }
     }
 }
 
