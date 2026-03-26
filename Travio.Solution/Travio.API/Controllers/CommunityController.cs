@@ -28,6 +28,7 @@ namespace Travio.API.Controllers
             _communityService = communityService;
             _uploadPostImageValidator = uploadPostImageValidator;
         }
+
         [HttpPost("create-post")]
         [ProducesResponseType(typeof(ServiceResponse<PostResponseDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
