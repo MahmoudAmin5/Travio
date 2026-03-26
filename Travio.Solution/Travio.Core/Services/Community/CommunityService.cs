@@ -226,6 +226,31 @@ namespace Travio.Core.Services.Community
                 };
             }
         }
+
+        public async Task<ServiceResponse<PostDetailsResponseDTO>> GetPostByIdAsync(int postId, string userId)
+        {
+            try
+            {
+                var spec = new GetPostDetailsSpec(postId, userId);
+                var postDetails = await _postRepo.FirstOrDefaultAsync(spec);
+                if (postDetails is null) return new ServiceResponse<PostDetailsResponseDTO>() { Success = false, Message = "Post not found." };
+                return new ServiceResponse<PostDetailsResponseDTO>()
+                {
+                    Success = true,
+                    Message = "Post retrieved successfully.",
+                    Data = postDetails
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ServiceResponse<PostDetailsResponseDTO>()
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching the post details."
+                };
+            }
+
+        }
     }
 }
 
