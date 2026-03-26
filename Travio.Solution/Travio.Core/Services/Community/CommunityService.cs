@@ -1,5 +1,6 @@
 ﻿using Mapster;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Storage.Json;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Travio.Core.Contracts.Services.Community;
+using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Community;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.Domain.Specifications.Community;
@@ -21,14 +23,20 @@ namespace Travio.Core.Services.Community
         private readonly IGenericRepository<Post> _postRepo;
         private readonly IGenericRepository<PostImage> _postImageRepo;
         private readonly IGenericRepository<PostLike> _postLikeRepo;
+        private readonly IGenericRepository<Comment> _postCommentRepo;
+        private readonly IGenericRepository<ApplicationUser> _userRepo;
 
         public CommunityService(IGenericRepository<Post> postRepo,
             IGenericRepository<PostImage> postImageRepo,
-            IGenericRepository<PostLike> postLikeRepo)
+            IGenericRepository<PostLike> postLikeRepo,
+            IGenericRepository<Comment> postCommentRepo,
+            IGenericRepository<ApplicationUser> userRepo)
         {
             _postRepo = postRepo;
             _postImageRepo = postImageRepo;
             _postLikeRepo = postLikeRepo;
+            _postCommentRepo = postCommentRepo;
+            _userRepo = userRepo;
         }
         public async Task<ServiceResponse<PostResponseDTO>> CreatePostAsync(string UerId, CreatePostDTO model)
         {
@@ -250,6 +258,43 @@ namespace Travio.Core.Services.Community
                 };
             }
 
+        }
+
+        public async Task<ServiceResponse<CommentResponseDTO>> AddCommentAsync(int postId, string userId, CreateCommentDTO dto)
+        {
+            try
+            {
+                var postExists = await _postRepo.FirstOrDefaultAsync(new GetPostByIdSpec(postId));
+                if (postExists is null) return new ServiceResponse<CommentResponseDTO>() { Success = false, Message = "Post Not Found" };
+                var user = await _userRepo.GetByIdAsync(userId);
+                var comment = new Comment
+                {
+                    PostId = postId,
+                    UserId = userId,
+                    Content = dto.Content,
+                    CreatedOn = DateTime.UtcNow
+                };
+                await _postCommentRepo.AddAsync(comment);
+                var responseDto = new CommentResponseDTO
+                {
+                    Id = comment.Id,
+                    Content = comment.Content,
+                    CreationDate = comment.CreatedOn,
+                    AuthorId = user.Id,
+                    AuthorName = user.FirstName + " " + user.LastName,
+                    AuthorProfilePictureUrl = user.ProfilePictureURL
+                };
+                return new ServiceResponse<CommentResponseDTO>
+                {
+                    Success = true,
+                    Message = "Comment added successfully.",
+                    Data = responseDto 
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ServiceResponse<CommentResponseDTO> { Success = false, Message = "An error occurred while adding the comment." };
+            }
         }
     }
 }
