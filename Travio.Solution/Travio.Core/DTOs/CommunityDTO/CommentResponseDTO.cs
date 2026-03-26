@@ -10,7 +10,7 @@ namespace Travio.Core.DTOs.CommunityDTO
     {
         public int Id { get; set; }
         public string Content { get; set; }
-        public string CreationDate { get; set; }
+        public DateTime CreationDate { get; set; }
         public string AuthorId { get; set; }
         public string AuthorName { get; set; }
         public string AuthorProfilePictureUrl { get; set; }
