@@ -18,15 +18,18 @@ namespace Travio.API.Controllers
         private readonly IValidator<CreatePostDTO> _createPostDtoValidator;
         private readonly ICommunityService _communityService;
         private readonly IValidator<UploadPostImageDTO> _uploadPostImageValidator;
+        private readonly IValidator<CreateCommentDTO> _addCommentValidator;
 
         public CommunityController(
             IValidator<CreatePostDTO> createPostDtoValidator,
             ICommunityService communityService,
-            IValidator<UploadPostImageDTO> uploadPostImageValidator)
+            IValidator<UploadPostImageDTO> uploadPostImageValidator,
+             IValidator<CreateCommentDTO> addCommentValidator)
         {
             _createPostDtoValidator = createPostDtoValidator;
             _communityService = communityService;
             _uploadPostImageValidator = uploadPostImageValidator;
+            _addCommentValidator = addCommentValidator;
         }
 
         [HttpPost("create-post")]
@@ -82,7 +85,7 @@ namespace Travio.API.Controllers
         }
         [HttpPost("posts/{postId}/images")]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult> UploadPostImage(int postId, [FromForm]UploadPostImageDTO dto)
+        public async Task<ActionResult> UploadPostImage(int postId, [FromForm] UploadPostImageDTO dto)
         {
             var validationResult = await _uploadPostImageValidator.ValidateAsync(dto);
             if (!validationResult.IsValid)
@@ -117,7 +120,7 @@ namespace Travio.API.Controllers
             var userId = User.GetUserId();
             if (userId is null) return BadRequest(new ApiResponse(400, "Invalid Token"));
             var response = await _communityService.ToggleLikeAsync(postId, userId);
-            if(!response.Success) return BadRequest(new ApiResponse(400, response.Message));
+            if (!response.Success) return BadRequest(new ApiResponse(400, response.Message));
             return Ok(response);
         }
         [HttpGet("posts/{postId}")]
@@ -131,6 +134,26 @@ namespace Travio.API.Controllers
             var postResponse = await _communityService.GetPostByIdAsync(postId, userId);
             if (postResponse == null) return BadRequest(new ApiResponse(400, postResponse.Message));
             return Ok(postResponse);
+        }
+
+        [HttpPost("posts/{postId}/comments")]
+        [ProducesResponseType(typeof(ServiceResponse<CommentResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> AddComment(int postId, [FromBody] CreateCommentDTO dto)
+        {
+            var validationResult = await _addCommentValidator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized(new ApiResponse(401, "InvalidToken"));
+
+            var response = await _communityService.AddCommentAsync(postId, userId, dto);
+
+            if (!response.Success) return BadRequest(new ApiResponse(400, response.Message));
+
+            return Ok(response);
         }
     }
 }
