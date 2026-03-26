@@ -19,7 +19,7 @@ namespace Travio.Core.Domain.Specifications.Community
             {
                 Id = post.Id,
                 Location = post.Location,
-                Description = post.Content,
+                Content = post.Content,
                 CreationDate = post.CreatedOn,
 
                 AuthorId = post.UserId,
