@@ -1,3 +1,4 @@
+using Duffel.ApiClient;
 using FluentValidation;
 using Hangfire;
 using Mapster;
@@ -7,17 +8,20 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Text;
 using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Community;
 using Travio.Core.Contracts.Services.Destination;
+using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.DTOs.CommunityDTO;
 using Travio.Core.Services.Auth;
 using Travio.Core.Services.Community;
 using Travio.Core.Services.Destinations;
+using Travio.Core.Services.DuffelFlights;
 using Travio.Core.Setting;
 using Travio.Core.Validators;
 using Travio.Infrastructure;
@@ -91,6 +95,17 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddTransient<IGoogleAuthService, GoogleAuthService>();
         services.AddTransient<IEmailSender, MailKitEmailSender>();
+        var duffelToken = configuration["Duffel:AccessToken"];
+        services.AddHttpClient<IDuffelFlightBookingService, DuffelFlightBookingService>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.duffel.com/");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", duffelToken);
+
+            // THIS IS THE MAGIC FIX: Forcing the modern V2 API version!
+            client.DefaultRequestHeaders.Add("Duffel-Version", "v2");
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+
 
         // Validators
         services.AddValidatorsFromAssembly(typeof(CreatePostValidator).Assembly);
