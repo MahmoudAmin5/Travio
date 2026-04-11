@@ -7,6 +7,9 @@ public class Country
     public string Name { get; set; } = string.Empty;
     public string FlagURL { get; set; } = string.Empty;
 
+    // image for each country, we can use it in the UI to make it more visually appealing
+    public string ImageURL { get; set; } = String.Empty;
+
     // Navigation
     public Continent Continent { get; set; } = null!;
     public ICollection<City> Cities { get; set; } = new HashSet<City>();

@@ -24,6 +24,7 @@ public static class WebApplicationExtensions
             }
 
             await WorldCitiesSeed.SeedAsync(context);
+            await CountryLandmarkImagesSeed.SeedAsync(context);
             await DestinationSeed.SeedAsync(context);
             await IdentitySeed.SeedRolesAndAdminAsync(app.Services, app.Configuration);
         }
