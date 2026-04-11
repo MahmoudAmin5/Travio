@@ -9,72 +9,89 @@ using System.Threading.Tasks;
 using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.DTOs.DuffelFlightsDTOs;
 using Travio.Core.DTOs.GenericResponse;
+using System.Text.Json;
 
 namespace Travio.Core.Services.DuffelFlights
 {
     public class DuffelFlightBookingService : IDuffelFlightBookingService
     {
-        private readonly IDuffelApiClient _duffelClient;
+        private readonly HttpClient _httpClient;
 
-        public DuffelFlightBookingService(IDuffelApiClient duffelClient)
+        // Inject the standard HttpClient we just configured in Program.cs
+        public DuffelFlightBookingService(HttpClient httpClient)
         {
-            _duffelClient = duffelClient;
+            _httpClient = httpClient;
         }
+
         public async Task<ServiceResponse<List<FlightSearchResponseDto>>> SearchFlightsAsync(FlightSearchRequestDto request)
         {
             try
             {
-                // 1. Build the Duffel Request
-                var duffelRequest = new OffersRequest
+                // 1. Build the JSON payload exactly how Duffel's docs ask for it
+                var payload = new
                 {
-                    Passengers = new List<Passenger>(),
-                    Slices = new List<Slice>
+                    data = new
                     {
-                        new Slice
+                        cabin_class = "economy",
+                        passengers = Enumerable.Repeat(new { type = "adult" }, request.NumberOfAdults).ToList(),
+                        slices = new[]
                         {
-                            Origin = request.Origin,
-                            Destination = request.Destination,
-                            DepartureDate = request.DepartureDate
+                            new
+                            {
+                                origin = request.Origin,
+                                destination = request.Destination,
+                                departure_date = request.DepartureDate
+                            }
                         }
-                    },
-                    CabinClass = CabinClass.Economy
+                    }
                 };
 
-                // Add the requested number of adult passengers
-                for (int i = 0; i < request.NumberOfAdults; i++)
+                var jsonPayload = JsonSerializer.Serialize(payload);
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                // 2. Make the POST request to the live Duffel API
+                // Adding ?return_offers=true tells Duffel to send the actual flights back instantly
+                var response = await _httpClient.PostAsync("air/offer_requests?return_offers=true", content);
+
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    duffelRequest.Passengers.Add(new Passenger { PassengerType = PassengerType.Adult });
+                    // If Duffel rejects it, we print their EXACT error message to the screen!
+                    return new ServiceResponse<List<FlightSearchResponseDto>>
+                    {
+                        Success = false,
+                        Message = $"Duffel API Error: {responseString}"
+                    };
                 }
 
-                // 2. Call the live Duffel API
-                var offerResponse = await _duffelClient.OfferRequests.Create(duffelRequest);
+                // 3. Parse the massive JSON response
+                using var jsonDoc = JsonDocument.Parse(responseString);
+                var offers = jsonDoc.RootElement.GetProperty("data").GetProperty("offers").EnumerateArray();
 
-                // 3. Map the response to our clean DTO
                 var flights = new List<FlightSearchResponseDto>();
 
-                foreach (var offer in offerResponse.Offers)
+                foreach (var offer in offers)
                 {
-                    // For a simple one-way flight, we just look at the first "Slice" and first "Segment"
-                    var firstSlice = offer.Slices.FirstOrDefault();
-                    var firstSegment = firstSlice?.Segments.FirstOrDefault();
+                    var slices = offer.GetProperty("slices").EnumerateArray();
+                    var firstSlice = slices.FirstOrDefault();
+                    var firstSegment = firstSlice.GetProperty("segments").EnumerateArray().FirstOrDefault();
 
-                    if (firstSlice != null && firstSegment != null)
+                    flights.Add(new FlightSearchResponseDto
                     {
-                        flights.Add(new FlightSearchResponseDto
-                        {
-                            OfferId = offer.Id,
-                            AirlineName = offer.Owner.AirlineName,
-                            Origin = firstSlice.Origin.IataCode,
-                            Destination = firstSlice.Destination.IataCode,
-                            DepartureTime = firstSegment.DepartingAt,
-                            ArrivalTime = firstSegment.ArrivingAt,
-                            TotalPrice = decimal.Parse(offer.TotalAmount),
-                            Currency = offer.TotalCurrency
-                        });
-                    }
+                        OfferId = offer.GetProperty("id").GetString(),
+                        AirlineName = offer.GetProperty("owner").GetProperty("name").GetString(),
+                        Origin = firstSlice.GetProperty("origin").GetProperty("iata_code").GetString(),
+                        Destination = firstSlice.GetProperty("destination").GetProperty("iata_code").GetString(),
+                        DepartureTime = firstSegment.GetProperty("departing_at").GetDateTime(),
+                        ArrivalTime = firstSegment.GetProperty("arriving_at").GetDateTime(),
+                        // Parse the string amount into a decimal
+                        TotalPrice = decimal.Parse(offer.GetProperty("total_amount").GetString()),
+                        Currency = offer.GetProperty("total_currency").GetString()
+                    });
                 }
 
-                // 4. Return the list, sorted by cheapest flight first!
+                // 4. Return cheapest flights first!
                 return new ServiceResponse<List<FlightSearchResponseDto>>
                 {
                     Success = true,
@@ -82,23 +99,12 @@ namespace Travio.Core.Services.DuffelFlights
                     Data = flights.OrderBy(f => f.TotalPrice).ToList()
                 };
             }
-            catch (Duffel.ApiClient.Exceptions.ApiException ex)
-            {
-                // Duffel returns a list of errors. We grab the first one to see what we did wrong!
-                var realErrorMessage = ex.Errors.FirstOrDefault()?.Message ?? "Unknown API Error";
-
-                return new ServiceResponse<List<FlightSearchResponseDto>>
-                {
-                    Success = false,
-                    Message = $"Duffel rejected the search: {realErrorMessage}"
-                };
-            }
             catch (Exception ex)
             {
                 return new ServiceResponse<List<FlightSearchResponseDto>>
                 {
                     Success = false,
-                    Message = "Failed to fetch flights from the provider."
+                    Message = $"An error occurred: {ex.Message}"
                 };
             }
         }
