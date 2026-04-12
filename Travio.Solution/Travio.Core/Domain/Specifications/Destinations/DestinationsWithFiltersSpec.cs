@@ -6,10 +6,11 @@ namespace Travio.Core.Domain.Specifications.Destinations;
 
 public class DestinationsWithFiltersSpec : Specification<Destination>
 {
-    public DestinationsWithFiltersSpec(int? cityId, int? interestId, int skip, int take, DestinationSortBy sortBy = DestinationSortBy.Newest)
+    public DestinationsWithFiltersSpec(int? cityId, int? interestId, int? countryId, int skip, int take, DestinationSortBy sortBy = DestinationSortBy.Newest)
     {
         Query.Where(x => (!cityId.HasValue || x.CityID == cityId) &&
-                         (!interestId.HasValue || x.DestinationInterests.Any(di => di.InterestID == interestId)));
+                         (!interestId.HasValue || x.DestinationInterests.Any(di => di.InterestID == interestId)) &&
+                         (!countryId.HasValue || x.City.CountryID == countryId));
 
         Query.Include(x => x.City)
              .Include(x => x.Images)

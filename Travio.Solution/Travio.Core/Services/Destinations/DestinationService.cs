@@ -22,11 +22,11 @@ public class DestinationService : IDestinationService
         _countryRepository = countryRepository;
     }
 
-    public async Task<Pagination<DestinationDto>> GetAllAsync(int pageIndex, int pageSize, int? cityId, int? interestId, DestinationSortBy sortBy = DestinationSortBy.Newest)
+    public async Task<Pagination<DestinationDto>> GetAllAsync(int pageIndex, int pageSize, int? cityId, int? countryId, int? interestId, DestinationSortBy sortBy = DestinationSortBy.Newest)
     {
         var skip = (pageIndex - 1) * pageSize;
-        var dataSpec = new DestinationsWithFiltersSpec(cityId, interestId, skip, pageSize, sortBy);
-        var countSpec = new DestinationFilterSpec(cityId, interestId);
+        var dataSpec = new DestinationsWithFiltersSpec(cityId, interestId, countryId, skip, pageSize, sortBy);
+        var countSpec = new DestinationFilterSpec(cityId, interestId, countryId);
         var totalItems = await _destinationRepository.CountAsync(countSpec);
         var data = await _destinationRepository.ListAsync(dataSpec);
         var dataDto = data.Adapt<IEnumerable<DestinationDto>>();

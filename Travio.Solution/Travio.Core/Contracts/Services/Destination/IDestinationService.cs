@@ -6,7 +6,7 @@ namespace Travio.Core.Contracts.Services.Destination;
 
 public interface IDestinationService
 {
-    Task<Pagination<DestinationDto>> GetAllAsync(int pageIndex, int pageSize, int? cityId, int? interestId, DestinationSortBy sortBy = DestinationSortBy.Newest);
+    Task<Pagination<DestinationDto>> GetAllAsync(int pageIndex, int pageSize, int? cityId, int? countryId, int? interestId, DestinationSortBy sortBy = DestinationSortBy.Newest);
     Task<DestinationDto?> GetByIdAsync(int id);
     Task<IEnumerable<DestinationDto>> GetTopRatedAsync(int count = 10);
     Task<Pagination<DestinationDto>> SearchByNameAsync(string keyword, int pageIndex, int pageSize);
