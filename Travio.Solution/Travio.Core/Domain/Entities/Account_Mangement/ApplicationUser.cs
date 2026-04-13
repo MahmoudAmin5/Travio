@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Travio.Core.Domain.Entities.Destinations;
 namespace Travio.Core.Domain.Entities.Account_Mangement;
 
 public class ApplicationUser : IdentityUser
@@ -11,4 +12,5 @@ public class ApplicationUser : IdentityUser
     public string? ProviderKey { get; set; }
 
     public List<RefreshToken>? RefreshTokens { get; set; } = new List<RefreshToken>();
+    public ICollection<UserPreference> UserPreferences { get; set; } = new HashSet<UserPreference>();
 }

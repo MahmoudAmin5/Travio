@@ -23,10 +23,11 @@ namespace Travio.API.Controllers
             [FromQuery] int pageIndex = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] int? cityId = null,
+            [FromQuery] int? countryId = null,
             [FromQuery] int? interestId = null,
             [FromQuery] DestinationSortBy sortBy = DestinationSortBy.Rating)
         {
-            var result = await _destinationService.GetAllAsync(pageIndex, pageSize, cityId, interestId, sortBy);
+            var result = await _destinationService.GetAllAsync(pageIndex, pageSize, cityId, countryId, interestId, sortBy);
             return Ok(result);
         }
 

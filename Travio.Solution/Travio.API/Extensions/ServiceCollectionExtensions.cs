@@ -1,4 +1,3 @@
-using Duffel.ApiClient;
 using FluentValidation;
 using Hangfire;
 using Mapster;
@@ -15,13 +14,14 @@ using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Community;
 using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Contracts.Services.DuffelFlights;
+using Travio.Core.Contracts.Services.Survey;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
-using Travio.Core.DTOs.CommunityDTO;
 using Travio.Core.Services.Auth;
 using Travio.Core.Services.Community;
 using Travio.Core.Services.Destinations;
 using Travio.Core.Services.DuffelFlights;
+using Travio.Core.Services.Survey;
 using Travio.Core.Setting;
 using Travio.Core.Validators;
 using Travio.Infrastructure;
@@ -35,7 +35,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
-            .LogTo(log=>Debug.WriteLine(log), LogLevel.Information));
+            .LogTo(log => Debug.WriteLine(log), LogLevel.Information));
 
         return services;
     }
@@ -93,6 +93,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IDestinationService, DestinationService>();
         services.AddScoped<ICommunityService, CommunityService>();
+        services.AddScoped<ISurveyService, SurveyService>();
         services.AddTransient<IGoogleAuthService, GoogleAuthService>();
         services.AddTransient<IEmailSender, MailKitEmailSender>();
         var duffelToken = configuration["Duffel:AccessToken"];
