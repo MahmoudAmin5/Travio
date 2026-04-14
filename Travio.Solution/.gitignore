@@ -75,4 +75,6 @@ _ReSharper*/
 *.opendb
 *.VC.db
 *.vscode/
+.github/
+.specify/
 

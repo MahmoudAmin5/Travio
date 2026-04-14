@@ -31,7 +31,7 @@ namespace Travio.API.Middleware
                 //httpContext.Response.ContentType = "Application/Json";
 
                 var response = _env.IsDevelopment() ?
-                     new Errors.ApiExceptionErrorResponse((int)HttpStatusCode.InternalServerError, null, ex.StackTrace)
+                     new Errors.ApiExceptionErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message, ex.StackTrace)
                      : new Errors.ApiExceptionErrorResponse((int)HttpStatusCode.InternalServerError);
 
                 await httpContext.Response.WriteAsJsonAsync(response);
