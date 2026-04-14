@@ -27,6 +27,7 @@ namespace Travio.Infrastructure
         public DbSet<Country> Countries { get; set; }
         public DbSet<Destination> Destinations { get; set; }
         public DbSet<Interest> Interests { get; set; }
+        public DbSet<UserFavorite> UserFavorites { get; set; }
 
         public DbSet<Post> Posts { get; set; }
         public DbSet<Comment> Comments { get; set; }

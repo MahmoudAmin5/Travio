@@ -94,6 +94,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDestinationService, DestinationService>();
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<ISurveyService, SurveyService>();
+        services.AddScoped<IUserFavoriteService, UserFavoriteService>();
         services.AddTransient<IGoogleAuthService, GoogleAuthService>();
         services.AddTransient<IEmailSender, MailKitEmailSender>();
         var duffelToken = configuration["Duffel:AccessToken"];
