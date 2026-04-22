@@ -1,13 +1,5 @@
 ﻿using Mapster;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Storage.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using Travio.Core.Contracts.Services.Community;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Community;
@@ -249,7 +241,7 @@ namespace Travio.Core.Services.Community
                     Data = postDetails
                 };
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return new ServiceResponse<PostDetailsResponseDTO>()
                 {
@@ -288,10 +280,10 @@ namespace Travio.Core.Services.Community
                 {
                     Success = true,
                     Message = "Comment added successfully.",
-                    Data = responseDto 
+                    Data = responseDto
                 };
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return new ServiceResponse<CommentResponseDTO> { Success = false, Message = "An error occurred while adding the comment." };
             }

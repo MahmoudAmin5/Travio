@@ -13,4 +13,5 @@ public class ApplicationUser : IdentityUser
 
     public List<RefreshToken>? RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<UserPreference> UserPreferences { get; set; } = new HashSet<UserPreference>();
+    public ICollection<DestinationReview> DestinationReviews { get; set; } = new HashSet<DestinationReview>();
 }

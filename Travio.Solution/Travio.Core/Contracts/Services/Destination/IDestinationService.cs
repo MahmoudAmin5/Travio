@@ -12,4 +12,8 @@ public interface IDestinationService
     Task<Pagination<DestinationDto>> SearchByNameAsync(string keyword, int pageIndex, int pageSize);
     Task<IEnumerable<DestinationDto>> GetNearbyAsync(decimal latitude, decimal longitude, double radiusKm, int count = 10);
     Task<IEnumerable<CountryDto>> GetFamousCountriesAsync();
+    Task<Pagination<DestinationReviewDto>> GetReviewsAsync(int destinationId, int pageIndex = 1, int pageSize = 10, string? currentUserId = null);
+    Task<DestinationReviewMutationDto> UpsertMyReviewAsync(int destinationId, string userId, DestinationReviewUpsertDto dto);
+    Task<DestinationReviewMutationDto> UpdateMyReviewAsync(int destinationId, string userId, DestinationReviewUpsertDto dto);
+    Task<DestinationReviewDeleteResultDto> DeleteMyReviewAsync(int destinationId, string userId);
 }
