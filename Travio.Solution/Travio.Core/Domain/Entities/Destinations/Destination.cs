@@ -23,4 +23,6 @@ public class Destination
 
     public ICollection<DestinationInterest> DestinationInterests { get; set; } = new HashSet<DestinationInterest>();
 
+    public ICollection<DestinationReview> Reviews { get; set; } = new HashSet<DestinationReview>();
+
 }
