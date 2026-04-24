@@ -27,45 +27,43 @@ namespace Travio.Core.Services.DuffelFlights
         {
             try
             {
-                // 1. Build the JSON payload exactly how Duffel's docs ask for it
+                var slice = new
+                {
+                    origin = request.Origin,
+                    destination = request.Destination,
+                    departure_date = request.DepartureDate,
+                    max_connections = request.MaxStops
+                };
+
                 var payload = new
                 {
                     data = new
                     {
-                        cabin_class = "economy",
-                        passengers = Enumerable.Repeat(new { type = "adult" }, request.NumberOfAdults).ToList(),
-                        slices = new[]
-                        {
-                            new
-                            {
-                                origin = request.Origin,
-                                destination = request.Destination,
-                                departure_date = request.DepartureDate
-                            }
-                        }
+                        cabin_class = string.IsNullOrWhiteSpace(request.CabinClass) ? "economy" : request.CabinClass.ToLower(),
+                        passengers = Enumerable.Repeat(new { type = "adult" }, request.Adults).ToList(),
+                        slices = new[] { slice }
                     }
                 };
 
-                var jsonPayload = JsonSerializer.Serialize(payload);
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+
+                var jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-                // 2. Make the POST request to the live Duffel API
-                // Adding ?return_offers=true tells Duffel to send the actual flights back instantly
                 var response = await _httpClient.PostAsync("air/offer_requests?return_offers=true", content);
-
                 var responseString = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // If Duffel rejects it, we print their EXACT error message to the screen!
                     return new ServiceResponse<List<FlightSearchResponseDto>>
                     {
                         Success = false,
                         Message = $"Duffel API Error: {responseString}"
                     };
                 }
-
-                // 3. Parse the massive JSON response
                 using var jsonDoc = JsonDocument.Parse(responseString);
                 var offers = jsonDoc.RootElement.GetProperty("data").GetProperty("offers").EnumerateArray();
 
@@ -75,23 +73,37 @@ namespace Travio.Core.Services.DuffelFlights
                 {
                     var slices = offer.GetProperty("slices").EnumerateArray();
                     var firstSlice = slices.FirstOrDefault();
-                    var firstSegment = firstSlice.GetProperty("segments").EnumerateArray().FirstOrDefault();
 
+                    if (firstSlice.ValueKind == JsonValueKind.Undefined) continue;
+
+                    var duffelSegments = firstSlice.GetProperty("segments").EnumerateArray().ToList();
+                    var mappedSegments = new List<FlightSegmentDto>();
+
+                    foreach (var seg in duffelSegments)
+                    {
+                        mappedSegments.Add(new FlightSegmentDto
+                        {
+                            Origin = seg.GetProperty("origin").GetProperty("iata_code").GetString(),
+                            Destination = seg.GetProperty("destination").GetProperty("iata_code").GetString(),
+                            DepartureTime = seg.GetProperty("departing_at").GetDateTime(),
+                            ArrivalTime = seg.GetProperty("arriving_at").GetDateTime(),
+                            AirlineName = seg.GetProperty("operating_carrier").GetProperty("name").GetString(),
+                            FlightNumber = seg.GetProperty("operating_carrier_flight_number").GetString()
+                        });
+                    }
                     flights.Add(new FlightSearchResponseDto
                     {
                         OfferId = offer.GetProperty("id").GetString(),
-                        AirlineName = offer.GetProperty("owner").GetProperty("name").GetString(),
-                        Origin = firstSlice.GetProperty("origin").GetProperty("iata_code").GetString(),
-                        Destination = firstSlice.GetProperty("destination").GetProperty("iata_code").GetString(),
-                        DepartureTime = firstSegment.GetProperty("departing_at").GetDateTime(),
-                        ArrivalTime = firstSegment.GetProperty("arriving_at").GetDateTime(),
-                        // Parse the string amount into a decimal
+                        TotalOrigin = firstSlice.GetProperty("origin").GetProperty("iata_code").GetString(),
+                        TotalDestination = firstSlice.GetProperty("destination").GetProperty("iata_code").GetString(),
                         TotalPrice = decimal.Parse(offer.GetProperty("total_amount").GetString()),
-                        Currency = offer.GetProperty("total_currency").GetString()
+                        Currency = offer.GetProperty("total_currency").GetString(),
+
+                        Stops = mappedSegments.Count - 1,
+                        Segments = mappedSegments
                     });
                 }
 
-                // 4. Return cheapest flights first!
                 return new ServiceResponse<List<FlightSearchResponseDto>>
                 {
                     Success = true,
@@ -104,10 +116,11 @@ namespace Travio.Core.Services.DuffelFlights
                 return new ServiceResponse<List<FlightSearchResponseDto>>
                 {
                     Success = false,
-                    Message = $"An error occurred: {ex.Message}"
+                    Message = $"An error occurred while searching for flights: {ex.Message}"
                 };
             }
         }
     }
-    
 }
+
+
