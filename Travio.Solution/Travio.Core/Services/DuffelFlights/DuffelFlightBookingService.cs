@@ -120,6 +120,79 @@ namespace Travio.Core.Services.DuffelFlights
                 };
             }
         }
+        public async Task<ServiceResponse<List<TopFlightOfferDto>>> GetTopOffersAsync()
+        {
+            try
+            {
+          
+                var popularRoutes = new List<(string Name, string Dest, string ImageUrl)>
+        {
+            ("Paris", "CDG", "https://images.unsplash.com/photo-1502602898657-3e9076113192?auto=format&fit=crop&w=800&q=80"),
+            ("Dubai", "DXB", "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80"),
+            ("London", "LHR", "https://images.unsplash.com/photo-1513635269975-59693e2482d5?auto=format&fit=crop&w=800&q=80")
+        };
+
+               
+                var futureDate = DateTime.UtcNow.AddDays(30).ToString("yyyy-MM-dd");
+
+               
+                var tasks = popularRoutes.Select(async route =>
+                {
+                    var request = new FlightSearchRequestDto
+                    {
+                        Origin = "CAI",
+                        Destination = route.Dest,
+                        DepartureDate = futureDate,
+                        Adults = 1,
+                        MaxStops = 1 
+                    };
+
+                  
+                    var response = await SearchFlightsAsync(request);
+
+               
+                    if (response.Success && response.Data != null && response.Data.Any())
+                    {
+                        
+                        var cheapestFlight = response.Data.First();
+
+                        return new TopFlightOfferDto
+                        {
+                            DestinationName = route.Name,
+                            Origin = "CAI",
+                            Destination = route.Dest,
+                            TravelDate = futureDate,
+                            ImageUrl = route.ImageUrl,
+                            CheapestPrice = cheapestFlight.TotalPrice,
+                            Currency = cheapestFlight.Currency,
+                            AirlineName = cheapestFlight.Segments.FirstOrDefault()?.AirlineName ?? "Multiple Airlines",
+                            OfferId = cheapestFlight.OfferId
+                        };
+                    }
+
+                    return null; 
+                });
+
+               
+                var results = await Task.WhenAll(tasks);
+                var topOffers = results.Where(r => r != null).ToList();
+
+                return new ServiceResponse<List<TopFlightOfferDto>>
+                {
+                    Success = true,
+                    Message = "Top offers retrieved successfully.",
+                    Data = topOffers
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<List<TopFlightOfferDto>>
+                {
+                    Success = false,
+                    Message = $"An error occurred while fetching top offers: {ex.Message}"
+                };
+            }
+        }
     }
 }
 
