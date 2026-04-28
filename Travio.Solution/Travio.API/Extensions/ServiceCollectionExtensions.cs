@@ -14,6 +14,7 @@ using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Community;
 using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Contracts.Services.DuffelFlights;
+using Travio.Core.Contracts.Services.DuffelHotels;
 using Travio.Core.Contracts.Services.Survey;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -21,6 +22,7 @@ using Travio.Core.Services.Auth;
 using Travio.Core.Services.Community;
 using Travio.Core.Services.Destinations;
 using Travio.Core.Services.DuffelFlights;
+using Travio.Core.Services.DuffelHotels;
 using Travio.Core.Services.Survey;
 using Travio.Core.Setting;
 using Travio.Core.Validators;
@@ -99,6 +101,15 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IEmailSender, MailKitEmailSender>();
         var duffelToken = configuration["Duffel:AccessToken"];
         services.AddHttpClient<IDuffelFlightBookingService, DuffelFlightBookingService>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.duffel.com/");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", duffelToken);
+
+            // THIS IS THE MAGIC FIX: Forcing the modern V2 API version!
+            client.DefaultRequestHeaders.Add("Duffel-Version", "v2");
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+        services.AddHttpClient<IDuffelHotelsService, DuffelHotelsService>(client =>
         {
             client.BaseAddress = new Uri("https://api.duffel.com/");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", duffelToken);

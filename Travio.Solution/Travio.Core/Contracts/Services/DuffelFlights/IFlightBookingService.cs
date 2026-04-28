@@ -11,5 +11,6 @@ namespace Travio.Core.Contracts.Services.DuffelFlights
     public interface IDuffelFlightBookingService
     {
         Task<ServiceResponse<List<FlightSearchResponseDto>>> SearchFlightsAsync(FlightSearchRequestDto request);
+        Task<ServiceResponse<List<TopFlightOfferDto>>> GetTopOffersAsync();
     }
 }
