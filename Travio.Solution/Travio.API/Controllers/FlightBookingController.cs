@@ -38,5 +38,17 @@ namespace Travio.API.Controllers
 
             return Ok(response);
         }
+        [HttpGet("top-offers")]
+        public async Task<IActionResult> GetTopOffers()
+        {
+            var response = await _flightBookingService.GetTopOffersAsync();
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
     }
 }
