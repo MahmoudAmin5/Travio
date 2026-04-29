@@ -39,6 +39,9 @@ namespace Travio.API.Controllers
             return Ok(response);
         }
         [HttpGet("top-offers")]
+        [ProducesResponseType(typeof(ServiceResponse<List<TopFlightOfferDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ServiceResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetTopOffers()
         {
             var response = await _flightBookingService.GetTopOffersAsync();
