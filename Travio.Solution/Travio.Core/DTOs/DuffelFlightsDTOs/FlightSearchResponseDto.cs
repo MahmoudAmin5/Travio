@@ -14,6 +14,12 @@ namespace Travio.Core.DTOs.DuffelFlightsDTOs
         public decimal TotalPrice { get; set; }
         public string Currency { get; set; }
         public int Stops { get; set; }
-        public List<FlightSegmentDto> Segments { get; set; }
+        public string TotalDuration { get; set; }
+        public string OriginCityName { get; set; }
+        public string DestinationCityName { get; set; }
+        public string AirlineLogoUrl { get; set; }
+
+        public List<FlightSegmentDto> Segments { get; set; } = new();
     }
 }
+

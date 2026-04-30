@@ -81,27 +81,59 @@ namespace Travio.Core.Services.DuffelFlights
 
                     foreach (var seg in duffelSegments)
                     {
+                        var carrier = seg.GetProperty("operating_carrier");
+
+                        // 1. Safely extract the logo, with a clean fallback placeholder
+                        string logoUrl = carrier.TryGetProperty("logo_symbol_url", out var logo) && logo.ValueKind != JsonValueKind.Null
+                            ? logo.GetString()
+                            : "https://placehold.co/400x400/000000/ffffff?text=" + carrier.GetProperty("name").GetString().Replace(" ", "+");
+
                         mappedSegments.Add(new FlightSegmentDto
                         {
                             Origin = seg.GetProperty("origin").GetProperty("iata_code").GetString(),
+                            OriginCityName = seg.GetProperty("origin").GetProperty("city_name").GetString(),
+
                             Destination = seg.GetProperty("destination").GetProperty("iata_code").GetString(),
+                            DestinationCityName = seg.GetProperty("destination").GetProperty("city_name").GetString(),
+
                             DepartureTime = seg.GetProperty("departing_at").GetDateTime(),
                             ArrivalTime = seg.GetProperty("arriving_at").GetDateTime(),
-                            AirlineName = seg.GetProperty("operating_carrier").GetProperty("name").GetString(),
-                            FlightNumber = seg.GetProperty("operating_carrier_flight_number").GetString()
+
+                            AirlineName = carrier.GetProperty("name").GetString(),
+
+                            // --- ADD THE LOGO TO THE SEGMENT ---
+                            AirlineLogoUrl = logoUrl,
+
+                            FlightNumber = carrier.GetProperty("iata_code").GetString() + " " +
+                                           seg.GetProperty("operating_carrier_flight_number").GetString(),
+
+                            SegmentDuration = seg.GetProperty("duration").GetString()
                         });
                     }
-                    flights.Add(new FlightSearchResponseDto
-                    {
-                        OfferId = offer.GetProperty("id").GetString(),
-                        TotalOrigin = firstSlice.GetProperty("origin").GetProperty("iata_code").GetString(),
-                        TotalDestination = firstSlice.GetProperty("destination").GetProperty("iata_code").GetString(),
-                        TotalPrice = decimal.Parse(offer.GetProperty("total_amount").GetString()),
-                        Currency = offer.GetProperty("total_currency").GetString(),
 
-                        Stops = mappedSegments.Count - 1,
-                        Segments = mappedSegments
-                    });
+                    // ... further down, when you assemble the main FlightSearchResponseDto ...
+
+                    int calculatedStops = mappedSegments.Count - 1;
+
+                   flights.Add(new FlightSearchResponseDto
+                    {
+                       OfferId = offer.GetProperty("id").GetString(),
+
+                       TotalOrigin = firstSlice.GetProperty("origin").GetProperty("iata_code").GetString(),
+                       OriginCityName = firstSlice.GetProperty("origin").GetProperty("city_name").GetString(),
+
+                       TotalDestination = firstSlice.GetProperty("destination").GetProperty("iata_code").GetString(),
+                       DestinationCityName = firstSlice.GetProperty("destination").GetProperty("city_name").GetString(),
+
+                       TotalPrice = decimal.Parse(offer.GetProperty("total_amount").GetString()),
+                       Currency = offer.GetProperty("total_currency").GetString(),
+                       TotalDuration = firstSlice.GetProperty("duration").GetString(),
+                       Stops = calculatedStops < 0 ? 0 : calculatedStops,
+
+                       AirlineLogoUrl = mappedSegments.FirstOrDefault()?.AirlineLogoUrl,
+
+                       Segments = mappedSegments
+                   });
                 }
 
                 return new ServiceResponse<List<FlightSearchResponseDto>>
@@ -122,77 +154,93 @@ namespace Travio.Core.Services.DuffelFlights
         }
         public async Task<ServiceResponse<List<TopFlightOfferDto>>> GetTopOffersAsync()
         {
-            try
-            {
-          
-                var popularRoutes = new List<(string Name, string Dest, string ImageUrl)>
+          try
+    {
+        // 1. Define the dynamic routes for the UI Carousel
+        var popularRoutes = new List<(string Name, string Dest, string ImageUrl)>
         {
-            ("Paris", "CDG", "https://images.unsplash.com/photo-1502602898657-3e9076113192?auto=format&fit=crop&w=800&q=80"),
-            ("Dubai", "DXB", "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80"),
-            ("London", "LHR", "https://images.unsplash.com/photo-1513635269975-59693e2482d5?auto=format&fit=crop&w=800&q=80")
+            ("Paris", "CDG", "https://plus.unsplash.com/premium_photo-1719581957038-0121108b9455?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"),
+            ("Dubai", "DXB", "https://images.unsplash.com/photo-1700397801373-3c13a56d6cc3?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"),
+            ("London", "LHR", "https://images.unsplash.com/photo-1569865867048-34cfce8d58fe?q=80&w=678&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
         };
 
-               
-                var futureDate = DateTime.UtcNow.AddDays(30).ToString("yyyy-MM-dd");
+        var futureDate = DateTime.UtcNow.AddDays(30).ToString("yyyy-MM-dd");
 
-               
-                var tasks = popularRoutes.Select(async route =>
+        // 2. Fan-out: Request all destinations from Duffel in parallel
+        var tasks = popularRoutes.Select(async route =>
+        {
+            var request = new FlightSearchRequestDto
+            {
+                Origin = "CAI",
+                Destination = route.Dest,
+                DepartureDate = futureDate,
+                Adults = 1,
+                MaxStops = 1 
+            };
+
+            // Call your existing search method
+            var response = await SearchFlightsAsync(request);
+
+            if (response.Success && response.Data != null && response.Data.Any())
+            {
+                // Grab the absolute cheapest flight for this specific destination
+                var cheapestFlight = response.Data.First();
+                var firstSegment = cheapestFlight.Segments?.FirstOrDefault();
+
+                // 3. Map to the highly-detailed DTO
+                return new TopFlightOfferDto
                 {
-                    var request = new FlightSearchRequestDto
-                    {
-                        Origin = "CAI",
-                        Destination = route.Dest,
-                        DepartureDate = futureDate,
-                        Adults = 1,
-                        MaxStops = 1 
-                    };
+                    OfferId = cheapestFlight.OfferId,
+                    AirlineName = firstSegment?.AirlineName ?? "Multiple Airlines",
+                    ImageUrl = route.ImageUrl,
+                    AirlineLogoUrl = cheapestFlight.AirlineLogoUrl,
 
                   
-                    var response = await SearchFlightsAsync(request);
+                    Origin = "CAI",
+                    OriginCityName = "Cairo", 
+                    
+                    Destination = route.Dest,
+                    DestinationCityName = route.Name, 
 
-               
-                    if (response.Success && response.Data != null && response.Data.Any())
-                    {
-                        
-                        var cheapestFlight = response.Data.First();
+                    
+                    Duration = cheapestFlight.TotalDuration ?? "N/A",
 
-                        return new TopFlightOfferDto
-                        {
-                            DestinationName = route.Name,
-                            Origin = "CAI",
-                            Destination = route.Dest,
-                            TravelDate = futureDate,
-                            ImageUrl = route.ImageUrl,
-                            CheapestPrice = cheapestFlight.TotalPrice,
-                            Currency = cheapestFlight.Currency,
-                            AirlineName = cheapestFlight.Segments.FirstOrDefault()?.AirlineName ?? "Multiple Airlines",
-                            OfferId = cheapestFlight.OfferId
-                        };
-                    }
+                    FlightNumber = firstSegment?.FlightNumber ?? "Unknown", 
+                    
+         
+                    Stops = cheapestFlight.Segments != null ? Math.Max(0, cheapestFlight.Segments.Count - 1) : 0,
+                   
 
-                    return null; 
-                });
-
-               
-                var results = await Task.WhenAll(tasks);
-                var topOffers = results.Where(r => r != null).ToList();
-
-                return new ServiceResponse<List<TopFlightOfferDto>>
-                {
-                    Success = true,
-                    Message = "Top offers retrieved successfully.",
-                    Data = topOffers
+                    CheapestPrice = cheapestFlight.TotalPrice,
+                    Currency = cheapestFlight.Currency
                 };
             }
-            catch (Exception ex)
-            {
-                return new ServiceResponse<List<TopFlightOfferDto>>
-                {
-                    Success = false,
-                    Message = $"An error occurred while fetching top offers: {ex.Message}"
-                };
-            }
-        }
+
+            return null; 
+        });
+
+       
+        var results = await Task.WhenAll(tasks);
+        
+      
+        var topOffers = results.Where(r => r != null).ToList();
+
+        return new ServiceResponse<List<TopFlightOfferDto>>
+        {
+            Success = true,
+            Message = "Top offers retrieved successfully.",
+            Data = topOffers
+        };
+    }
+    catch (Exception ex)
+    {
+        return new ServiceResponse<List<TopFlightOfferDto>>
+        {
+            Success = false,
+            Message = $"An error occurred while fetching top offers: {ex.Message}"
+        };
+    }
+}
         public async Task<ServiceResponse<FlightDetailsDto>> GetFlightDetailsAsync(string offerId)
         {
             try
