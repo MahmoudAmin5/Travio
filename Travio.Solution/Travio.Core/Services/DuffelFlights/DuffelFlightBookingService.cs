@@ -193,6 +193,125 @@ namespace Travio.Core.Services.DuffelFlights
                 };
             }
         }
+        public async Task<ServiceResponse<FlightDetailsDto>> GetFlightDetailsAsync(string offerId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"air/offers/{offerId}");
+                var jsonString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new ServiceResponse<FlightDetailsDto>
+                    {
+                        Success = false,
+                        Message = "Could not retrieve flight details. The offer may have expired."
+                    };
+                }
+
+                using var jsonDoc = JsonDocument.Parse(jsonString);
+                var data = jsonDoc.RootElement.GetProperty("data");
+                var firstSlice = data.GetProperty("slices").EnumerateArray().FirstOrDefault();
+
+                // 1. Parse Baggage Rules
+                int checkedBags = 0;
+                var firstPassenger = data.GetProperty("passengers").EnumerateArray().FirstOrDefault();
+                // Duffel usually puts baggage info inside the passenger or segment object depending on the airline
+                // For safety, we check the first segment's passenger array if available
+                var passengerSegment = firstSlice.GetProperty("segments").EnumerateArray().First()
+                                        .GetProperty("passengers").EnumerateArray().FirstOrDefault();
+
+                if (passengerSegment.ValueKind != JsonValueKind.Undefined && passengerSegment.TryGetProperty("baggages", out var baggages))
+                {
+                    foreach (var bag in baggages.EnumerateArray())
+                    {
+                        if (bag.GetProperty("type").GetString() == "checked")
+                        {
+                            checkedBags += bag.GetProperty("quantity").GetInt32();
+                        }
+                    }
+                }
+
+                // 2. Parse Refund Rules Safely
+                bool isRefundable = false;
+                decimal? refundPenalty = null;
+
+                if (data.TryGetProperty("conditions", out var conditions) && conditions.ValueKind != JsonValueKind.Null)
+                {
+                    if (conditions.TryGetProperty("refund_before_departure", out var refundCondition) && refundCondition.ValueKind != JsonValueKind.Null)
+                    {
+                        isRefundable = refundCondition.TryGetProperty("allowed", out var allowed) && allowed.GetBoolean();
+
+                        if (isRefundable && refundCondition.TryGetProperty("penalty_amount", out var penalty) && penalty.ValueKind != JsonValueKind.Null)
+                        {
+                            refundPenalty = decimal.Parse(penalty.GetString());
+                        }
+                    }
+                }
+
+                // 3. Parse Segments and Aircraft details
+                var flightSegments = new List<FlightSegmentDetailsDto>();
+                foreach (var segment in firstSlice.GetProperty("segments").EnumerateArray())
+                {
+                    var carrier = segment.GetProperty("operating_carrier");
+
+                    string logoUrl = carrier.TryGetProperty("logo_symbol_url", out var logo) && logo.ValueKind != JsonValueKind.Null
+                        ? logo.GetString()
+                        : "https://placehold.co/400x400/000000/ffffff?text=Airline";
+
+                    string aircraftName = "Aircraft Info Unavailable";
+                    if (segment.TryGetProperty("aircraft", out var aircraft) && aircraft.ValueKind != JsonValueKind.Null)
+                    {
+                        aircraftName = aircraft.GetProperty("name").GetString();
+                    }
+
+                    flightSegments.Add(new FlightSegmentDetailsDto
+                    {
+                        AirlineName = carrier.GetProperty("name").GetString(),
+                        AirlineLogoUrl = logoUrl,
+                        FlightNumber = carrier.GetProperty("iata_code").GetString() + " " + segment.GetProperty("operating_carrier_flight_number").GetString(),
+                        AircraftName = aircraftName,
+
+                        OriginAirport = segment.GetProperty("origin").GetProperty("iata_code").GetString(),
+                        DepartureTime = segment.GetProperty("departing_at").GetString(),
+
+                        DestinationAirport = segment.GetProperty("destination").GetProperty("iata_code").GetString(),
+                        ArrivalTime = segment.GetProperty("arriving_at").GetString(),
+
+                        SegmentDuration = segment.GetProperty("duration").GetString()
+                    });
+                }
+
+                // 4. Assemble the Final DTO
+                var details = new FlightDetailsDto
+                {
+                    OfferId = data.GetProperty("id").GetString(),
+                    TotalPrice = decimal.Parse(data.GetProperty("total_amount").GetString()),
+                    TaxAmount = decimal.Parse(data.GetProperty("tax_amount").GetString()),
+                    Currency = data.GetProperty("total_currency").GetString(),
+                    TotalDuration = firstSlice.GetProperty("duration").GetString(),
+                    CheckedBags = checkedBags,
+                    IsRefundable = isRefundable,
+                    RefundPenaltyAmount = refundPenalty,
+                    Segments = flightSegments
+                };
+
+                return new ServiceResponse<FlightDetailsDto>
+                {
+                    Success = true,
+                    Message = "Flight details retrieved successfully.",
+                    Data = details
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<FlightDetailsDto>
+                {
+                    Success = false,
+                    Message = $"Error parsing flight details: {ex.Message}"
+                };
+            }
+        }
     }
 }
 
