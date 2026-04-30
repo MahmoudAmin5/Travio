@@ -69,8 +69,6 @@ namespace Travio.API.Controllers
                     Message = "Offer ID is required."
                 });
             }
-
-          
             var response = await _flightBookingService.GetFlightDetailsAsync(offerId);
 
             

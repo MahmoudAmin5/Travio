@@ -14,5 +14,13 @@ namespace Travio.Core.DTOs.DuffelFlightsDTOs
         public DateTime ArrivalTime { get; set; }
         public string AirlineName { get; set; }
         public string FlightNumber { get; set; }
+
+        // --- NEW SEGMENT FIELDS ---
+        public string OriginCityName { get; set; }
+        public string DestinationCityName { get; set; }
+        public string SegmentDuration { get; set; }
+        public string AirlineLogoUrl { get; set; }
+        // --------------------------
     }
 }
+
