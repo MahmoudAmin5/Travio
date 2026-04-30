@@ -53,5 +53,36 @@ namespace Travio.API.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet("{offerId}")]
+        [ProducesResponseType(typeof(ServiceResponse<FlightDetailsDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ServiceResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetFlightDetails(string offerId)
+        {
+           
+            if (string.IsNullOrWhiteSpace(offerId))
+            {
+                return BadRequest(new ServiceResponse<object>
+                {
+                    Success = false,
+                    Message = "Offer ID is required."
+                });
+            }
+
+          
+            var response = await _flightBookingService.GetFlightDetailsAsync(offerId);
+
+            
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+         
+            return Ok(response);
+        }
     }
+
 }
+
