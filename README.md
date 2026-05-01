@@ -81,7 +81,7 @@ dotnet run --project Travio.API
 
 ## 🔌 API Documentation
 
-Once the application is running, navigate to `/swagger` in your browser to explore the fully documented API endpoints.
+Once the application is running, navigate to `/openApi` in your browser to explore the fully documented API endpoints.
 
 ### Core Modules:
 * **`Auth`**: Endpoints for user registration, login, and token generation.
