@@ -20,7 +20,7 @@ Travio is a smart travel recommendation, booking, and social platform. This repo
 
 This project strictly adheres to **Clean Architecture** (Onion Architecture) and **Domain-Driven Design (DDD)** principles to ensure high scalability, maintainability, and a clear separation of concerns.
 
-* **Framework:** ASP.NET Core 8 Web API
+* **Framework:** ASP.NET Core 9 Web API
 * **Language:** C# 12
 * **Architecture:** Clean Architecture
 * **Design Patterns:** Repository Pattern for data access abstraction
