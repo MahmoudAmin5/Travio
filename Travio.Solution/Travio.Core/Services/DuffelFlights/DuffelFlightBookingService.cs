@@ -195,21 +195,24 @@ namespace Travio.Core.Services.DuffelFlights
                     ImageUrl = route.ImageUrl,
                     AirlineLogoUrl = cheapestFlight.AirlineLogoUrl,
 
-                  
+
                     Origin = "CAI",
-                    OriginCityName = "Cairo", 
-                    
+                    OriginCityName = "Cairo",
+
                     Destination = route.Dest,
-                    DestinationCityName = route.Name, 
+                    DestinationCityName = route.Name,
 
-                    
+
+
                     Duration = cheapestFlight.TotalDuration ?? "N/A",
+                    DepartureTime = firstSegment.DepartureTime,
+                    ArrivalTime = firstSegment.ArrivalTime,
 
-                    FlightNumber = firstSegment?.FlightNumber ?? "Unknown", 
-                    
-         
+                    FlightNumber = firstSegment?.FlightNumber ?? "Unknown",
+
+
                     Stops = cheapestFlight.Segments != null ? Math.Max(0, cheapestFlight.Segments.Count - 1) : 0,
-                   
+
 
                     CheapestPrice = cheapestFlight.TotalPrice,
                     Currency = cheapestFlight.Currency
