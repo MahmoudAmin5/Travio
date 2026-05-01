@@ -41,7 +41,7 @@ Travio.Backend/
 ## 🚀 Getting Started
 
 ### Prerequisites
-* .NET 8 SDK
+* .NET 9 SDK
 * SQL Server
 * External AI Service running locally or accessible via URL (for the smart itinerary feature).
 
@@ -66,7 +66,7 @@ Update the `appsettings.json` in the `Travio.API` project with your database con
 },
 "AiService": {
   "BaseUrl": "<AI_SERVER_URL>"
-}
+},
 ```
 
 **3. Apply Database Migrations:**
