@@ -10,6 +10,7 @@ using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.DTOs.DuffelFlightsDTOs;
 using Travio.Core.DTOs.GenericResponse;
 using System.Text.Json;
+using Travio.Core.DTOs.DuffelFlightsDTOs.Requests;
 
 namespace Travio.Core.Services.DuffelFlights
 {
@@ -360,6 +361,87 @@ namespace Travio.Core.Services.DuffelFlights
                 {
                     Success = false,
                     Message = $"Error parsing flight details: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<ServiceResponse<FlightOrderResponseDto>> CreateOrderAsync(FlightOrderRequestDto request)
+        {
+            try
+            {
+               
+                var duffelPassengers = request.Passengers.Select(p => new
+                {
+                    type = "adult", 
+                    title = p.Title.ToLower(),
+                    given_name = p.GivenName,
+                    family_name = p.FamilyName,
+                    born_on = p.BornOn,
+                    email = p.Email,
+                    phone_number = p.PhoneNumber,
+                    gender = p.Gender.ToLower()
+                }).ToList();
+
+                var payload = new
+                {
+                    data = new
+                    {
+                        type = "instant",
+                        selected_offers = new[] { request.OfferId },
+                        passengers = duffelPassengers
+                    }
+                };
+
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+
+                var jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+               
+                var response = await _httpClient.PostAsync("air/orders", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                   
+                    return new ServiceResponse<FlightOrderResponseDto>
+                    {
+                        Success = false,
+                        Message = $"Failed to create order: {responseString}"
+                    };
+                }
+
+               
+                using var jsonDoc = JsonDocument.Parse(responseString);
+                var data = jsonDoc.RootElement.GetProperty("data");
+
+               
+                string pnr = data.TryGetProperty("booking_reference", out var bookingRef) && bookingRef.ValueKind != JsonValueKind.Null
+                    ? bookingRef.GetString()
+                    : "PENDING";
+
+                return new ServiceResponse<FlightOrderResponseDto>
+                {
+                    Success = true,
+                    Message = "Flight booked successfully!",
+                    Data = new FlightOrderResponseDto
+                    {
+                        DuffelOrderId = data.GetProperty("id").GetString(),
+                        PNR = pnr,
+                        BookingStatus = data.GetProperty("booking_status").GetString() 
+
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<FlightOrderResponseDto>
+                {
+                    Success = false,
+                    Message = $"An error occurred while booking the flight: {ex.Message}"
                 };
             }
         }
