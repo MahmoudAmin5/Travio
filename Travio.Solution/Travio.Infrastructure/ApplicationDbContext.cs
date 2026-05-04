@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Community;
 using Travio.Core.Domain.Entities.Destinations;
+using Travio.Core.Domain.Entities.Duffel;
 using Travio.Infrastructure.Configrations.UserMangement;
 
 namespace Travio.Infrastructure
@@ -34,5 +35,6 @@ namespace Travio.Infrastructure
         public DbSet<Comment> Comments { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
         public DbSet<PostImage> PostImages { get; set; }
+        public DbSet<FlightBooking> FlightBookings { get; set; }
     }
 }

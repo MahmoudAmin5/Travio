@@ -18,6 +18,8 @@ namespace Travio.Core.DTOs.DuffelFlightsDTOs
 
         public string Destination { get; set; }
         public string DestinationCityName { get; set; }
+        public DateTime DepartureTime { get; set; }
+        public DateTime ArrivalTime { get; set; }
 
         public string Duration { get; set; }
         public string FlightNumber { get; set; }

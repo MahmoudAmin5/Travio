@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.RateLimiting;
 using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Community;
@@ -107,7 +108,7 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = new Uri("https://api.duffel.com/");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", duffelToken);
 
-            // THIS IS THE MAGIC FIX: Forcing the modern V2 API version!
+          
             client.DefaultRequestHeaders.Add("Duffel-Version", "v2");
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
@@ -116,7 +117,7 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = new Uri("https://api.duffel.com/");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", duffelToken);
 
-            // THIS IS THE MAGIC FIX: Forcing the modern V2 API version!
+            
             client.DefaultRequestHeaders.Add("Duffel-Version", "v2");
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
@@ -125,7 +126,39 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = new Uri("http://127.0.0.1:8000/");
             client.Timeout = TimeSpan.FromMinutes(3);
         });
-        // Validators
+        services.AddRateLimiter(options =>
+        {
+          
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+          
+            options.OnRejected = async (context, token) =>
+            {
+                context.HttpContext.Response.ContentType = "application/json";
+                await context.HttpContext.Response.WriteAsync(
+                    "{\"success\": false, \"message\": \"Too many requests. Please slow down.\"}", token);
+            };
+
+         
+            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+            {
+              
+                var userIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
+
+                return RateLimitPartition.GetSlidingWindowLimiter(
+                    partitionKey: userIp,
+                    factory: partition => new SlidingWindowRateLimiterOptions
+                    {
+                        PermitLimit = 30,
+                        Window = TimeSpan.FromMinutes(1),
+                        SegmentsPerWindow = 6,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0,
+                        AutoReplenishment = true
+                    });
+            });
+        });
+
         services.AddValidatorsFromAssembly(typeof(CreatePostValidator).Assembly);
 
         return services;
