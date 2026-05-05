@@ -15,5 +15,6 @@ namespace Travio.Core.Contracts.Services.DuffelFlights
         Task<ServiceResponse<List<TopFlightOfferDto>>> GetTopOffersAsync();
         Task<ServiceResponse<FlightDetailsDto>> GetFlightDetailsAsync(string offerId);
         Task<ServiceResponse<FlightOrderResponseDto>> CreateOrderAsync(FlightOrderRequestDto request);
+        Task<ServiceResponse<CheckoutResponseDto>> CreateCheckoutSessionAsync(CheckoutRequestDto request);
     }
 }

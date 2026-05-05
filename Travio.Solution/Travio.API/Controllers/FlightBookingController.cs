@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.DTOs.DuffelFlightsDTOs;
+using Travio.Core.DTOs.DuffelFlightsDTOs.Requests;
 using Travio.Core.DTOs.GenericResponse;
+using Travio.Core.Helpers;
 
 namespace Travio.API.Controllers
 {
@@ -12,6 +15,7 @@ namespace Travio.API.Controllers
     public class FlightBookingController : ControllerBase
     {
         private readonly IDuffelFlightBookingService _flightBookingService;
+       
 
         public FlightBookingController(IDuffelFlightBookingService flightBookingService)
         {
@@ -80,7 +84,34 @@ namespace Travio.API.Controllers
          
             return Ok(response);
         }
-    }
+        [Authorize]
+        [HttpPost("checkout")]
+        [ProducesResponseType(typeof(ServiceResponse<CheckoutResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ServiceResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Checkout([FromBody] CheckoutRequestAPI request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.OfferId))
+            {
+                return BadRequest(new { success = false, message = "Invalid checkout request." });
+            }
+            var userId = User.GetUserId();
+            var serviceRequest = new CheckoutRequestDto
+            {
+                UserId = userId,
+                OfferId = request.OfferId,
+                Passengers = request.Passengers
+            };
+            var response = await _flightBookingService.CreateCheckoutSessionAsync(serviceRequest);
 
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+    }
 }
+
+
 

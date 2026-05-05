@@ -28,8 +28,11 @@ namespace Travio.Core.Domain.Entities.Duffel
 
        
         public FlightBookingStatus BookingStatus { get; set; } = FlightBookingStatus.PendingPayment;
+        public string PassengersJson { get; set; }
+        public byte[] RowVersion { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
+
     }
 }
 

@@ -25,7 +25,8 @@ namespace Travio.Infrastructure.Configrations.Booking
             builder.Property(e => e.BookingStatus)
                    .HasConversion<string>()
                    .HasMaxLength(50);
-
+            builder.Property(e => e.RowVersion)
+           .IsRowVersion();
 
         }
     }

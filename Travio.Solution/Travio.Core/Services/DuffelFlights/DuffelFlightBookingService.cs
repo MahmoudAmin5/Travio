@@ -1,6 +1,19 @@
+﻿using Duffel.ApiClient;
+using Duffel.ApiClient.Models;
+using Duffel.ApiClient.Models.Requests;
+using Stripe;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 ﻿using System.Text;
 using System.Text.Json;
 using Travio.Core.Contracts.Services.DuffelFlights;
+using Travio.Core.Domain.Entities.Duffel;
+using Travio.Core.Domain.Enums.Booking;
+using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.DTOs.DuffelFlightsDTOs;
 using Travio.Core.DTOs.DuffelFlightsDTOs.Requests;
 using Travio.Core.DTOs.GenericResponse;
@@ -10,11 +23,15 @@ namespace Travio.Core.Services.DuffelFlights
     public class DuffelFlightBookingService : IDuffelFlightBookingService
     {
         private readonly HttpClient _httpClient;
+        private readonly IGenericRepository<FlightBooking> _bookingRepo;
+        private readonly IDuffelFlightBookingService _flightService;
 
         // Inject the standard HttpClient we just configured in Program.cs
-        public DuffelFlightBookingService(HttpClient httpClient)
+        public DuffelFlightBookingService(HttpClient httpClient, IGenericRepository<FlightBooking> bookingRepo)
         {
             _httpClient = httpClient;
+            _bookingRepo = bookingRepo;
+          
         }
 
         public async Task<ServiceResponse<List<FlightSearchResponseDto>>> SearchFlightsAsync(FlightSearchRequestDto request)
@@ -361,10 +378,10 @@ namespace Travio.Core.Services.DuffelFlights
         {
             try
             {
-               
+
                 var duffelPassengers = request.Passengers.Select(p => new
                 {
-                    type = "adult", 
+                    type = "adult",
                     title = p.Title.ToLower(),
                     given_name = p.GivenName,
                     family_name = p.FamilyName,
@@ -392,13 +409,13 @@ namespace Travio.Core.Services.DuffelFlights
                 var jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-               
+
                 var response = await _httpClient.PostAsync("air/orders", content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                   
+
                     return new ServiceResponse<FlightOrderResponseDto>
                     {
                         Success = false,
@@ -406,11 +423,11 @@ namespace Travio.Core.Services.DuffelFlights
                     };
                 }
 
-               
+
                 using var jsonDoc = JsonDocument.Parse(responseString);
                 var data = jsonDoc.RootElement.GetProperty("data");
 
-               
+
                 string pnr = data.TryGetProperty("booking_reference", out var bookingRef) && bookingRef.ValueKind != JsonValueKind.Null
                     ? bookingRef.GetString()
                     : "PENDING";
@@ -423,7 +440,7 @@ namespace Travio.Core.Services.DuffelFlights
                     {
                         DuffelOrderId = data.GetProperty("id").GetString(),
                         PNR = pnr,
-                        BookingStatus = data.GetProperty("booking_status").GetString() 
+                        BookingStatus = data.GetProperty("booking_status").GetString()
 
                     }
                 };
@@ -434,6 +451,79 @@ namespace Travio.Core.Services.DuffelFlights
                 {
                     Success = false,
                     Message = $"An error occurred while booking the flight: {ex.Message}"
+                };
+            }
+        }
+        public async Task<ServiceResponse<CheckoutResponseDto>> CreateCheckoutSessionAsync(CheckoutRequestDto request)
+        {
+            try
+            {
+
+                var offerResponse = await GetFlightDetailsAsync(request.OfferId); ;
+
+                if (!offerResponse.Success || offerResponse.Data == null)
+                {
+                    return new ServiceResponse<CheckoutResponseDto>
+                    {
+                        Success = false,
+                        Message = "Invalid Offer ID or the flight has already sold out."
+                    };
+                }
+
+                // Extract the authentic, server-validated price
+                decimal realPrice = offerResponse.Data.TotalPrice;
+                string realCurrency = offerResponse.Data.Currency;
+
+                // 2. Stripe requires the price in the SMALLEST currency unit (cents)
+                long amountInCents = (long)(realPrice * 100);
+
+                // 3. Tell Stripe to prepare for a payment
+                var options = new PaymentIntentCreateOptions
+                {
+                    Amount = amountInCents,
+                    Currency = realCurrency.ToLower(),
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "OfferId", request.OfferId },
+                        { "UserId", request.UserId }
+                    }
+                };
+
+                var service = new PaymentIntentService();
+                PaymentIntent intent = await service.CreateAsync(options);
+
+                // 4. Save the Pending Booking to your SQL Database using Ardalis
+                var flightBooking = new FlightBooking
+                {
+                    UserId = request.UserId,
+                    OfferId = request.OfferId,
+                    TotalPrice = realPrice, // Save the REAL price
+                    Currency = realCurrency, // Save the REAL currency
+                    StripePaymentIntentId = intent.Id,
+                    BookingStatus = FlightBookingStatus.PendingPayment,
+                    PNR = "PEND_" + Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
+                    PassengersJson = JsonSerializer.Serialize(request.Passengers)
+                };
+
+                await _bookingRepo.AddAsync(flightBooking);
+
+                return new ServiceResponse<CheckoutResponseDto>
+                {
+                    Success = true,
+                    Message = "Checkout session created successfully.",
+                    Data = new CheckoutResponseDto
+                    {
+                        ClientSecret = intent.ClientSecret,
+                        StripeIntentId = intent.Id
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<CheckoutResponseDto>
+                {
+                    Success = false,
+                    Message = $"Payment setup failed: {ex.Message}"
                 };
             }
         }
