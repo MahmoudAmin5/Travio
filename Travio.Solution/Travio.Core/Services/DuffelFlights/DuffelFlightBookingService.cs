@@ -334,9 +334,11 @@ namespace Travio.Core.Services.DuffelFlights
                         AircraftName = aircraftName,
 
                         OriginAirport = segment.GetProperty("origin").GetProperty("iata_code").GetString(),
+                        OriginCityName = segment.GetProperty("origin").GetProperty("city_name").GetString(),
                         DepartureTime = segment.GetProperty("departing_at").GetString(),
 
                         DestinationAirport = segment.GetProperty("destination").GetProperty("iata_code").GetString(),
+                        DestinationCityName = segment.GetProperty("destination").GetProperty("city_name").GetString(),
                         ArrivalTime = segment.GetProperty("arriving_at").GetString(),
 
                         SegmentDuration = segment.GetProperty("duration").GetString()
@@ -351,6 +353,9 @@ namespace Travio.Core.Services.DuffelFlights
                     TaxAmount = decimal.Parse(data.GetProperty("tax_amount").GetString()),
                     Currency = data.GetProperty("total_currency").GetString(),
                     TotalDuration = firstSlice.GetProperty("duration").GetString(),
+                    OriginCityName = firstSlice.GetProperty("origin").GetProperty("city_name").GetString(),
+
+                    DestinationCityName = firstSlice.GetProperty("destination").GetProperty("city_name").GetString(),
                     CheckedBags = checkedBags,
                     IsRefundable = isRefundable,
                     RefundPenaltyAmount = refundPenalty,
