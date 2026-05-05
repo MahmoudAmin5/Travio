@@ -18,6 +18,7 @@ using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.Contracts.Services.DuffelHotels;
 using Travio.Core.Contracts.Services.Payment;
 using Travio.Core.Contracts.Services.Survey;
+using Travio.Core.Contracts.Services.TripPlaner;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.Services.Auth;
@@ -27,6 +28,7 @@ using Travio.Core.Services.DuffelFlights;
 using Travio.Core.Services.DuffelHotels;
 using Travio.Core.Services.Payment;
 using Travio.Core.Services.Survey;
+using Travio.Core.Services.TripPlaner;
 using Travio.Core.Setting;
 using Travio.Core.Validators;
 using Travio.Infrastructure;
@@ -122,6 +124,11 @@ public static class ServiceCollectionExtensions
             
             client.DefaultRequestHeaders.Add("Duffel-Version", "v2");
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+        services.AddHttpClient<ITripPlanerService, TripPlanerService>(client =>
+        {
+            client.BaseAddress = new Uri("http://127.0.0.1:8000/");
+            client.Timeout = TimeSpan.FromMinutes(3);
         });
         services.AddRateLimiter(options =>
         {

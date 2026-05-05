@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+﻿using System.Text;
+using System.Text.Json;
 using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.Domain.Entities.Duffel;
 using Travio.Core.Domain.Enums.Booking;
@@ -210,7 +212,6 @@ namespace Travio.Core.Services.DuffelFlights
 
                             Destination = route.Dest,
                             DestinationCityName = route.Name,
-
 
 
                             Duration = cheapestFlight.TotalDuration ?? "N/A",
