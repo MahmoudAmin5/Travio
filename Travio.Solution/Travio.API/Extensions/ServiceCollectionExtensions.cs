@@ -16,6 +16,7 @@ using Travio.Core.Contracts.Services.Community;
 using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.Contracts.Services.DuffelHotels;
+using Travio.Core.Contracts.Services.Payment;
 using Travio.Core.Contracts.Services.Survey;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -24,6 +25,7 @@ using Travio.Core.Services.Community;
 using Travio.Core.Services.Destinations;
 using Travio.Core.Services.DuffelFlights;
 using Travio.Core.Services.DuffelHotels;
+using Travio.Core.Services.Payment;
 using Travio.Core.Services.Survey;
 using Travio.Core.Setting;
 using Travio.Core.Validators;
@@ -100,6 +102,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserFavoriteService, UserFavoriteService>();
         services.AddTransient<IGoogleAuthService, GoogleAuthService>();
         services.AddTransient<IEmailSender, MailKitEmailSender>();
+        services.AddScoped<IStripeWebhookService, StripeWebhookService>();
+
         var duffelToken = configuration["Duffel:AccessToken"];
         services.AddHttpClient<IDuffelFlightBookingService, DuffelFlightBookingService>(client =>
         {
@@ -151,6 +155,8 @@ public static class ServiceCollectionExtensions
                     });
             });
         });
+        var stripeKey = configuration["Stripe:SecretKey"];
+        Stripe.StripeConfiguration.ApiKey = stripeKey;
 
         services.AddValidatorsFromAssembly(typeof(CreatePostValidator).Assembly);
 
