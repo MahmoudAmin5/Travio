@@ -166,6 +166,7 @@ public static class ServiceCollectionExtensions
         Stripe.StripeConfiguration.ApiKey = stripeKey;
 
         services.AddValidatorsFromAssembly(typeof(CreatePostValidator).Assembly);
+        services.AddSignalR();
 
         return services;
     }
