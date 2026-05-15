@@ -160,6 +160,7 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddValidatorsFromAssembly(typeof(CreatePostValidator).Assembly);
+        services.AddSignalR();
 
         return services;
     }
