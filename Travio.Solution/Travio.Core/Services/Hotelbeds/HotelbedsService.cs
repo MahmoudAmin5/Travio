@@ -106,18 +106,18 @@ namespace Travio.Core.Services.Hotelbeds
                     return new ServiceResponse<HotelAvailabilityResponseDto>("Either a destination code or hotel codes must be provided.");
                 if (!string.IsNullOrWhiteSpace(request.DestinationName))
                 {
-                    var spec = new DestinationByNameSpec(request.DestinationName);
+                    //var spec = new DestinationByNameSpec(request.DestinationName);
 
-                    // 2. Query the database using the Repository
-                    var destinationMatch = await _destinationRepository.FirstOrDefaultAsync(spec);
+                    //// 2. Query the database using the Repository
+                    //var destinationMatch = await _destinationRepository.FirstOrDefaultAsync(spec);
 
-                    if (destinationMatch != null && !string.IsNullOrEmpty(destinationMatch.Code))
-                    {
-                        request.DestinationCode = destinationMatch.Code; // Success! We have the code.
-                    }
+                    //if (destinationMatch != null && !string.IsNullOrEmpty(destinationMatch.Code))
+                    //{
+                    //    request.DestinationCode = destinationMatch.Code; // Success! We have the code.
+                    //}
 
-                    // 2. THE FALLBACK: Local DB failed. Call an external geocoder.
-                    _logger.LogWarning("Destination '{Name}' not in local DB. Falling back to Geocoder.", request.DestinationName);
+                    //// 2. THE FALLBACK: Local DB failed. Call an external geocoder.
+                    //_logger.LogWarning("Destination '{Name}' not in local DB. Falling back to Geocoder.", request.DestinationName);
 
                         var coordinates = await _geocodingService.GetCoordinatesAsync(request.DestinationName);
 
