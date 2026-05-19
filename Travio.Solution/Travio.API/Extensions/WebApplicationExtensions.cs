@@ -2,6 +2,7 @@ using Hangfire;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Travio.API.Hubs;
 using Travio.API.Middleware;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Infrastructure;
@@ -44,12 +45,13 @@ public static class WebApplicationExtensions
             app.MapOpenApi();
             app.MapScalarApiReference();
         }
-       // app.UseRateLimiter();
+        //app.UseRateLimiter();
         app.UseStaticFiles();
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+        app.MapHub<TripPlanerHub>("/hubs/trip-planer");
 
         return app;
     }
