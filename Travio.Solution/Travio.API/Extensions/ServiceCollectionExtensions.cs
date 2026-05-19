@@ -13,9 +13,12 @@ using System.Threading.RateLimiting;
 using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Community;
+using Travio.Core.Contracts.Services.CurruncyExchange;
 using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.Contracts.Services.DuffelHotels;
+using Travio.Core.Contracts.Services.GeocodingService;
+using Travio.Core.Contracts.Services.Hotelbeds;
 using Travio.Core.Contracts.Services.Payment;
 using Travio.Core.Contracts.Services.Survey;
 using Travio.Core.Contracts.Services.TripPlaner;
@@ -26,7 +29,10 @@ using Travio.Core.Services.Community;
 using Travio.Core.Services.Destinations;
 using Travio.Core.Services.DuffelFlights;
 using Travio.Core.Services.DuffelHotels;
+using Travio.Core.Services.Hotelbeds;
 using Travio.Core.Services.Payment;
+using Travio.Core.Services.Shared.CurrencyExchange;
+using Travio.Core.Services.Shared.GeocodingService;
 using Travio.Core.Services.Survey;
 using Travio.Core.Services.TripPlaner;
 using Travio.Core.Setting;
@@ -130,6 +136,9 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = new Uri("http://127.0.0.1:8000/");
             client.Timeout = TimeSpan.FromMinutes(3);
         });
+       services.AddMemoryCache();
+        services.AddHttpClient<ICurrencyExchangeService, CurrencyExchangeService>();
+        services.AddHttpClient<IGeocodingService, NominatimGeocodingService>();
         services.AddRateLimiter(options =>
         {
           
@@ -167,6 +176,43 @@ public static class ServiceCollectionExtensions
 
         services.AddValidatorsFromAssembly(typeof(CreatePostValidator).Assembly);
         services.AddSignalR();
+
+        // ── Hotelbeds APITUDE API Integration ──────────────────────────────
+        // 0. Add in-memory cache for Content API responses (images/descriptions rarely change)
+        services.AddMemoryCache();
+
+        // Register Background Job for Static Data Sync
+        services.AddHostedService<Travio.Infrastructure.Jobs.HotelbedsStaticDataSyncJob>();
+
+        // 1. Bind HotelbedsSettings from appsettings.json via the Options Pattern
+        services.Configure<HotelbedsSettings>(configuration.GetSection("HotelbedsSettings"));
+
+        // 2. Register the custom auth handler as transient (new instance per request)
+        services.AddTransient<HotelbedsAuthHandler>();
+
+        // 3. Register the typed HttpClient with base URL and the auth handler attached.
+        //    The HotelbedsAuthHandler intercepts every request to inject Api-key and X-Signature headers.
+        services.AddHttpClient<IHotelbedsService, HotelbedsService>(client =>
+        {
+            var baseUrl = configuration["HotelbedsSettings:BaseUrl"]
+                ?? "https://api.test.hotelbeds.com/hotel-api/1.0/";
+            client.BaseAddress = new Uri(baseUrl);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            client.Timeout = TimeSpan.FromSeconds(60);
+        })
+        .AddHttpMessageHandler<HotelbedsAuthHandler>();
+
+        services.AddHttpClient("HotelbedsContentApi", client =>
+        {
+            var baseUrl = configuration["HotelbedsSettings:ContentApiBaseUrl"]
+                ?? "https://api.test.hotelbeds.com/hotel-content-api/1.0/";
+            client.BaseAddress = new Uri(baseUrl);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            client.Timeout = TimeSpan.FromSeconds(60);
+        })
+        .AddHttpMessageHandler<HotelbedsAuthHandler>();
 
         return services;
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +30,7 @@ namespace Travio.Core.Domain.Entities.Duffel
        
         public FlightBookingStatus BookingStatus { get; set; } = FlightBookingStatus.PendingPayment;
         public string PassengersJson { get; set; }
+        [Timestamp]
         public byte[] RowVersion { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

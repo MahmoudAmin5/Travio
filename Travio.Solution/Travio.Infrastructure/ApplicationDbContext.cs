@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Entities.Community;
 using Travio.Core.Domain.Entities.Destinations;
 using Travio.Core.Domain.Entities.Duffel;
+using Travio.Core.Domain.Entities.Hotelbeds;
 using Travio.Infrastructure.Configrations.UserMangement;
 
 namespace Travio.Infrastructure
@@ -36,5 +37,8 @@ namespace Travio.Infrastructure
         public DbSet<PostLike> PostLikes { get; set; }
         public DbSet<PostImage> PostImages { get; set; }
         public DbSet<FlightBooking> FlightBookings { get; set; }
+        public DbSet<HotelBooking> HotelBookings { get; set; }
+        public DbSet<HotelDestination> HotelDestinations { get; set; }
+        public DbSet<HotelFacility> HotelFacilities { get; set; }
     }
 }
