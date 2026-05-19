@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +8,6 @@ namespace Travio.Core.Contracts.Services.Payment
 {
     public interface IStripeWebhookService
     {
-        Task<bool> ProcessPaymentSuccessAsync(string stripeIntentId);
+        Task<bool> ProcessPaymentSuccessAsync(Stripe.PaymentIntent paymentIntent);
     }
 }

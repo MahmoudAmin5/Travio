@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using Travio.Core.Services.Payment;
@@ -40,7 +40,7 @@ namespace Travio.API.Controllers
                     var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
 
                     // 3. Hand it to the brain
-                    await _webhookService.ProcessPaymentSuccessAsync(paymentIntent.Id);
+                    await _webhookService.ProcessPaymentSuccessAsync(paymentIntent);
                 }
 
                 // 4. Always return 200 OK fast so Stripe knows you received it
