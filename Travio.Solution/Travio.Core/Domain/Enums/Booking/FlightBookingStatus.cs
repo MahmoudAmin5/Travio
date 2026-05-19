@@ -10,6 +10,8 @@ namespace Travio.Core.Domain.Enums.Booking
     {
         PendingPayment,
         Confirmed,
+        RefundRequest,
+        ProcessingWebhook,
         Failed,
         Cancelled
     }
