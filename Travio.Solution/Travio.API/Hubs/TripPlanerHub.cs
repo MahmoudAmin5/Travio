@@ -1,7 +1,6 @@
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
 using Travio.Core.Contracts.Services.TripPlaner;
 using Travio.Core.Domain.Entities.TripPlaner;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -9,7 +8,7 @@ using Travio.Core.DTOs.TripPlanerDTOs;
 
 namespace Travio.API.Hubs;
 
-[Authorize]
+//[Authorize]
 public class TripPlanerHub : Hub
 {
     private readonly ITripPlanerService _tripPlanerService;
