@@ -5,6 +5,7 @@ using Travio.Core.Domain.Entities.Community;
 using Travio.Core.Domain.Entities.Destinations;
 using Travio.Core.Domain.Entities.Duffel;
 using Travio.Core.Domain.Entities.Hotelbeds;
+using Travio.Core.Domain.Entities.TripPlaner;
 using Travio.Infrastructure.Configrations.UserMangement;
 
 namespace Travio.Infrastructure
@@ -40,5 +41,14 @@ namespace Travio.Infrastructure
         public DbSet<HotelBooking> HotelBookings { get; set; }
         public DbSet<HotelDestination> HotelDestinations { get; set; }
         public DbSet<HotelFacility> HotelFacilities { get; set; }
+
+        // Chat & Trip Persistence
+        public DbSet<ChatSession> ChatSessions { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<SavedTrip> SavedTrips { get; set; }
+        public DbSet<SavedTripDay> SavedTripDays { get; set; }
+        public DbSet<SavedTripActivity> SavedTripActivities { get; set; }
+        public DbSet<SavedTripHotel> SavedTripHotels { get; set; }
     }
 }
+
