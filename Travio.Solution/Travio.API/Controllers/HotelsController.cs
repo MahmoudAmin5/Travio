@@ -89,7 +89,7 @@ namespace Travio.API.Controllers
 
         [Authorize]
         [HttpPost("checkout")]
-        [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ServiceResponse<CheckoutResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Checkout([FromBody] HotelBookingRequestDto request, CancellationToken ct)
