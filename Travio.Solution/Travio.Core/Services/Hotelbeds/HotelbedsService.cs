@@ -14,6 +14,7 @@ using Travio.Core.Domain.Specifications.Hotels;
 using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.DTOs.HotelbedsDTOs.Requests;
 using Travio.Core.DTOs.HotelbedsDTOs.Responses;
+using Travio.Core.Helpers;
 using Travio.Core.Services.Hotelbeds.ApiModels;
 using Travio.Core.Setting;
 
@@ -119,19 +120,19 @@ namespace Travio.Core.Services.Hotelbeds
                     //// 2. THE FALLBACK: Local DB failed. Call an external geocoder.
                     //_logger.LogWarning("Destination '{Name}' not in local DB. Falling back to Geocoder.", request.DestinationName);
 
-                        var coordinates = await _geocodingService.GetCoordinatesAsync(request.DestinationName);
+                    var coordinates = await _geocodingService.GetCoordinatesAsync(request.DestinationName);
 
-                        if (coordinates != null)
-                        {
-                            request.Latitude = coordinates.Value.Lat;
-                            request.Longitude = coordinates.Value.Lng;
-                            request.RadiusInKm = 20; // Search a 20km circle around this point
-                        }
-                        else
-                        {
-                            return new ServiceResponse<HotelAvailabilityResponseDto>("We couldn't locate this destination on the map.");
-                        }
-        
+                    if (coordinates != null)
+                    {
+                        request.Latitude = coordinates.Value.Lat;
+                        request.Longitude = coordinates.Value.Lng;
+                        request.RadiusInKm = 20; // Search a 20km circle around this point
+                    }
+                    else
+                    {
+                        return new ServiceResponse<HotelAvailabilityResponseDto>("We couldn't locate this destination on the map.");
+                    }
+
                 }
                 //var distcode = _destinationRepository.FirstOrDefaultAsync();
                 var apiRequest = BuildAvailabilityRequest(request);
@@ -148,9 +149,9 @@ namespace Travio.Core.Services.Hotelbeds
                     return new ServiceResponse<HotelAvailabilityResponseDto>(
                         new HotelAvailabilityResponseDto { Hotels = new(), TotalHotels = 0 },
                         "No hotels found matching your search criteria.");
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR","USD", cancellationToken);
+                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
                 var responseDto = MapAvailabilityResponse(apiResponse, exchangeRate);
-                
+
 
                 // Enrich with images from Content API
                 var hotelCodes = responseDto.Hotels.Select(h => h.Code).ToList();
@@ -187,20 +188,25 @@ namespace Travio.Core.Services.Hotelbeds
                 if (hotelCode <= 0)
                     return new ServiceResponse<HotelDetailResponseDto>("A valid hotel code is required.");
 
-               
+
                 var contentMap = await GetHotelContentBatchAsync(new List<int> { hotelCode }, cancellationToken);
                 if (!contentMap.TryGetValue(hotelCode, out var content))
                     return new ServiceResponse<HotelDetailResponseDto>("Hotel not found in Hotelbeds.");
 
-               
+                string rawCategoryCode = content.CategoryCode ?? string.Empty;
+
+                // 2. Instantly resolve it using your new static helper!
+                string resolvedCategoryName = HotelbedsCategoryMapper.GetCategoryName(rawCategoryCode);
                 var dto = new HotelDetailResponseDto
                 {
                     Code = content.Code,
                     Name = content.Name?.Content ?? string.Empty,
                     Description = content.Description?.Content ?? string.Empty,
-                    CategoryCode = content.Category?.Code ?? string.Empty,
-                    CategoryName = content.Category?.Description?.Content ?? string.Empty,
-                    AccommodationType = content.AccommodationType?.TypeDescription ?? string.Empty,
+                    CategoryCode = rawCategoryCode,
+                    CategoryName = resolvedCategoryName,
+                    AccommodationType = HotelbedsAccommodationMapper.GetName(
+        content.AccommodationType?.Code,
+        content.AccommodationType?.TypeDescription),
                     Address = content.Address?.Content ?? string.Empty,
                     PostalCode = content.PostalCode ?? string.Empty,
                     City = content.City?.Content ?? string.Empty,
@@ -339,19 +345,19 @@ namespace Travio.Core.Services.Hotelbeds
                 if (!httpResponse.IsSuccessStatusCode)
                 {
                     var err = await ExtractErrorMessageAsync(httpResponse, cancellationToken);
-                    await PersistBookingRecordAsync(userId, request, null, HotelBookingStatus.PaymentFailed,exchangeRate, cancellationToken);
+                    await PersistBookingRecordAsync(userId, request, null, HotelBookingStatus.PaymentFailed, exchangeRate, cancellationToken);
                     return new ServiceResponse<HotelBookingResponseDto>($"Hotelbeds booking failed: {err}");
                 }
 
                 var apiResponse = await httpResponse.Content.ReadFromJsonAsync<HotelbedsBookingResponse>(JsonOptions, cancellationToken);
                 if (apiResponse?.Booking is null)
                 {
-                    await PersistBookingRecordAsync(userId, request, null, HotelBookingStatus.PaymentFailed,exchangeRate, cancellationToken);
+                    await PersistBookingRecordAsync(userId, request, null, HotelBookingStatus.PaymentFailed, exchangeRate, cancellationToken);
                     return new ServiceResponse<HotelBookingResponseDto>("Booking response was empty.");
                 }
 
-                await PersistBookingRecordAsync(userId, request, apiResponse.Booking, HotelBookingStatus.Confirmed,exchangeRate, cancellationToken);
-                
+                await PersistBookingRecordAsync(userId, request, apiResponse.Booking, HotelBookingStatus.Confirmed, exchangeRate, cancellationToken);
+
                 var responseDto = MapBookingResponse(apiResponse, exchangeRate);
                 return new ServiceResponse<HotelBookingResponseDto>(responseDto, $"Hotel booked! Reference: {responseDto.BookingReference}");
             }
