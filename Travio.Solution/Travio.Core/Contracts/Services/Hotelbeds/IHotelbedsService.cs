@@ -68,9 +68,11 @@ namespace Travio.Core.Contracts.Services.Hotelbeds
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Initializes checkout, creates DB record as PendingPayment, and returns Stripe ClientSecret.
+        /// Initializes checkout: validates the rate via CheckRate, creates a PendingPayment DB record
+        /// with serialized guest data, and creates a Stripe PaymentIntent with the converted/marked-up price.
+        /// Returns the Stripe ClientSecret + BookingId + validated price.
         /// </summary>
-        Task<ServiceResponse<string>> InitCheckoutAsync(
+        Task<ServiceResponse<CheckoutResponseDto>> InitCheckoutAsync(
             HotelBookingRequestDto request,
             string userId,
             CancellationToken cancellationToken = default);
