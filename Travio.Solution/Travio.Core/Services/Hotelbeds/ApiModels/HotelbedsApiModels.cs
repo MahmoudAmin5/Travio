@@ -458,6 +458,25 @@ namespace Travio.Core.Services.Hotelbeds.ApiModels
 
         [JsonPropertyName("description")]
         public string? Description { get; set; }
+
+        [JsonPropertyName("roomFacilities")]
+        public List<HotelbedsRoomFacility>? RoomFacilities { get; set; }
+    }
+
+    /// <summary>Facility reference inside a Content API room object.</summary>
+    public class HotelbedsRoomFacility
+    {
+        [JsonPropertyName("facilityCode")]
+        public int FacilityCode { get; set; }
+
+        [JsonPropertyName("facilityGroupCode")]
+        public int FacilityGroupCode { get; set; }
+
+        [JsonPropertyName("indYesOrNo")]
+        public bool? IndYesOrNo { get; set; }
+
+        [JsonPropertyName("number")]
+        public int? Number { get; set; }
     }
 
     /// <summary>Generic content value wrapper used by Hotelbeds Content API.</summary>
