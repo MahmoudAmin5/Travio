@@ -148,7 +148,7 @@ namespace Travio.Core.Services.Hotelbeds
                     return new ServiceResponse<HotelAvailabilityResponseDto>(
                         new HotelAvailabilityResponseDto { Hotels = new(), TotalHotels = 0 },
                         "No hotels found matching your search criteria.");
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR","EGP", cancellationToken);
+                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR","USD", cancellationToken);
                 var responseDto = MapAvailabilityResponse(apiResponse, exchangeRate);
                 
 
@@ -244,7 +244,7 @@ namespace Travio.Core.Services.Hotelbeds
                             }
                         }
                     };
-                    var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "EGP", cancellationToken);
+                    var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
                     var apiRequest = BuildAvailabilityRequest(availRequest);
                     var httpResponse = await _httpClient.PostAsJsonAsync("hotels", apiRequest, JsonOptions, cancellationToken);
                     if (httpResponse.IsSuccessStatusCode)
@@ -253,10 +253,12 @@ namespace Travio.Core.Services.Hotelbeds
                         var hotelAvail = availResponse?.Hotels?.Hotels?.FirstOrDefault();
                         if (hotelAvail is not null)
                         {
-                            dto.Rooms = MapRooms(hotelAvail.Rooms, content.Rooms, content.Images,exchangeRate);
+                            // Load facility lookup for room-level facility resolution
+                            var facilityLookup = await GetFacilityLookupAsync(cancellationToken);
+                            dto.Rooms = MapRooms(hotelAvail.Rooms, content.Rooms, content.Images, exchangeRate, facilityLookup);
                             dto.MinRate = decimal.TryParse(hotelAvail.MinRate, out var min) ? Math.Round(min * 1.15m * exchangeRate, 2) : null;
                             dto.MaxRate = decimal.TryParse(hotelAvail.MaxRate, out var max) ? Math.Round(max * 1.15m * exchangeRate, 2) : null;
-                            dto.Currency = "EGP";
+                            dto.Currency = "USD";
                         }
                     }
                 }
@@ -301,7 +303,7 @@ namespace Travio.Core.Services.Hotelbeds
                 if (apiResponse?.Hotel is null)
                     return new ServiceResponse<HotelCheckRateResponseDto>("The rate is no longer available.");
 
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "EGP", cancellationToken);
+                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
                 return new ServiceResponse<HotelCheckRateResponseDto>(MapCheckRateResponse(apiResponse, exchangeRate), "Rate confirmed. Proceed to booking.");
             }
             catch (HttpRequestException ex)
@@ -321,7 +323,7 @@ namespace Travio.Core.Services.Hotelbeds
         {
             try
             {
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "EGP", cancellationToken);
+                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
                 if (request is null) return new ServiceResponse<HotelBookingResponseDto>("Booking request cannot be null.");
                 if (string.IsNullOrWhiteSpace(request.RateKey)) return new ServiceResponse<HotelBookingResponseDto>("Rate key is required.");
                 if (string.IsNullOrWhiteSpace(request.HolderFirstName) || string.IsNullOrWhiteSpace(request.HolderLastName))
@@ -359,6 +361,38 @@ namespace Travio.Core.Services.Hotelbeds
             { return new ServiceResponse<HotelBookingResponseDto>("The booking request timed out."); }
             catch (Exception ex)
             { return new ServiceResponse<HotelBookingResponseDto>($"Unexpected error: {ex.Message}"); }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PRIVATE: Facility Lookup Cache (from local DB)
+        // ═══════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Loads the facility lookup table from the database and caches it in memory for 24h.
+        /// Returns a dictionary mapping FacilityCode → human-readable description.
+        /// </summary>
+        private async Task<IReadOnlyDictionary<int, string>> GetFacilityLookupAsync(CancellationToken ct)
+        {
+            const string cacheKey = "hotelbeds_facility_lookup";
+            if (_cache.TryGetValue<IReadOnlyDictionary<int, string>>(cacheKey, out var cached) && cached is not null)
+                return cached;
+
+            try
+            {
+                var facilities = await _facilityRepository.ListAsync(ct);
+                var lookup = facilities
+                    .Where(f => !string.IsNullOrWhiteSpace(f.Description))
+                    .GroupBy(f => f.FacilityCode)
+                    .ToDictionary(g => g.Key, g => g.First().Description);
+
+                _cache.Set(cacheKey, (IReadOnlyDictionary<int, string>)lookup, ContentCacheDuration);
+                return lookup;
+            }
+            catch
+            {
+                // If DB query fails, return empty — room facilities just won't appear
+                return new Dictionary<int, string>();
+            }
         }
     }
 }

@@ -55,6 +55,13 @@ namespace Travio.Core.Domain.Entities.Hotelbeds
         public int RoomCount { get; set; } = 1;
 
         /// <summary>
+        /// Serialized JSON of the original HotelBookingRequestDto.
+        /// Stored at checkout time so the webhook can reconstruct the full Hotelbeds booking
+        /// request with real guest names, room details, and pax information.
+        /// </summary>
+        public string? GuestDataJson { get; set; }
+
+        /// <summary>
         /// CRITICAL: Optimistic concurrency token managed by SQL Server.
         /// EF Core will include this in WHERE clauses on UPDATE/DELETE to detect conflicts.
         /// If another process modified the row, a DbUpdateConcurrencyException is thrown.

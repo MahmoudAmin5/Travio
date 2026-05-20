@@ -60,82 +60,116 @@ namespace Travio.Core.Services.Payment
             var bookingIdStr = paymentIntent.Metadata.GetValueOrDefault("BookingId");
             if (!Guid.TryParse(bookingIdStr, out var bookingId))
             {
-                _logger.LogError($"Webhook failed: Invalid BookingId for Intent {stripeIntentId}");
+                _logger.LogError("Webhook failed: Invalid BookingId in metadata for Intent {IntentId}.", stripeIntentId);
                 return false;
             }
 
             var booking = await _hotelRepo.GetByIdAsync(bookingId);
             if (booking == null)
             {
-                _logger.LogError($"Webhook failed: No hotel booking found for Intent {stripeIntentId}");
+                _logger.LogError("Webhook failed: No hotel booking found for BookingId {BookingId}, Intent {IntentId}.", bookingId, stripeIntentId);
                 return false;
             }
 
-            // 1. Idempotency Check
+            // ── 1. Idempotency Check ─────────────────────────────────────────
             if (booking.BookingStatus != HotelBookingStatus.PendingPayment)
             {
-                _logger.LogInformation($"Webhook ignored. Hotel booking status is currently {booking.BookingStatus}.");
+                _logger.LogInformation("Webhook ignored: Hotel booking {BookingId} status is {Status} (not PendingPayment).",
+                    bookingId, booking.BookingStatus);
                 return true;
             }
 
-            // 2. The Lock
+            // ── 2. The Lock (Optimistic Concurrency via RowVersion) ──────────
+            // Set status to ProcessingWebhook and attempt to save.
+            // If another thread already changed the RowVersion, a DbUpdateConcurrencyException is thrown.
             booking.BookingStatus = HotelBookingStatus.ProcessingWebhook;
+            booking.UpdatedAt = DateTime.UtcNow;
             try
             {
                 await _hotelRepo.UpdateAsync(booking);
-                // SaveChangesAsync is required to execute the concurrency check!
-                // NOTE: UpdateAsync might call SaveChanges internally depending on the generic repo implementation, 
-                // but we should ensure it does or call it explicitly if needed.
+                await _hotelRepo.SaveChangesAsync();
             }
-            catch (Exception)
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
             {
-                _logger.LogWarning($"RACE CONDITION AVOIDED: Another thread is processing Hotel Intent {stripeIntentId}.");
-                return true;
+                // Another thread won the race — this is expected behavior, not an error.
+                _logger.LogWarning("RACE CONDITION AVOIDED: Another thread is processing Hotel Intent {IntentId}.", stripeIntentId);
+                return true; // Return 200 OK to Stripe so it doesn't retry
             }
 
-            // 3. Safe Zone - Call Hotelbeds
-            var request = new HotelBookingRequestDto
+            // ── 3. Deserialize guest data from the DB record ─────────────────
+            HotelBookingRequestDto? guestRequest = null;
+            if (!string.IsNullOrWhiteSpace(booking.GuestDataJson))
+            {
+                try
+                {
+                    guestRequest = JsonSerializer.Deserialize<HotelBookingRequestDto>(booking.GuestDataJson,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Failed to deserialize GuestDataJson for BookingId {BookingId}.", bookingId);
+                }
+            }
+
+            // Fallback: If deserialization fails, construct a minimal request with the stored rate key
+            guestRequest ??= new HotelBookingRequestDto
             {
                 RateKey = booking.RateKey,
-                HolderFirstName = "Test",
+                HolderFirstName = "Guest",
                 HolderLastName = "User",
                 Rooms = new List<BookingRoomDto>
                 {
-                    // Since this is a refactored flow, normally we'd deserialize the full request here, 
-                    // but for demonstration we'll just populate a default passenger.
-                    new BookingRoomDto {
+                    new BookingRoomDto
+                    {
                         RateKey = booking.RateKey,
-                        Paxes = new List<BookingPaxDto> { new BookingPaxDto { RoomId = 1, Type = "AD", Name = "Test", Surname = "User" } }
+                        Paxes = new List<BookingPaxDto>
+                        {
+                            new BookingPaxDto { RoomId = 1, Type = "AD", Name = "Guest", Surname = "User" }
+                        }
                     }
                 }
             };
 
-            var hotelResult = await _hotelbedsService.CreateBookingAsync(request, booking.UserId);
+            // ── 4. Call Hotelbeds Booking API ─────────────────────────────────
+            var hotelResult = await _hotelbedsService.CreateBookingAsync(guestRequest, booking.UserId);
+
             if (!hotelResult.Success)
             {
-                _logger.LogCritical($"Hotelbeds booking failed for Intent {stripeIntentId}.");
-                
-                // COMPENSATING TRANSACTION
+                _logger.LogCritical("Hotelbeds booking FAILED for Intent {IntentId}, BookingId {BookingId}. Reason: {Reason}",
+                    stripeIntentId, bookingId, hotelResult.Message);
+
+                // ── COMPENSATING TRANSACTION: Refund the payment ─────────────
                 try
                 {
-                    var refundOptions = new RefundCreateOptions { PaymentIntent = stripeIntentId, Reason = RefundReasons.RequestedByCustomer };
+                    var refundOptions = new RefundCreateOptions
+                    {
+                        PaymentIntent = stripeIntentId,
+                        Reason = RefundReasons.RequestedByCustomer
+                    };
                     await new RefundService().CreateAsync(refundOptions);
-                    booking.BookingStatus = HotelBookingStatus.PaymentFailed;
+                    _logger.LogInformation("Refund issued successfully for Intent {IntentId}.", stripeIntentId);
                 }
                 catch (StripeException ex)
                 {
-                    _logger.LogCritical($"Refund failed for Hotel Intent {stripeIntentId}. Error: {ex.Message}");
-                    booking.BookingStatus = HotelBookingStatus.PaymentFailed;
+                    _logger.LogCritical(ex, "CRITICAL: Refund FAILED for Intent {IntentId}. Manual intervention required.", stripeIntentId);
                 }
 
+                booking.BookingStatus = HotelBookingStatus.PaymentFailed;
+                booking.UpdatedAt = DateTime.UtcNow;
                 await _hotelRepo.UpdateAsync(booking);
+                await _hotelRepo.SaveChangesAsync();
                 return false;
             }
 
-            // 4. Success
+            // ── 5. Success — Update booking with Hotelbeds reference ─────────
             booking.HotelbedsReference = hotelResult.Data?.BookingReference;
             booking.BookingStatus = HotelBookingStatus.Confirmed;
+            booking.UpdatedAt = DateTime.UtcNow;
             await _hotelRepo.UpdateAsync(booking);
+            await _hotelRepo.SaveChangesAsync();
+
+            _logger.LogInformation("Hotel booking CONFIRMED. BookingId: {BookingId}, Reference: {Ref}.",
+                bookingId, booking.HotelbedsReference);
 
             return true;
         }
