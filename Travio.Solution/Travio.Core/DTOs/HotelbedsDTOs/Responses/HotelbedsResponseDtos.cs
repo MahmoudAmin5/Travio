@@ -199,6 +199,9 @@ namespace Travio.Core.DTOs.HotelbedsDTOs.Responses
         /// <summary>HAB Images (Photos of the specific room).</summary>
         public List<HotelImageDto> Images { get; set; } = new();
 
+        /// <summary>Room amenities/facilities (e.g., "Air Conditioning", "Bathtub", "Minibar").</summary>
+        public List<string> RoomFacilities { get; set; } = new();
+
         /// <summary>Rate plans available for this room.</summary>
         public List<RateDto> Rates { get; set; } = new();
     }
@@ -375,5 +378,28 @@ namespace Travio.Core.DTOs.HotelbedsDTOs.Responses
 
         /// <summary>The cancellation reference issued by Hotelbeds.</summary>
         public string CancellationReference { get; set; } = string.Empty;
+    }
+
+    // ========================================================================================
+    // CHECKOUT RESPONSE — Returned by POST /checkout after Stripe PaymentIntent creation.
+    // ========================================================================================
+
+    /// <summary>
+    /// Response from the checkout initialization endpoint.
+    /// Contains the Stripe client secret for the mobile app to render the payment sheet.
+    /// </summary>
+    public class CheckoutResponseDto
+    {
+        /// <summary>The Stripe client secret for the PaymentIntent. Pass this to the Stripe SDK.</summary>
+        public string ClientSecret { get; set; } = string.Empty;
+
+        /// <summary>Our internal booking ID (persisted as PendingPayment in the DB).</summary>
+        public Guid BookingId { get; set; }
+
+        /// <summary>The validated total price (15% markup + currency conversion applied).</summary>
+        public decimal TotalPrice { get; set; }
+
+        /// <summary>ISO 4217 currency code (e.g., "USD").</summary>
+        public string Currency { get; set; } = "USD";
     }
 }
