@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
-using Travio.Core.Services.Payment;
-using Stripe;
 using Travio.Core.Contracts.Services.Payment;
 
 namespace Travio.API.Controllers
