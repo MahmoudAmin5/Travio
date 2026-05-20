@@ -88,6 +88,23 @@ public static class ServiceCollectionExtensions
                         ?? throw new InvalidOperationException("JWT Key is not configured."))),
                 ClockSkew = TimeSpan.Zero
             };
+
+            // Allow SignalR to receive the JWT token from the query string
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                    {
+                        context.Token = accessToken;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
         });
 
         return services;
@@ -108,6 +125,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<ISurveyService, SurveyService>();
         services.AddScoped<IUserFavoriteService, UserFavoriteService>();
+        services.AddScoped<ISavedTripService, SavedTripService>();
+        services.AddScoped<IChatHistoryService, ChatHistoryService>();
         services.AddTransient<IGoogleAuthService, GoogleAuthService>();
         services.AddTransient<IEmailSender, MailKitEmailSender>();
         services.AddScoped<IStripeWebhookService, StripeWebhookService>();
