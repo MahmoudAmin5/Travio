@@ -51,6 +51,10 @@ namespace Travio.Infrastructure.Configrations.Booking
             builder.Property(e => e.RateKey)
                    .HasMaxLength(2000); // Rate keys can be very long
 
+            // Serialized booking request — stored so the webhook can reconstruct the Hotelbeds call
+            builder.Property(e => e.GuestDataJson)
+                   .HasMaxLength(8000);
+
             // Store enum as string for readability in the database
             builder.Property(e => e.BookingStatus)
                    .HasConversion<string>()
