@@ -408,11 +408,11 @@ namespace Travio.Core.Services.Hotelbeds.ApiModels
         [JsonPropertyName("coordinates")]
         public HotelbedsCoordinates? Coordinates { get; set; }
 
-        [JsonPropertyName("category")]
-        public HotelbedsContentCategory? Category { get; set; }
+        [JsonPropertyName("categoryCode")]
+        public string? CategoryCode { get; set; }
 
-        [JsonPropertyName("categoryGroup")]
-        public HotelbedsContentCategory? CategoryGroup { get; set; }
+        [JsonPropertyName("categoryGroupCode")]
+        public string? CategoryGroupCode { get; set; }
 
         [JsonPropertyName("accommodationType")]
         public HotelbedsAccommodationType? AccommodationType { get; set; }
