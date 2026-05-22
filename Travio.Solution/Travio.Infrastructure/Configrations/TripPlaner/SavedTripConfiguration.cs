@@ -35,7 +35,7 @@ public class SavedTripConfiguration : IEntityTypeConfiguration<SavedTrip>
         builder.HasOne(x => x.User)
             .WithMany(x => x.SavedTrips)
             .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.ChatSession)
             .WithOne(x => x.SavedTrip)
