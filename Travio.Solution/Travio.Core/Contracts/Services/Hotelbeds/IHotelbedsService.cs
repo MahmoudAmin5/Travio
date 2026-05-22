@@ -78,11 +78,18 @@ namespace Travio.Core.Contracts.Services.Hotelbeds
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Executes the final hotel booking and persists the result to the database.
+        /// Called by the Stripe webhook ONLY. Takes an existing PendingPayment booking,
+        /// deserializes GuestDataJson, calls the Hotelbeds Booking API directly,
+        /// and UPDATES the existing row to Confirmed (or SupplierFailed on error).
+        /// 
+        /// CRITICAL: This method does NOT create new DB records — it updates existing ones.
+        /// This prevents the double-booking bug where CreateBookingAsync inserted a second row.
         /// </summary>
-        Task<ServiceResponse<HotelBookingResponseDto>> CreateBookingAsync(
-            HotelBookingRequestDto request,
-            string userId,
+        /// <param name="bookingId">The existing PendingPayment booking ID from Stripe metadata.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Success with booking reference, or failure with reason.</returns>
+        Task<ServiceResponse<HotelBookingResponseDto>> FulfillBookingFromWebhookAsync(
+            Guid bookingId,
             CancellationToken cancellationToken = default);
 
         // ============================

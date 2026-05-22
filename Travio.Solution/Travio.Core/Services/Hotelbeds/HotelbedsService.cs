@@ -7,6 +7,7 @@ using System.Text.Json;
 using Travio.Core.Contracts.Services.CurruncyExchange;
 using Travio.Core.Contracts.Services.GeocodingService;
 using Travio.Core.Contracts.Services.Hotelbeds;
+using Travio.Core.Contracts.Services.Payment;
 using Travio.Core.Domain.Entities.Hotelbeds;
 using Travio.Core.Domain.Enums.Booking;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -28,9 +29,18 @@ namespace Travio.Core.Services.Hotelbeds
         private readonly IGenericRepository<HotelFacility> _facilityRepository;
         private readonly IMemoryCache _cache;
         private readonly ICurrencyExchangeService _currencyExchangeService;
+        private readonly IPaymentGatewayService _paymentGateway;
         private readonly ILogger<HotelbedsService> _logger;
         private readonly IGeocodingService _geocodingService;
         private readonly HotelbedsSettings _settings;
+
+        // ── Business Constants ────────────────────────────────────────────────
+        /// <summary>15% corporate markup applied on top of Hotelbeds wholesale price.</summary>
+        internal const decimal CorporateMarkupMultiplier = 1.15m;
+        /// <summary>Target display currency for end users.</summary>
+        internal const string DisplayCurrency = "USD";
+        /// <summary>Hotelbeds wholesale currency (all net prices are in EUR).</summary>
+        internal const string WholesaleCurrency = "EUR";
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -48,6 +58,7 @@ namespace Travio.Core.Services.Hotelbeds
             IMemoryCache cache,
             IOptions<HotelbedsSettings> settings,
             ICurrencyExchangeService currencyExchangeService,
+            IPaymentGatewayService paymentGateway,
             ILogger<HotelbedsService> logger,
             IGeocodingService geocodingService)
         {
@@ -57,6 +68,7 @@ namespace Travio.Core.Services.Hotelbeds
             _facilityRepository = facilityRepository ?? throw new ArgumentNullException(nameof(facilityRepository));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _currencyExchangeService = currencyExchangeService;
+            _paymentGateway = paymentGateway ?? throw new ArgumentNullException(nameof(paymentGateway));
             _logger = logger;
             _geocodingService = geocodingService;
             _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
@@ -149,7 +161,7 @@ namespace Travio.Core.Services.Hotelbeds
                     return new ServiceResponse<HotelAvailabilityResponseDto>(
                         new HotelAvailabilityResponseDto { Hotels = new(), TotalHotels = 0 },
                         "No hotels found matching your search criteria.");
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
+                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(WholesaleCurrency, DisplayCurrency, cancellationToken);
                 var responseDto = MapAvailabilityResponse(apiResponse, exchangeRate);
 
 
@@ -250,7 +262,7 @@ namespace Travio.Core.Services.Hotelbeds
                             }
                         }
                     };
-                    var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
+                    var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(WholesaleCurrency, DisplayCurrency, cancellationToken);
                     var apiRequest = BuildAvailabilityRequest(availRequest);
                     var httpResponse = await _httpClient.PostAsJsonAsync("hotels", apiRequest, JsonOptions, cancellationToken);
                     if (httpResponse.IsSuccessStatusCode)
@@ -262,9 +274,9 @@ namespace Travio.Core.Services.Hotelbeds
                             // Load facility lookup for room-level facility resolution
                             var facilityLookup = await GetFacilityLookupAsync(cancellationToken);
                             dto.Rooms = MapRooms(hotelAvail.Rooms, content.Rooms, content.Images, exchangeRate, facilityLookup);
-                            dto.MinRate = decimal.TryParse(hotelAvail.MinRate, out var min) ? Math.Round(min * 1.15m * exchangeRate, 2) : null;
-                            dto.MaxRate = decimal.TryParse(hotelAvail.MaxRate, out var max) ? Math.Round(max * 1.15m * exchangeRate, 2) : null;
-                            dto.Currency = "USD";
+                            dto.MinRate = decimal.TryParse(hotelAvail.MinRate, out var min) ? Math.Round(min * CorporateMarkupMultiplier * exchangeRate, 2) : null;
+                            dto.MaxRate = decimal.TryParse(hotelAvail.MaxRate, out var max) ? Math.Round(max * CorporateMarkupMultiplier * exchangeRate, 2) : null;
+                            dto.Currency = DisplayCurrency;
                         }
                     }
                 }
@@ -309,7 +321,7 @@ namespace Travio.Core.Services.Hotelbeds
                 if (apiResponse?.Hotel is null)
                     return new ServiceResponse<HotelCheckRateResponseDto>("The rate is no longer available.");
 
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
+                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(WholesaleCurrency, DisplayCurrency, cancellationToken);
                 return new ServiceResponse<HotelCheckRateResponseDto>(MapCheckRateResponse(apiResponse, exchangeRate), "Rate confirmed. Proceed to booking.");
             }
             catch (HttpRequestException ex)
@@ -321,52 +333,79 @@ namespace Travio.Core.Services.Hotelbeds
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // ENDPOINT 4: CREATE BOOKING
+        // WEBHOOK FULFILLMENT: Submit booking to Hotelbeds + update existing row
         // ═══════════════════════════════════════════════════════════════════
 
-        public async Task<ServiceResponse<HotelBookingResponseDto>> CreateBookingAsync(
-            HotelBookingRequestDto request, string userId, CancellationToken cancellationToken = default)
+        /// <inheritdoc />
+        public async Task<ServiceResponse<HotelBookingResponseDto>> FulfillBookingFromWebhookAsync(
+            Guid bookingId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
-                if (request is null) return new ServiceResponse<HotelBookingResponseDto>("Booking request cannot be null.");
-                if (string.IsNullOrWhiteSpace(request.RateKey)) return new ServiceResponse<HotelBookingResponseDto>("Rate key is required.");
-                if (string.IsNullOrWhiteSpace(request.HolderFirstName) || string.IsNullOrWhiteSpace(request.HolderLastName))
-                    return new ServiceResponse<HotelBookingResponseDto>("Holder's first and last name are required.");
-                if (request.Rooms is null || request.Rooms.Count == 0) return new ServiceResponse<HotelBookingResponseDto>("At least one room is required.");
-                if (string.IsNullOrWhiteSpace(userId)) return new ServiceResponse<HotelBookingResponseDto>("User must be authenticated.");
+                // 1. Load the existing PendingPayment/ProcessingWebhook booking
+                var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
+                if (booking is null)
+                    return new ServiceResponse<HotelBookingResponseDto>($"Booking {bookingId} not found.");
 
-                var clientRef = string.IsNullOrWhiteSpace(request.ClientReference)
-                    ? $"TRV-{Guid.NewGuid().ToString("N")[..12].ToUpperInvariant()}" : request.ClientReference;
-                var apiRequest = BuildBookingRequest(request, clientRef);
+                // 2. Deserialize guest data — FAIL if corrupt (don't book with fake names)
+                if (string.IsNullOrWhiteSpace(booking.GuestDataJson))
+                    return new ServiceResponse<HotelBookingResponseDto>("GuestDataJson is empty — cannot fulfill booking.");
+
+                HotelBookingRequestDto? guestRequest;
+                try
+                {
+                    guestRequest = JsonSerializer.Deserialize<HotelBookingRequestDto>(booking.GuestDataJson, JsonOptions);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Failed to deserialize GuestDataJson for BookingId {BookingId}.", bookingId);
+                    return new ServiceResponse<HotelBookingResponseDto>("Guest data is corrupted — cannot fulfill booking.");
+                }
+
+                if (guestRequest is null)
+                    return new ServiceResponse<HotelBookingResponseDto>("GuestDataJson deserialized to null.");
+
+                // 3. Build and submit booking to Hotelbeds
+                var clientRef = $"TRV-{bookingId.ToString("N")[..12].ToUpperInvariant()}";
+                var apiRequest = BuildBookingRequest(guestRequest, clientRef);
                 var httpResponse = await _httpClient.PostAsJsonAsync("bookings", apiRequest, JsonOptions, cancellationToken);
 
                 if (!httpResponse.IsSuccessStatusCode)
                 {
                     var err = await ExtractErrorMessageAsync(httpResponse, cancellationToken);
-                    await PersistBookingRecordAsync(userId, request, null, HotelBookingStatus.PaymentFailed, exchangeRate, cancellationToken);
                     return new ServiceResponse<HotelBookingResponseDto>($"Hotelbeds booking failed: {err}");
                 }
 
                 var apiResponse = await httpResponse.Content.ReadFromJsonAsync<HotelbedsBookingResponse>(JsonOptions, cancellationToken);
                 if (apiResponse?.Booking is null)
-                {
-                    await PersistBookingRecordAsync(userId, request, null, HotelBookingStatus.PaymentFailed, exchangeRate, cancellationToken);
-                    return new ServiceResponse<HotelBookingResponseDto>("Booking response was empty.");
-                }
+                    return new ServiceResponse<HotelBookingResponseDto>("Booking response was empty from Hotelbeds.");
 
-                await PersistBookingRecordAsync(userId, request, apiResponse.Booking, HotelBookingStatus.Confirmed, exchangeRate, cancellationToken);
+                // 4. UPDATE the existing row (no new INSERT)
+                booking.HotelbedsReference = apiResponse.Booking.Reference;
+                booking.BookingStatus = HotelBookingStatus.Confirmed;
+                booking.UpdatedAt = DateTime.UtcNow;
+                await _bookingRepository.UpdateAsync(booking, cancellationToken);
+                await _bookingRepository.SaveChangesAsync(cancellationToken);
+
+                // 5. Map response using the frozen exchange rate from checkout
+                var exchangeRate = booking.ExchangeRateAtCheckout > 0
+                    ? booking.ExchangeRateAtCheckout
+                    : await _currencyExchangeService.GetExchangeRateAsync(WholesaleCurrency, DisplayCurrency, cancellationToken);
 
                 var responseDto = MapBookingResponse(apiResponse, exchangeRate);
-                return new ServiceResponse<HotelBookingResponseDto>(responseDto, $"Hotel booked! Reference: {responseDto.BookingReference}");
+                return new ServiceResponse<HotelBookingResponseDto>(
+                    responseDto, $"Hotel booked! Reference: {responseDto.BookingReference}");
             }
             catch (HttpRequestException ex)
-            { return new ServiceResponse<HotelBookingResponseDto>($"Network error: {ex.Message}"); }
-            catch (TaskCanceledException)
-            { return new ServiceResponse<HotelBookingResponseDto>("The booking request timed out."); }
+            {
+                _logger.LogError(ex, "Network error during webhook fulfillment for BookingId {BookingId}.", bookingId);
+                return new ServiceResponse<HotelBookingResponseDto>($"Network error: {ex.Message}");
+            }
             catch (Exception ex)
-            { return new ServiceResponse<HotelBookingResponseDto>($"Unexpected error: {ex.Message}"); }
+            {
+                _logger.LogError(ex, "Unexpected error during webhook fulfillment for BookingId {BookingId}.", bookingId);
+                return new ServiceResponse<HotelBookingResponseDto>($"Unexpected error: {ex.Message}");
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════════

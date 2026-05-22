@@ -55,6 +55,16 @@ namespace Travio.Infrastructure.Configrations.Booking
             builder.Property(e => e.GuestDataJson)
                    .HasMaxLength(8000);
 
+            // Financial data frozen at checkout time
+            builder.Property(e => e.WholesaleNetEur)
+                   .HasPrecision(18, 4); // 4 decimal places for wholesale EUR precision
+
+            builder.Property(e => e.ExchangeRateAtCheckout)
+                   .HasPrecision(18, 6); // 6 decimal places for FX rate precision
+
+            builder.Property(e => e.FailureReason)
+                   .HasMaxLength(2000);
+
             // Store enum as string for readability in the database
             builder.Property(e => e.BookingStatus)
                    .HasConversion<string>()

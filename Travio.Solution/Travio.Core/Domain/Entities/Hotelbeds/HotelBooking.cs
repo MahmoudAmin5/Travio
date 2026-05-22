@@ -62,6 +62,24 @@ namespace Travio.Core.Domain.Entities.Hotelbeds
         public string? GuestDataJson { get; set; }
 
         /// <summary>
+        /// The wholesale net price in EUR as returned by Hotelbeds CheckRate.
+        /// Frozen at checkout time — never recalculated.
+        /// Formula: TotalPrice = WholesaleNetEur × 1.15 (markup) × ExchangeRateAtCheckout.
+        /// </summary>
+        public decimal WholesaleNetEur { get; set; }
+
+        /// <summary>
+        /// EUR → USD exchange rate locked at checkout time.
+        /// Prevents financial drift between checkout and webhook fulfillment.
+        /// </summary>
+        public decimal ExchangeRateAtCheckout { get; set; }
+
+        /// <summary>
+        /// Human-readable failure reason for support dashboards.
+        /// Set when BookingStatus transitions to SupplierFailed, PaymentFailed, etc.
+        /// </summary>
+        public string? FailureReason { get; set; }
+        /// <summary>
         /// CRITICAL: Optimistic concurrency token managed by SQL Server.
         /// EF Core will include this in WHERE clauses on UPDATE/DELETE to detect conflicts.
         /// If another process modified the row, a DbUpdateConcurrencyException is thrown.
