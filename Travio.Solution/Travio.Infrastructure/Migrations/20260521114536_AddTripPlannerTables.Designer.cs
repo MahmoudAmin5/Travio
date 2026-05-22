@@ -12,8 +12,8 @@ using Travio.Infrastructure;
 namespace Travio.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260520213524_AddChatAndTripEntities")]
-    partial class AddChatAndTripEntities
+    [Migration("20260521114536_AddTripPlannerTables")]
+    partial class AddTripPlannerTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1397,7 +1397,7 @@ namespace Travio.Infrastructure.Migrations
                     b.HasOne("Travio.Core.Domain.Entities.Account_Mangement.ApplicationUser", "User")
                         .WithMany("SavedTrips")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("ChatSession");
