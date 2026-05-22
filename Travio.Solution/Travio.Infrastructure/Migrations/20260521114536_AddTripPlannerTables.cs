@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Travio.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddChatAndTripEntities : Migration
+    public partial class AddTripPlannerTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -88,7 +88,7 @@ namespace Travio.Infrastructure.Migrations
                         principalSchema: "Account_Schema",
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(

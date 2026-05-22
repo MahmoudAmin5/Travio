@@ -194,7 +194,10 @@ public static class ServiceCollectionExtensions
         Stripe.StripeConfiguration.ApiKey = stripeKey;
 
         services.AddValidatorsFromAssembly(typeof(CreatePostValidator).Assembly);
-        services.AddSignalR();
+        services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true; // Shows real exception messages in dev
+        });
 
         // ── Hotelbeds APITUDE API Integration ──────────────────────────────
         // 0. Add in-memory cache for Content API responses (images/descriptions rarely change)

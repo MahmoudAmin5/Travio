@@ -1394,7 +1394,7 @@ namespace Travio.Infrastructure.Migrations
                     b.HasOne("Travio.Core.Domain.Entities.Account_Mangement.ApplicationUser", "User")
                         .WithMany("SavedTrips")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("ChatSession");
