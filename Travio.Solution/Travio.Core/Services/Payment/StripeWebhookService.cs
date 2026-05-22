@@ -1,10 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Stripe;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.Contracts.Services.Hotelbeds;
 using Travio.Core.Contracts.Services.Payment;
@@ -14,7 +10,6 @@ using Travio.Core.Domain.Enums.Booking;
 using Travio.Core.Domain.Infrastructure.Contract;
 using Travio.Core.Domain.Specifications.Duffel;
 using Travio.Core.DTOs.DuffelFlightsDTOs.Requests;
-using Travio.Core.DTOs.HotelbedsDTOs.Requests;
 
 namespace Travio.Core.Services.Payment
 {
@@ -24,6 +19,7 @@ namespace Travio.Core.Services.Payment
         private readonly IGenericRepository<HotelBooking> _hotelRepo;
         private readonly IDuffelFlightBookingService _flightBookingService;
         private readonly IHotelbedsService _hotelbedsService;
+        private readonly IPaymentGatewayService _paymentGateway;
         private readonly ILogger<StripeWebhookService> _logger;
 
         public StripeWebhookService(
@@ -31,12 +27,14 @@ namespace Travio.Core.Services.Payment
             IGenericRepository<HotelBooking> hotelRepo,
             IDuffelFlightBookingService flightBookingService,
             IHotelbedsService hotelbedsService,
+            IPaymentGatewayService paymentGateway,
             ILogger<StripeWebhookService> logger)
         {
             _flightRepo = flightRepo;
             _hotelRepo = hotelRepo;
             _flightBookingService = flightBookingService;
             _hotelbedsService = hotelbedsService;
+            _paymentGateway = paymentGateway;
             _logger = logger;
         }
 
@@ -53,6 +51,15 @@ namespace Travio.Core.Services.Payment
             // Default to Flight for backward compatibility
             return await ProcessFlightBookingAsync(stripeIntentId);
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // HOTEL BOOKING — COMPLETE REWRITE
+        // FIX CRITICAL-1: No longer calls CreateBookingAsync (which created duplicate rows).
+        //                 Instead calls FulfillBookingFromWebhookAsync which UPDATES existing row.
+        // FIX CRITICAL-4: No more fake "Guest User" fallback — FulfillBookingFromWebhookAsync
+        //                 fails and triggers refund if GuestDataJson is corrupt.
+        // FIX MAJOR-5: Uses IPaymentGatewayService for refunds instead of new RefundService().
+        // ═══════════════════════════════════════════════════════════════════
 
         private async Task<bool> ProcessHotelBookingAsync(PaymentIntent paymentIntent)
         {
@@ -96,42 +103,13 @@ namespace Travio.Core.Services.Payment
                 return true; // Return 200 OK to Stripe so it doesn't retry
             }
 
-            // ── 3. Deserialize guest data from the DB record ─────────────────
-            HotelBookingRequestDto? guestRequest = null;
-            if (!string.IsNullOrWhiteSpace(booking.GuestDataJson))
-            {
-                try
-                {
-                    guestRequest = JsonSerializer.Deserialize<HotelBookingRequestDto>(booking.GuestDataJson,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogError(ex, "Failed to deserialize GuestDataJson for BookingId {BookingId}.", bookingId);
-                }
-            }
-
-            // Fallback: If deserialization fails, construct a minimal request with the stored rate key
-            guestRequest ??= new HotelBookingRequestDto
-            {
-                RateKey = booking.RateKey,
-                HolderFirstName = "Guest",
-                HolderLastName = "User",
-                Rooms = new List<BookingRoomDto>
-                {
-                    new BookingRoomDto
-                    {
-                        RateKey = booking.RateKey,
-                        Paxes = new List<BookingPaxDto>
-                        {
-                            new BookingPaxDto { RoomId = 1, Type = "AD", Name = "Guest", Surname = "User" }
-                        }
-                    }
-                }
-            };
-
-            // ── 4. Call Hotelbeds Booking API ─────────────────────────────────
-            var hotelResult = await _hotelbedsService.CreateBookingAsync(guestRequest, booking.UserId);
+            // ── 3. FIX CRITICAL-1 + CRITICAL-4: Call FulfillBookingFromWebhookAsync ──
+            // This method:
+            //   - Reads the existing booking from DB
+            //   - Deserializes GuestDataJson (FAILS if corrupt — no fake names)
+            //   - Calls Hotelbeds Booking API directly
+            //   - UPDATES the existing row (no duplicate INSERT)
+            var hotelResult = await _hotelbedsService.FulfillBookingFromWebhookAsync(bookingId);
 
             if (!hotelResult.Success)
             {
@@ -139,40 +117,44 @@ namespace Travio.Core.Services.Payment
                     stripeIntentId, bookingId, hotelResult.Message);
 
                 // ── COMPENSATING TRANSACTION: Refund the payment ─────────────
-                try
+                // FIX MAJOR-5: Use IPaymentGatewayService instead of new RefundService()
+                var refundResult = await _paymentGateway.RefundPaymentAsync(
+                    stripeIntentId, "requested_by_customer");
+
+                // Update booking status with failure details
+                // Re-read the booking since FulfillBookingFromWebhookAsync may have modified it
+                booking = await _hotelRepo.GetByIdAsync(bookingId);
+                if (booking is not null)
                 {
-                    var refundOptions = new RefundCreateOptions
-                    {
-                        PaymentIntent = stripeIntentId,
-                        Reason = RefundReasons.RequestedByCustomer
-                    };
-                    await new RefundService().CreateAsync(refundOptions);
-                    _logger.LogInformation("Refund issued successfully for Intent {IntentId}.", stripeIntentId);
-                }
-                catch (StripeException ex)
-                {
-                    _logger.LogCritical(ex, "CRITICAL: Refund FAILED for Intent {IntentId}. Manual intervention required.", stripeIntentId);
+                    booking.BookingStatus = refundResult.Success
+                        ? HotelBookingStatus.RefundIssued
+                        : HotelBookingStatus.SupplierFailed;
+                    booking.FailureReason = hotelResult.Message;
+                    booking.UpdatedAt = DateTime.UtcNow;
+                    await _hotelRepo.UpdateAsync(booking);
+                    await _hotelRepo.SaveChangesAsync();
                 }
 
-                booking.BookingStatus = HotelBookingStatus.PaymentFailed;
-                booking.UpdatedAt = DateTime.UtcNow;
-                await _hotelRepo.UpdateAsync(booking);
-                await _hotelRepo.SaveChangesAsync();
+                if (!refundResult.Success)
+                {
+                    _logger.LogCritical(
+                        "CRITICAL: Refund FAILED for Intent {IntentId}. Error: {Error}. MANUAL INTERVENTION REQUIRED.",
+                        stripeIntentId, refundResult.ErrorMessage);
+                }
+
                 return false;
             }
 
-            // ── 5. Success — Update booking with Hotelbeds reference ─────────
-            booking.HotelbedsReference = hotelResult.Data?.BookingReference;
-            booking.BookingStatus = HotelBookingStatus.Confirmed;
-            booking.UpdatedAt = DateTime.UtcNow;
-            await _hotelRepo.UpdateAsync(booking);
-            await _hotelRepo.SaveChangesAsync();
-
+            // ── 4. Success — FulfillBookingFromWebhookAsync already updated the row ──
             _logger.LogInformation("Hotel booking CONFIRMED. BookingId: {BookingId}, Reference: {Ref}.",
-                bookingId, booking.HotelbedsReference);
+                bookingId, hotelResult.Data?.BookingReference);
 
             return true;
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // FLIGHT BOOKING — Unchanged (uses existing pattern)
+        // ═══════════════════════════════════════════════════════════════════
 
         private async Task<bool> ProcessFlightBookingAsync(string stripeIntentId)
         {
@@ -221,13 +203,15 @@ namespace Travio.Core.Services.Payment
 
                 try
                 {
-                    var refundOptions = new RefundCreateOptions { PaymentIntent = stripeIntentId, Reason = RefundReasons.RequestedByCustomer };
-                    await new RefundService().CreateAsync(refundOptions);
-                    booking.BookingStatus = FlightBookingStatus.RefundRequest;
+                    var refundResult = await _paymentGateway.RefundPaymentAsync(
+                        stripeIntentId, "requested_by_customer");
+                    booking.BookingStatus = refundResult.Success
+                        ? FlightBookingStatus.RefundRequest
+                        : FlightBookingStatus.Failed;
                 }
-                catch (StripeException stripeEx)
+                catch (Exception ex)
                 {
-                    _logger.LogCritical($"Refund failed for Flight Intent {stripeIntentId}. Error: {stripeEx.Message}");
+                    _logger.LogCritical($"Refund failed for Flight Intent {stripeIntentId}. Error: {ex.Message}");
                     booking.BookingStatus = FlightBookingStatus.Failed;
                 }
 
@@ -243,4 +227,3 @@ namespace Travio.Core.Services.Payment
         }
     }
 }
-
