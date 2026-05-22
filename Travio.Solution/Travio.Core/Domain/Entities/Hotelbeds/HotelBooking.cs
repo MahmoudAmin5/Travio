@@ -45,7 +45,11 @@ namespace Travio.Core.Domain.Entities.Hotelbeds
         /// </summary>
         public string? HotelbedsReference { get; set; }
 
-        /// <summary>The rate key used for the CheckRate/Booking call — stored for audit trail.</summary>
+        /// <summary>
+        /// Comma-separated rate keys for all rooms in this booking.
+        /// Single-room: one key. Multi-room: "key1,key2,...".
+        /// Stored for audit trail — the authoritative guest+rate data is in GuestDataJson.
+        /// </summary>
         public string RateKey { get; set; } = string.Empty;
 
         /// <summary>Current lifecycle status of this booking.</summary>

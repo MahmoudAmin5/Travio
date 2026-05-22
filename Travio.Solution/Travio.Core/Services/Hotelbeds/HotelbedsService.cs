@@ -302,12 +302,23 @@ namespace Travio.Core.Services.Hotelbeds
             {
                 if (request is null)
                     return new ServiceResponse<HotelCheckRateResponseDto>("CheckRate request cannot be null.");
-                if (string.IsNullOrWhiteSpace(request.RateKey))
-                    return new ServiceResponse<HotelCheckRateResponseDto>("Rate key is required.");
+                if (request.Rooms is null || request.Rooms.Count == 0)
+                    return new ServiceResponse<HotelCheckRateResponseDto>("At least one room with a rate key is required.");
 
+                // Validate every room has a non-empty rate key
+                for (int i = 0; i < request.Rooms.Count; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(request.Rooms[i].RateKey))
+                        return new ServiceResponse<HotelCheckRateResponseDto>($"Room {i + 1} is missing a rate key.");
+                }
+
+                // Build the CheckRate payload — one room entry per rate key in the cart.
+                // Hotelbeds treats this as a shopping cart and returns the COMBINED TotalNet.
                 var apiRequest = new HotelbedsCheckRateRequest
                 {
-                    Rooms = new List<HotelbedsCheckRateRoom> { new() { RateKey = request.RateKey } }
+                    Rooms = request.Rooms
+                        .Select(r => new HotelbedsCheckRateRoom { RateKey = r.RateKey })
+                        .ToList()
                 };
                 var httpResponse = await _httpClient.PostAsJsonAsync("checkrates", apiRequest, JsonOptions, cancellationToken);
 
@@ -319,7 +330,7 @@ namespace Travio.Core.Services.Hotelbeds
 
                 var apiResponse = await httpResponse.Content.ReadFromJsonAsync<HotelbedsCheckRateResponse>(JsonOptions, cancellationToken);
                 if (apiResponse?.Hotel is null)
-                    return new ServiceResponse<HotelCheckRateResponseDto>("The rate is no longer available.");
+                    return new ServiceResponse<HotelCheckRateResponseDto>("The selected rate(s) are no longer available.");
 
                 var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(WholesaleCurrency, DisplayCurrency, cancellationToken);
                 return new ServiceResponse<HotelCheckRateResponseDto>(MapCheckRateResponse(apiResponse, exchangeRate), "Rate confirmed. Proceed to booking.");
