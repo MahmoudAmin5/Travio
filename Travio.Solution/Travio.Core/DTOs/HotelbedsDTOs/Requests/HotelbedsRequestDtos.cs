@@ -102,38 +102,52 @@ namespace Travio.Core.DTOs.HotelbedsDTOs.Requests
 
     /// <summary>
     /// Request DTO for creating a hotel booking via the Hotelbeds Booking endpoint.
+    /// Used at checkout time: the mobile app sends this payload to POST /api/Hotels/checkout.
+    /// 
+    /// WHERE THESE FIELDS COME FROM:
+    ///   - RateKey → from the Availability Search (each room rate has a unique RateKey in the response)
+    ///   - HolderFirstName/LastName → the user types this in the checkout form
+    ///   - Remark → optional text the user types (e.g., "Late check-in")
+    ///   - Rooms/Paxes → the user fills in guest names for each room from the checkout form
     /// </summary>
     public class HotelBookingRequestDto
     {
         /// <summary>
-        /// The rate key confirmed via CheckRate. This is required for booking.
+        /// The rate key from the availability search or check-rate response.
+        /// This encodes: hotel code, room type, board type, dates, and wholesale price.
+        /// 
+        /// WHERE IT COMES FROM: The mobile app gets this from the "Rates" array in the
+        /// search/details response. Each RateDto has a RateKey property.
+        /// 
+        /// IMPORTANT: Rate keys expire within minutes — the user must complete checkout quickly.
         /// </summary>
         public required string RateKey { get; set; }
 
         /// <summary>
-        /// The booking holder's first name (as it appears on identification).
+        /// First name of the booking holder — the person legally responsible for the reservation.
+        /// WHERE IT COMES FROM: The user types this in the checkout form.
         /// </summary>
         public required string HolderFirstName { get; set; }
 
         /// <summary>
-        /// The booking holder's last name (as it appears on identification).
+        /// Last name of the booking holder.
+        /// WHERE IT COMES FROM: The user types this in the checkout form.
         /// </summary>
         public required string HolderLastName { get; set; }
 
         /// <summary>
-        /// Client reference for this booking (your internal tracking ID).
-        /// Max 20 characters. Must be unique.
-        /// </summary>
-        public string? ClientReference { get; set; }
-
-        /// <summary>
-        /// Optional special remark for the hotel (e.g., "Late check-in").
+        /// Optional special request for the hotel (e.g., "Late check-in at 11 PM", "Honeymoon couple").
+        /// WHERE IT COMES FROM: Optional text field in the checkout form.
+        /// Not all hotels honor remarks, but they are forwarded via Hotelbeds.
         /// </summary>
         public string? Remark { get; set; }
 
         /// <summary>
         /// Guest details for each room being booked.
-        /// Must match the number of rooms from the rate key.
+        /// The number of rooms must match what's encoded in the RateKey.
+        /// 
+        /// WHERE IT COMES FROM: The checkout form has a "Guests" section for each room.
+        /// The user fills in the name and type (adult/child) of each guest.
         /// </summary>
         public required List<BookingRoomDto> Rooms { get; set; }
     }
