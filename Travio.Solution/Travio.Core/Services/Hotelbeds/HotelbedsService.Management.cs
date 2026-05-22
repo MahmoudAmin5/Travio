@@ -469,8 +469,6 @@ namespace Travio.Core.Services.Hotelbeds
                 // ── Validation ────────────────────────────────────────────────
                 if (request is null)
                     return new ServiceResponse<CheckoutResponseDto>("Booking request cannot be null.");
-                if (string.IsNullOrWhiteSpace(request.RateKey))
-                    return new ServiceResponse<CheckoutResponseDto>("Rate key is required.");
                 if (string.IsNullOrWhiteSpace(request.HolderFirstName) || string.IsNullOrWhiteSpace(request.HolderLastName))
                     return new ServiceResponse<CheckoutResponseDto>("Holder's first and last name are required.");
                 if (request.Rooms is null || request.Rooms.Count == 0)
@@ -478,10 +476,25 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<CheckoutResponseDto>("User must be authenticated.");
 
-                // ── Step 1: Validate the rate via Hotelbeds CheckRate ─────────
+                // Validate that EVERY room has a non-empty RateKey and at least one pax
+                for (int i = 0; i < request.Rooms.Count; i++)
+                {
+                    var room = request.Rooms[i];
+                    if (string.IsNullOrWhiteSpace(room.RateKey))
+                        return new ServiceResponse<CheckoutResponseDto>($"Room {i + 1} is missing a rate key.");
+                    if (room.Paxes is null || room.Paxes.Count == 0)
+                        return new ServiceResponse<CheckoutResponseDto>($"Room {i + 1} must have at least one guest.");
+                    if (!room.Paxes.Any(p => p.Type == "AD"))
+                        return new ServiceResponse<CheckoutResponseDto>($"Room {i + 1} must have at least one adult (Type = \"AD\").");
+                }
+
+                // ── Step 1: Validate ALL rates via Hotelbeds CheckRate ─────────
+                // Send one room entry per rate key — Hotelbeds returns COMBINED TotalNet.
                 var checkRateApiRequest = new HotelbedsCheckRateRequest
                 {
-                    Rooms = new List<HotelbedsCheckRateRoom> { new() { RateKey = request.RateKey } }
+                    Rooms = request.Rooms
+                        .Select(r => new HotelbedsCheckRateRoom { RateKey = r.RateKey })
+                        .ToList()
                 };
                 var checkRateResponse = await _httpClient.PostAsJsonAsync("checkrates", checkRateApiRequest, JsonOptions, cancellationToken);
 
@@ -493,14 +506,15 @@ namespace Travio.Core.Services.Hotelbeds
 
                 var checkRateResult = await checkRateResponse.Content.ReadFromJsonAsync<HotelbedsCheckRateResponse>(JsonOptions, cancellationToken);
                 if (checkRateResult?.Hotel is null)
-                    return new ServiceResponse<CheckoutResponseDto>("The selected rate is no longer available. Please search again.");
+                    return new ServiceResponse<CheckoutResponseDto>("The selected rate(s) are no longer available. Please search again.");
 
                 // ── Step 2: Calculate final price (freeze exchange rate + markup) ──
+                // TotalNet from CheckRate is the COMBINED wholesale price across ALL rooms
                 var wholesaleNet = decimal.TryParse(checkRateResult.Hotel.TotalNet, out var rawNet) ? rawNet : 0m;
                 if (wholesaleNet <= 0)
                     return new ServiceResponse<CheckoutResponseDto>("Invalid price returned from rate validation.");
 
-                // FIX MAJOR-3: Freeze the exchange rate — stored in DB so webhook doesn't re-fetch
+                // Freeze the exchange rate — stored in DB so webhook doesn't re-fetch
                 var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(
                     WholesaleCurrency, DisplayCurrency, cancellationToken);
                 var finalPrice = Math.Round(wholesaleNet * CorporateMarkupMultiplier * exchangeRate, 2);
@@ -516,11 +530,12 @@ namespace Travio.Core.Services.Hotelbeds
                     CheckOut = DateOnly.TryParse(h.CheckOut, out var co) ? co : DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
                     TotalPrice = finalPrice,
                     Currency = DisplayCurrency,
-                    RateKey = request.RateKey,
+                    // Store comma-separated rate keys for audit trail
+                    RateKey = string.Join(",", request.Rooms.Select(r => r.RateKey)),
                     BookingStatus = HotelBookingStatus.PendingPayment,
                     RoomCount = request.Rooms.Count,
                     GuestDataJson = JsonSerializer.Serialize(request, JsonOptions),
-                    // FIX MAJOR-3: Freeze financial data for the webhook
+                    // Freeze financial data for the webhook
                     WholesaleNetEur = wholesaleNet,
                     ExchangeRateAtCheckout = exchangeRate,
                     CreatedAt = DateTime.UtcNow
@@ -530,12 +545,10 @@ namespace Travio.Core.Services.Hotelbeds
                 await _bookingRepository.SaveChangesAsync(cancellationToken);
 
                 // ── Step 4: Create Stripe PaymentIntent ───────────────────────
-                // FIX MAJOR-2: Use Math.Round to avoid truncation on decimal→long cast
                 var amountInCents = (long)Math.Round(finalPrice * 100m, MidpointRounding.AwayFromZero);
 
                 try
                 {
-                    // FIX MAJOR-5: Use injected IPaymentGatewayService instead of new PaymentIntentService()
                     var piResult = await _paymentGateway.CreatePaymentIntentAsync(
                         amountInCents, DisplayCurrency.ToLowerInvariant(), booking.Id, "Hotel", cancellationToken);
 
@@ -556,7 +569,7 @@ namespace Travio.Core.Services.Hotelbeds
                 }
                 catch (Exception stripeEx)
                 {
-                    // FIX CRITICAL-3: Clean up the orphaned PendingPayment DB record
+                    // Clean up the orphaned PendingPayment DB record
                     _logger.LogError(stripeEx,
                         "Stripe PaymentIntent creation failed for BookingId {BookingId}. Rolling back DB record.",
                         booking.Id);
@@ -567,7 +580,6 @@ namespace Travio.Core.Services.Hotelbeds
                     }
                     catch (Exception rollbackEx)
                     {
-                        // Log but don't mask the original Stripe error
                         _logger.LogError(rollbackEx,
                             "Failed to rollback orphaned PendingPayment record for BookingId {BookingId}.",
                             booking.Id);
