@@ -54,12 +54,13 @@ namespace Travio.API.Controllers
         public async Task<ActionResult<Pagination<DestinationDto>>> Search(
             [FromQuery] string keyword,
             [FromQuery] int pageIndex = 1,
-            [FromQuery] int pageSize = 10)
+            [FromQuery] int pageSize = 10,
+            [FromQuery] List<int>? interestIds = null)
         {
             if (string.IsNullOrWhiteSpace(keyword))
                 return BadRequest(new ApiResponse(400, "Keyword is required"));
 
-            var result = await _destinationService.SearchByNameAsync(keyword, pageIndex, pageSize);
+            var result = await _destinationService.SearchByNameAsync(keyword, pageIndex, pageSize, interestIds);
             return Ok(result);
         }
 

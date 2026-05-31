@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using FluentValidation.Results;
 using Mapster;
 using Travio.Core.Contracts.Services.Destination;
@@ -56,11 +56,11 @@ public class DestinationService : IDestinationService
         return destinations.Adapt<IEnumerable<DestinationDto>>();
     }
 
-    public async Task<Pagination<DestinationDto>> SearchByNameAsync(string keyword, int pageIndex, int pageSize)
+    public async Task<Pagination<DestinationDto>> SearchByNameAsync(string keyword, int pageIndex, int pageSize, List<int>? interestIds = null)
     {
         var skip = (pageIndex - 1) * pageSize;
-        var dataSpec = new DestinationSearchSpec(keyword, skip, pageSize);
-        var countSpec = new DestinationSearchCountSpec(keyword);
+        var dataSpec = new DestinationSearchSpec(keyword, skip, pageSize, interestIds);
+        var countSpec = new DestinationSearchCountSpec(keyword, interestIds);
         var totalItems = await _destinationRepository.CountAsync(countSpec);
         var data = await _destinationRepository.ListAsync(dataSpec);
         var dataDto = data.Adapt<IEnumerable<DestinationDto>>();

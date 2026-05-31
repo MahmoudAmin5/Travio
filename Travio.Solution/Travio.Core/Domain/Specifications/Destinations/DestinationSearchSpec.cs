@@ -5,7 +5,7 @@ namespace Travio.Core.Domain.Specifications.Destinations;
 
 public class DestinationSearchSpec : Specification<Destination>
 {
-    public DestinationSearchSpec(string keyword, int skip, int take)
+    public DestinationSearchSpec(string keyword, int skip, int take, List<int>? interestIds = null)
     {
         var lowerKeyword = keyword.ToLower();
 
@@ -18,6 +18,11 @@ public class DestinationSearchSpec : Specification<Destination>
             x.DestinationInterests.Any(di =>
                 di.Interest.InterestName.ToLower().Contains(lowerKeyword))
         );
+
+        if (interestIds is { Count: > 0 })
+        {
+            Query.Where(x => x.DestinationInterests.Any(di => interestIds.Contains(di.InterestID)));
+        }
 
         Query.Include(x => x.City)
                 .ThenInclude(c => c.Country)
