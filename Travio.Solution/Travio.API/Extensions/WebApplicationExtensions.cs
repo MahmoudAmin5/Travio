@@ -28,6 +28,7 @@ public static class WebApplicationExtensions
             await CountryLandmarkImagesSeed.SeedAsync(context);
             await DestinationSeed.SeedAsync(context);
             await IdentitySeed.SeedRolesAndAdminAsync(app.Services, app.Configuration);
+            await ReviewSeed.SeedAsync(app.Services);
         }
         catch (Exception ex)
         {

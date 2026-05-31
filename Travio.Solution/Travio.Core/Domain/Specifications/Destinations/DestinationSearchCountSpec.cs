@@ -5,7 +5,7 @@ namespace Travio.Core.Domain.Specifications.Destinations;
 
 public class DestinationSearchCountSpec : Specification<Destination>
 {
-    public DestinationSearchCountSpec(string keyword)
+    public DestinationSearchCountSpec(string keyword, List<int>? interestIds = null)
     {
         var lowerKeyword = keyword.ToLower();
 
@@ -18,5 +18,10 @@ public class DestinationSearchCountSpec : Specification<Destination>
             x.DestinationInterests.Any(di =>
                 di.Interest.InterestName.ToLower().Contains(lowerKeyword))
         );
+
+        if (interestIds is { Count: > 0 })
+        {
+            Query.Where(x => x.DestinationInterests.Any(di => interestIds.Contains(di.InterestID)));
+        }
     }
-}
+}
