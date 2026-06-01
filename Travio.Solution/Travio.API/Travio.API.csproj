@@ -4,14 +4,17 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>abed9281-b55a-4cc2-b075-76745ff24878</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Hangfire.Dashboard.Basic.Authentication" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" Version="2.11.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +25,14 @@
   <ItemGroup>
     <ProjectReference Include="..\Travio.Core\Travio.Core.csproj" />
     <ProjectReference Include="..\Travio.Infrastructure\Travio.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\Images\logo.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\NewFolder\" />
   </ItemGroup>
 
 </Project>

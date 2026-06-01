@@ -1,0 +1,205 @@
+[
+    {
+        "ContinentName": "Africa",
+        "Countries": [
+            {
+                "CountryName": "Egypt",
+                "FlagURL": "https://flagcdn.com/eg.svg",
+                "Cities": [
+                    { "CityName": "Cairo" },
+                    { "CityName": "Alexandria" },
+                    { "CityName": "Luxor" },
+                    { "CityName": "Aswan" },
+                    { "CityName": "Sharm El Sheikh" },
+                    { "CityName": "Hurghada" },
+                    { "CityName": "Dahab" },
+                    { "CityName": "Marsa Alam" },
+                    { "CityName": "Giza" },
+                    { "CityName": "Siwa" }
+                ]
+            },
+            {
+                "CountryName": "Morocco",
+                "FlagURL": "https://flagcdn.com/ma.svg",
+                "Cities": [
+                    { "CityName": "Marrakech" },
+                    { "CityName": "Casablanca" },
+                    { "CityName": "Fes" },
+                    { "CityName": "Agadir" },
+                    { "CityName": "Tangier" },
+                    { "CityName": "Rabat" },
+                    { "CityName": "Chefchaouen" },
+                    { "CityName": "Essaouira" }
+                ]
+            }
+        ]
+    },
+    {
+        "ContinentName": "Asia",
+        "Countries": [
+            {
+                "CountryName": "UAE",
+                "FlagURL": "https://flagcdn.com/ae.svg",
+                "Cities": [
+                    { "CityName": "Dubai" },
+                    { "CityName": "Abu Dhabi" },
+                    { "CityName": "Sharjah" },
+                    { "CityName": "Al Ain" }
+                ]
+            },
+            {
+                "CountryName": "Saudi Arabia",
+                "FlagURL": "https://flagcdn.com/sa.svg",
+                "Cities": [
+                    { "CityName": "Riyadh" },
+                    { "CityName": "Jeddah" },
+                    { "CityName": "Mecca" },
+                    { "CityName": "Medina" },
+                    { "CityName": "Al-Ula" }
+                ]
+            },
+            {
+                "CountryName": "Japan",
+                "FlagURL": "https://flagcdn.com/jp.svg",
+                "Cities": [
+                    { "CityName": "Tokyo" },
+                    { "CityName": "Kyoto" },
+                    { "CityName": "Osaka" },
+                    { "CityName": "Nara" }
+                ]
+            },
+            {
+                "CountryName": "Indonesia",
+                "FlagURL": "https://flagcdn.com/id.svg",
+                "Cities": [
+                    { "CityName": "Jakarta" },
+                    { "CityName": "Bali" },
+                    { "CityName": "Ubud" },
+                    { "CityName": "Yogyakarta" },
+                    { "CityName": "Lombok" }
+                ]
+            }
+        ]
+    },
+    {
+        "ContinentName": "Europe",
+        "Countries": [
+            {
+                "CountryName": "Italy",
+                "FlagURL": "https://flagcdn.com/it.svg",
+                "Cities": [
+                    { "CityName": "Rome" },
+                    { "CityName": "Venice" },
+                    { "CityName": "Milan" },
+                    { "CityName": "Florence" },
+                    { "CityName": "Amalfi" }
+                ]
+            },
+            {
+                "CountryName": "France",
+                "FlagURL": "https://flagcdn.com/fr.svg",
+                "Cities": [
+                    { "CityName": "Paris" },
+                    { "CityName": "Nice" },
+                    { "CityName": "Lyon" },
+                    { "CityName": "Bordeaux" }
+                ]
+            }
+        ]
+    },
+    {
+        "ContinentName": "North America",
+        "Countries": [
+            {
+                "CountryName": "USA",
+                "FlagURL": "https://flagcdn.com/us.svg",
+                "Cities": [
+                    { "CityName": "New York" },
+                    { "CityName": "Los Angeles" },
+                    { "CityName": "Miami" },
+                    { "CityName": "Las Vegas" },
+                    { "CityName": "San Francisco" }
+                ]
+            }
+        ]
+    },
+    {
+        "ContinentName": "South America",
+        "Countries": [
+            {
+                "CountryName": "Brazil",
+                "FlagURL": "https://flagcdn.com/br.svg",
+                "Cities": [
+                    { "CityName": "Rio de Janeiro" },
+                    { "CityName": "Sao Paulo" },
+                    { "CityName": "Salvador" },
+                    { "CityName": "Brasilia" },
+                    { "CityName": "Manaus" },
+                    { "CityName": "Buzios" },
+                    { "CityName": "Florianopolis" }
+                ]
+            },
+            {
+                "CountryName": "Argentina",
+                "FlagURL": "https://flagcdn.com/ar.svg",
+                "Cities": [
+                    { "CityName": "Buenos Aires" },
+                    { "CityName": "Mendoza" },
+                    { "CityName": "Bariloche" },
+                    { "CityName": "Ushuaia" },
+                    { "CityName": "Cordoba" },
+                    { "CityName": "Iguazu Falls" }
+                ]
+            },
+            {
+                "CountryName": "Peru",
+                "FlagURL": "https://flagcdn.com/pe.svg",
+                "Cities": [
+                    { "CityName": "Lima" },
+                    { "CityName": "Cusco" },
+                    { "CityName": "Arequipa" },
+                    { "CityName": "Machu Picchu Village" },
+                    { "CityName": "Iquitos" }
+                ]
+            },
+            {
+                "CountryName": "Colombia",
+                "FlagURL": "https://flagcdn.com/co.svg",
+                "Cities": [
+                    { "CityName": "Bogota" },
+                    { "CityName": "Medellin" },
+                    { "CityName": "Cartagena" },
+                    { "CityName": "Cali" },
+                    { "CityName": "Santa Marta" }
+                ]
+            },
+            {
+                "CountryName": "Chile",
+                "FlagURL": "https://flagcdn.com/cl.svg",
+                "Cities": [
+                    { "CityName": "Santiago" },
+                    { "CityName": "Valparaiso" },
+                    { "CityName": "Vina del Mar" },
+                    { "CityName": "San Pedro de Atacama" },
+                    { "CityName": "Puerto Natales" }
+                ]
+            }
+        ]
+    },
+    {
+        "ContinentName": "Oceania",
+        "Countries": [
+            {
+                "CountryName": "Australia",
+                "FlagURL": "https://flagcdn.com/au.svg",
+                "Cities": [
+                    { "CityName": "Sydney" },
+                    { "CityName": "Melbourne" },
+                    { "CityName": "Brisbane" },
+                    { "CityName": "Perth" },
+                    { "CityName": "Gold Coast" }
+                ]
+            }
+        ]
+    }
+]

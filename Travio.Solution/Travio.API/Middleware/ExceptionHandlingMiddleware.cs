@@ -21,7 +21,7 @@ namespace Travio.API.Middleware
 
             try
             {
-                // يارب يشتغل 
+                // test
                 await _next.Invoke(httpContext);
             }
             catch (Exception ex)
@@ -31,7 +31,7 @@ namespace Travio.API.Middleware
                 //httpContext.Response.ContentType = "Application/Json";
 
                 var response = _env.IsDevelopment() ?
-                     new Errors.ApiExceptionErrorResponse((int)HttpStatusCode.InternalServerError, null, ex.StackTrace)
+                     new Errors.ApiExceptionErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message, ex.StackTrace)
                      : new Errors.ApiExceptionErrorResponse((int)HttpStatusCode.InternalServerError);
 
                 await httpContext.Response.WriteAsJsonAsync(response);

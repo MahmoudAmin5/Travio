@@ -1,0 +1,49 @@
+﻿using Google.Apis.Auth;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+using Travio.Core.Contracts.Services.Auth;
+using Travio.Core.DTOs;
+
+namespace Travio.Core.Services.Auth
+{
+    public class GoogleAuthService : IGoogleAuthService
+    {
+        private readonly IConfiguration _configuration;
+
+        public GoogleAuthService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        public async Task<GoogleUserDTO> VerifyTokenAsync(string idToken)
+        {
+            try
+            {
+                var clientId = _configuration["Google:ClientId"];
+                if(clientId is null) throw new ArgumentNullException(nameof(clientId));
+                var settings = new GoogleJsonWebSignature.ValidationSettings()
+                {
+                    Audience = new List<string> { clientId }
+                };
+                var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+                return new GoogleUserDTO
+                {
+                    Email = payload.Email,
+                    Name = payload.Name,
+                    ProviderKey = payload.Subject,
+                    PictureURL = payload.Picture,
+
+                };
+            }
+            catch (InvalidJwtException ex)
+            {
+                throw new ValidationException($"Invalid Google Token: {ex.Message}");
+            }
+        }
+    }
+}

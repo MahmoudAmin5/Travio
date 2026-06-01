@@ -1,46 +1,38 @@
+using Travio.API.Extensions;
 
-using Microsoft.EntityFrameworkCore;
-
-using Travio.API.Middleware;
-
-using Travio.Core.Domain.Entities.Account_Mangement;
-using Travio.Infrastructure;
 namespace Travio.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
+            // Services
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
-            builder.Services.AddDbContext<ApplicationDbContext>(options => // add the ApplicationDbContext to the DI container
-            {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")); // configure the context to use SQL Server with the connection string from appsettings.json
-            });
-            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+            builder.Services.AddDatabase(builder.Configuration);
+            builder.Services.AddIdentityConfiguration();
+            builder.Services.AddJwtAuthentication(builder.Configuration);
+            builder.Services.AddApplicationServices(builder.Configuration);
+            builder.Services.AddMapsterConfiguration();
+            builder.Services.AddOpenApiConfiguration();
+            builder.Services.AddHangfireConfiguration(builder.Configuration);
+
+            // App
             var app = builder.Build();
-            app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            try
             {
-                app.MapOpenApi();
+                await app.ApplyMigrationsAndSeedAsync();
+                app.ConfigureMiddleware();
+                app.ConfigureHangfire();
+                app.Run();
             }
-
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+            catch (Exception ex)
+            {
+                // Log the exception (using your preferred logging framework)
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                throw; // Re-throw the exception after logging it
+            }
         }
     }
 }
