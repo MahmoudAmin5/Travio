@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
+using System.Reflection.Metadata;
 using Travio.Core.Contracts.Services.Payment;
 
 namespace Travio.API.Controllers
@@ -27,10 +28,11 @@ namespace Travio.API.Controllers
             {
                 // 1. Verify the signature against your secret
                 var stripeEvent = EventUtility.ConstructEvent(
-                    json,
-                    Request.Headers["Stripe-Signature"],
-                    _webhookSecret
-                );
+    json,
+    Request.Headers["Stripe-Signature"],
+    _webhookSecret,
+    throwOnApiVersionMismatch: false // <-- Add this parameter
+);  
 
                 // 2. Check if the event is a successful card charge
                 if (stripeEvent.Type == "payment_intent.succeeded")
