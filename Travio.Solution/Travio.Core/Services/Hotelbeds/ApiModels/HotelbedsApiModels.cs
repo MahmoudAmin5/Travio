@@ -331,7 +331,7 @@ namespace Travio.Core.Services.Hotelbeds.ApiModels
         public string? CreationDate { get; set; }
 
         [JsonPropertyName("totalNet")]
-        public string? TotalNet { get; set; }
+        public decimal? TotalNet { get; set; }
 
         [JsonPropertyName("currency")]
         public string? Currency { get; set; }
