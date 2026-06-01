@@ -375,17 +375,33 @@ namespace Travio.Core.Services.Hotelbeds
                     Name = roomName,
                     Images = habImages,
                     RoomFacilities = roomFacilities,
-                    Rates = r.Rates?.Select(rate => new RateDto
-                    {
-                        RateKey = rate.RateKey ?? string.Empty,
-                        RateClass = rate.RateClass ?? string.Empty,
-                        Price = decimal.TryParse(rate.Net, out var net) ? Math.Round(net * CorporateMarkupMultiplier * exchangeRate, 2) : 0,
-                        BoardCode = rate.BoardCode ?? string.Empty,
-                        BoardName = rate.BoardName ?? string.Empty,
-                        Allotment = rate.Allotment,
-                        CancellationPolicies = rate.CancellationPolicies?.Select(cp => new CancellationPolicyDto
-                        { Amount = decimal.TryParse(cp.Amount, out var amt) ? Math.Round(amt * exchangeRate, 2) : 0, From = cp.From ?? string.Empty }).ToList() ?? new()
-                    }).ToList() ?? new()
+                    Rates = r.Rates?
+    // 1. Group the rates by Meal Plan (e.g., "RO") and Refundability (e.g., "NRF" vs "NOR")
+    .GroupBy(rate => new
+    {
+        Board = rate.BoardCode ?? string.Empty,
+        Class = rate.RateClass ?? string.Empty
+    })
+    // 2. For each group, sort by price (cheapest first) and grab only the top one
+    .Select(group => group
+        .OrderBy(rate => decimal.TryParse(rate.Net, out var net) ? net : decimal.MaxValue)
+        .First()
+    )
+    // 3. Now project that beautifully filtered list into your DTO just like before
+    .Select(rate => new RateDto
+    {
+        RateKey = rate.RateKey ?? string.Empty,
+        RateClass = rate.RateClass ?? string.Empty,
+        Price = decimal.TryParse(rate.Net, out var net) ? Math.Round(net * CorporateMarkupMultiplier * exchangeRate, 2) : 0m,
+        BoardCode = rate.BoardCode ?? string.Empty,
+        BoardName = rate.BoardName ?? string.Empty,
+        Allotment = rate.Allotment,
+        CancellationPolicies = rate.CancellationPolicies?.Select(cp => new CancellationPolicyDto
+        {
+            Amount = decimal.TryParse(cp.Amount, out var amt) ? Math.Round(amt * exchangeRate, 2) : 0m,
+            From = cp.From ?? string.Empty
+        }).ToList() ?? new()
+    }).ToList() ?? new()
                 };
             }).ToList();
         }
