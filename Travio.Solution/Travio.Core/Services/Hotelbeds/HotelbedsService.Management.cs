@@ -93,7 +93,7 @@ namespace Travio.Core.Services.Hotelbeds
                     Status = b.Status ?? string.Empty,
                     CreationDate = b.CreationDate ?? string.Empty,
                     HolderName = b.Holder is not null ? $"{b.Holder.Name} {b.Holder.Surname}".Trim() : string.Empty,
-                    TotalNet = decimal.TryParse(b.TotalNet, out var net) ? net : 0,
+                    TotalNet = b.TotalNet ?? 0,
                     Currency = b.Currency ?? string.Empty,
                     CancellationReference = b.CancellationReference,
                     Hotel = b.Hotel is not null ? new BookingHotelDto
@@ -420,7 +420,7 @@ namespace Travio.Core.Services.Hotelbeds
                 BookingReference = b.Reference ?? string.Empty,
                 ClientReference = b.ClientReference ?? string.Empty,
                 Status = b.Status ?? string.Empty,
-                TotalPrice = decimal.TryParse(b.TotalNet, out var t) ? Math.Round(t * CorporateMarkupMultiplier * exchangeRate, 2) : 0,
+                TotalPrice = b.TotalNet.HasValue ? Math.Round(b.TotalNet.Value * CorporateMarkupMultiplier * exchangeRate, 2) : 0,
                 Currency = DisplayCurrency,
                 CreationDate = b.CreationDate ?? string.Empty,
                 Hotel = b.Hotel is not null ? new BookingHotelDto
