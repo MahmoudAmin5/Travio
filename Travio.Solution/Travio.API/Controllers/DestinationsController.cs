@@ -43,6 +43,24 @@ namespace Travio.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id:int}/suggested")]
+        [ProducesResponseType(typeof(IEnumerable<DestinationDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IEnumerable<DestinationDto>>> GetSuggested(
+            int id,
+            [FromQuery] int count = 10)
+        {
+            try
+            {
+                var result = await _destinationService.GetSuggestedAsync(id, count);
+                return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new ApiResponse(404, ex.Message));
+            }
+        }
+
         [HttpGet("top-rated")]
         public async Task<ActionResult<IEnumerable<DestinationDto>>> GetTopRated([FromQuery] int count = 10)
         {

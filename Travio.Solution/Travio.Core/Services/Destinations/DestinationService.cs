@@ -262,4 +262,38 @@ public class DestinationService : IDestinationService
 
         return (Math.Round((decimal)destination.Rating, 1, MidpointRounding.AwayFromZero), destination.TotalReviews);
     }
+
+    public async Task<IEnumerable<DestinationDto>> GetSuggestedAsync(int destinationId, int count = 10)
+    {
+        // Load the current destination with its interests and city info
+        var spec = new DestinationByIdSpec(destinationId);
+        var destination = await _destinationRepository.FirstOrDefaultAsync(spec)
+            ?? throw new NotFoundException("Destination", destinationId);
+
+        var interestIds = destination.DestinationInterests
+            .Select(di => di.InterestID)
+            .ToList();
+
+        var countryId = destination.City.CountryID;
+
+        IReadOnlyList<Destination> suggestions;
+
+        if (interestIds.Count > 0)
+        {
+            // Primary: shared interests with geographic priority
+            var continentId = destination.City.Country?.ContinentID ?? 0;
+
+            var suggestedSpec = new SuggestedDestinationsSpec(
+                destinationId, interestIds, countryId, continentId, count);
+            suggestions = await _destinationRepository.ListAsync(suggestedSpec);
+        }
+        else
+        {
+            // Fallback: top-rated in same country
+            var fallbackSpec = new SuggestedDestinationsFallbackSpec(destinationId, countryId, count);
+            suggestions = await _destinationRepository.ListAsync(fallbackSpec);
+        }
+
+        return suggestions.Adapt<IEnumerable<DestinationDto>>();
+    }
 }

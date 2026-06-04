@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Travio.Core.Domain.Entities.Destinations;
 
 namespace Travio.Core.Domain.Specifications.Destinations;
@@ -9,6 +9,7 @@ public class DestinationByIdSpec : Specification<Destination>
     {
         Query.Where(x => x.DestinationID == id)
              .Include(x => x.City)
+                .ThenInclude(c => c.Country)
              .Include(x => x.Images)
              .Include(x => x.DestinationInterests)
                  .ThenInclude(di => di.Interest).AsNoTracking();

@@ -34,6 +34,9 @@ public static class WebApplicationExtensions
         {
             var logger = loggerFactory.CreateLogger<Program>();
             logger.LogError(ex, "An error occurred during migration/seeding");
+            Console.WriteLine($"❌ [Seed] Error during migration/seeding: {ex.Message}");
+            if (ex.InnerException != null)
+                Console.WriteLine($"❌ [Seed] Inner: {ex.InnerException.Message}");
         }
     }
 
