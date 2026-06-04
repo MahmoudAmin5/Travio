@@ -74,126 +74,146 @@ public static class ReviewSeed
 
     public static async Task SeedAsync(IServiceProvider services)
     {
-        using var scope = services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        // Skip if reviews already exist
-        if (await context.DestinationReviews.AnyAsync())
-            return;
-
-        // 1. Create or retrieve the seed users
-        var seedUserIds = new List<string>();
-
-        foreach (var (firstName, lastName, email) in FakeUsers)
+        try
         {
-            var existingUser = await userManager.FindByEmailAsync(email);
-            if (existingUser != null)
+            using var scope = services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            Console.WriteLine("[ReviewSeed] Starting review seed...");
+
+            // Skip if reviews already exist
+            if (await context.DestinationReviews.AnyAsync())
             {
-                seedUserIds.Add(existingUser.Id);
-                continue;
+                Console.WriteLine("[ReviewSeed] Reviews already exist. Skipping.");
+                return;
             }
 
-            var user = new ApplicationUser
+            // 1. Create or retrieve the seed users
+            var seedUserIds = new List<string>();
+
+            foreach (var (firstName, lastName, email) in FakeUsers)
             {
-                UserName = email,
-                Email = email,
-                EmailConfirmed = true,
-                FirstName = firstName,
-                LastName = lastName,
-                RegistrationDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(30, 365))
-            };
-
-            var result = await userManager.CreateAsync(user, "Seed@Review123!");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(user, "User");
-                seedUserIds.Add(user.Id);
-            }
-            else
-            {
-                Console.WriteLine($"[ReviewSeed] Failed to create user {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            }
-        }
-
-        if (seedUserIds.Count == 0)
-        {
-            Console.WriteLine("[ReviewSeed] No seed users available. Skipping review seeding.");
-            return;
-        }
-
-        // 2. Load all destinations
-        var destinations = await context.Destinations.ToListAsync();
-
-        if (destinations.Count == 0)
-        {
-            Console.WriteLine("[ReviewSeed] No destinations found. Skipping review seeding.");
-            return;
-        }
-
-        var random = new Random(42); // fixed seed for reproducibility
-        var now = DateTime.UtcNow;
-        var reviews = new List<DestinationReview>();
-
-        foreach (var destination in destinations)
-        {
-            // Each destination gets exactly 30 reviews
-            var reviewCount = 30;
-
-            // Shuffle users and pick reviewCount of them
-            var shuffledUsers = seedUserIds.OrderBy(_ => random.Next()).Take(reviewCount).ToList();
-
-            var destinationRatings = new List<int>();
-
-            foreach (var userId in shuffledUsers)
-            {
-                // Weighted rating: mostly 4-5, some 3, rare 2
-                int rating = random.Next(1, 101) switch
+                var existingUser = await userManager.FindByEmailAsync(email);
+                if (existingUser != null)
                 {
-                    <= 5 => 2,
-                    <= 15 => 3,
-                    <= 45 => 4,
-                    _ => 5
+                    seedUserIds.Add(existingUser.Id);
+                    continue;
+                }
+
+                var user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    RegistrationDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(30, 365))
                 };
 
-                destinationRatings.Add(rating);
-
-                // Pick a comment based on rating
-                string? comment = rating switch
+                var result = await userManager.CreateAsync(user, "Seed@Review123!");
+                if (result.Succeeded)
                 {
-                    >= 4 => PositiveComments[random.Next(PositiveComments.Length)],
-                    3 => NeutralComments[random.Next(NeutralComments.Length)],
-                    _ => MixedComments[random.Next(MixedComments.Length)],
-                };
-
-                // 15% chance of no comment (rating only)
-                if (random.Next(1, 101) <= 15)
-                    comment = null;
-
-                var createdAt = now.AddDays(-random.Next(7, 300)).AddHours(-random.Next(0, 24));
-
-                reviews.Add(new DestinationReview
+                    await userManager.AddToRoleAsync(user, "User");
+                    seedUserIds.Add(user.Id);
+                }
+                else
                 {
-                    DestinationId = destination.DestinationID,
-                    UserId = userId,
-                    Rating = rating,
-                    Comment = comment,
-                    HelpfulVotes = random.Next(0, 50),
-                    IsActive = true,
-                    CreatedAtUtc = createdAt,
-                    UpdatedAtUtc = createdAt
-                });
+                    Console.WriteLine($"[ReviewSeed] Failed to create user {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
             }
 
-            // Update destination aggregates
-            destination.TotalReviews = destinationRatings.Count;
-            destination.Rating = Math.Round(destinationRatings.Average(), 1);
+            Console.WriteLine($"[ReviewSeed] Created/found {seedUserIds.Count} seed users.");
+
+            if (seedUserIds.Count == 0)
+            {
+                Console.WriteLine("[ReviewSeed] No seed users available. Skipping review seeding.");
+                return;
+            }
+
+            // 2. Load all destinations
+            var destinations = await context.Destinations.ToListAsync();
+            Console.WriteLine($"[ReviewSeed] Found {destinations.Count} destinations.");
+
+            if (destinations.Count == 0)
+            {
+                Console.WriteLine("[ReviewSeed] No destinations found. Skipping review seeding.");
+                return;
+            }
+
+            var random = new Random(42); // fixed seed for reproducibility
+            var now = DateTime.UtcNow;
+            var reviews = new List<DestinationReview>();
+
+            foreach (var destination in destinations)
+            {
+                // Each destination gets exactly 30 reviews
+                var reviewCount = 30;
+
+                // Shuffle users and pick reviewCount of them
+                var shuffledUsers = seedUserIds.OrderBy(_ => random.Next()).Take(reviewCount).ToList();
+
+                var destinationRatings = new List<int>();
+
+                foreach (var userId in shuffledUsers)
+                {
+                    // Weighted rating: mostly 4-5, some 3, rare 2
+                    int rating = random.Next(1, 101) switch
+                    {
+                        <= 5 => 2,
+                        <= 15 => 3,
+                        <= 45 => 4,
+                        _ => 5
+                    };
+
+                    destinationRatings.Add(rating);
+
+                    // Pick a comment based on rating
+                    string? comment = rating switch
+                    {
+                        >= 4 => PositiveComments[random.Next(PositiveComments.Length)],
+                        3 => NeutralComments[random.Next(NeutralComments.Length)],
+                        _ => MixedComments[random.Next(MixedComments.Length)],
+                    };
+
+                    // 15% chance of no comment (rating only)
+                    if (random.Next(1, 101) <= 15)
+                        comment = null;
+
+                    var createdAt = now.AddDays(-random.Next(7, 300)).AddHours(-random.Next(0, 24));
+
+                    reviews.Add(new DestinationReview
+                    {
+                        DestinationId = destination.DestinationID,
+                        UserId = userId,
+                        Rating = rating,
+                        Comment = comment,
+                        HelpfulVotes = random.Next(0, 50),
+                        IsActive = true,
+                        CreatedAtUtc = createdAt,
+                        UpdatedAtUtc = createdAt
+                    });
+                }
+
+                // Update destination aggregates
+                destination.TotalReviews = destinationRatings.Count;
+                destination.Rating = Math.Round(destinationRatings.Average(), 1);
+            }
+
+            Console.WriteLine($"[ReviewSeed] Saving {reviews.Count} reviews...");
+            context.DestinationReviews.AddRange(reviews);
+            context.Destinations.UpdateRange(destinations);
+            await context.SaveChangesAsync();
+
+            Console.WriteLine($"✅ ReviewSeed: Created {seedUserIds.Count} seed users and {reviews.Count} reviews across {destinations.Count} destinations.");
         }
-
-        context.DestinationReviews.AddRange(reviews);
-        context.Destinations.UpdateRange(destinations);
-        await context.SaveChangesAsync();
-
-        Console.WriteLine($"✅ ReviewSeed: Created {seedUserIds.Count} seed users and {reviews.Count} reviews across {destinations.Count} destinations.");
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ [ReviewSeed] Error: {ex.Message}");
+            Console.WriteLine($"❌ [ReviewSeed] StackTrace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+                Console.WriteLine($"❌ [ReviewSeed] Inner: {ex.InnerException.Message}");
+            throw; // re-throw so it's also caught by the outer handler
+        }
     }
 }

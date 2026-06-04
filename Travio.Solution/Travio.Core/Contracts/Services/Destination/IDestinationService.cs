@@ -16,4 +16,5 @@ public interface IDestinationService
     Task<DestinationReviewMutationDto> UpsertMyReviewAsync(int destinationId, string userId, DestinationReviewUpsertDto dto);
     Task<DestinationReviewMutationDto> UpdateMyReviewAsync(int destinationId, string userId, DestinationReviewUpsertDto dto);
     Task<DestinationReviewDeleteResultDto> DeleteMyReviewAsync(int destinationId, string userId);
+    Task<IEnumerable<DestinationDto>> GetSuggestedAsync(int destinationId, int count = 10);
 }
