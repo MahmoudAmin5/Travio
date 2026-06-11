@@ -1,3 +1,4 @@
+using Serilog;
 using Travio.API.Extensions;
 
 namespace Travio.API
@@ -6,32 +7,47 @@ namespace Travio.API
     {
         public static async Task Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .CreateBootstrapLogger();
 
-            // Services
-            builder.Services.AddControllers();
-            builder.Services.AddDatabase(builder.Configuration);
-            builder.Services.AddIdentityConfiguration();
-            builder.Services.AddJwtAuthentication(builder.Configuration);
-            builder.Services.AddApplicationServices(builder.Configuration);
-            builder.Services.AddMapsterConfiguration();
-            builder.Services.AddOpenApiConfiguration();
-            builder.Services.AddHangfireConfiguration(builder.Configuration);
-
-            // App
-            var app = builder.Build();
             try
             {
+                Log.Information("Starting web host");
+                var builder = WebApplication.CreateBuilder(args);
+
+                builder.Host.UseSerilog((context, services, configuration) => configuration
+                    .ReadFrom.Configuration(context.Configuration)
+                    .ReadFrom.Services(services)
+                    .Enrich.FromLogContext());
+
+                // Services
+                builder.Services.AddControllers(options =>
+                {
+                    options.Filters.Add<Travio.API.Filters.EndpointLoggingFilter>();
+                });
+                builder.Services.AddDatabase(builder.Configuration);
+                builder.Services.AddIdentityConfiguration();
+                builder.Services.AddJwtAuthentication(builder.Configuration);
+                builder.Services.AddApplicationServices(builder.Configuration);
+                builder.Services.AddMapsterConfiguration();
+                builder.Services.AddOpenApiConfiguration();
+                builder.Services.AddHangfireConfiguration(builder.Configuration);
+
+                // App
+                var app = builder.Build();
                 await app.ApplyMigrationsAndSeedAsync();
                 app.ConfigureMiddleware();
-                app.ConfigureHangfire();
                 app.Run();
             }
             catch (Exception ex)
             {
-                // Log the exception (using your preferred logging framework)
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                throw; // Re-throw the exception after logging it
+                Log.Fatal(ex, "Host terminated unexpectedly");
+                throw;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
             }
         }
     }

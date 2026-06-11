@@ -1,0 +1,285 @@
+2026-06-11 01:32:16.547 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-11 01:32:20.524 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-11 01:32:20.872 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-11 01:32:21.578 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-11 01:32:21.596 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-11 01:32:21.764 +03:00 [INF] Now listening on: https://localhost:7219
+2026-06-11 01:32:21.765 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-11 01:32:21.849 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: .@HangFireTravio'
+2026-06-11 01:32:21.851 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-11 01:32:21.851 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-11 01:32:21.917 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 01:32:21.918 +03:00 [INF] Hosting environment: Development
+2026-06-11 01:32:21.918 +03:00 [INF] Content root path: D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API
+2026-06-11 01:32:21.961 +03:00 [INF] Server desktop-vpea1s0:21056:707f8691 successfully announced in 41.8507 ms
+2026-06-11 01:32:21.964 +03:00 [INF] Server desktop-vpea1s0:21056:707f8691 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-11 01:32:21.968 +03:00 [INF] Server desktop-vpea1s0:21056:707f8691 all the dispatchers started
+2026-06-11 01:32:22.122 +03:00 [WRN] Recurring job 'DeleteOtpAuthService' can't be scheduled due to an error and will be retried in 00:00:15.
+Hangfire.Common.JobLoadException: Could not load the job. See inner exception for the details.
+ ---> System.IO.FileNotFoundException: Could not resolve assembly 'ProxyBuilder'.
+   at System.Reflection.TypeNameResolver.ResolveAssembly(AssemblyName assemblyName)
+   at System.Reflection.TypeNameResolver.GetType(String escapedTypeName, ReadOnlySpan`1 nestedTypeNames, TypeName parsedName)
+   at System.Reflection.TypeNameResolver.GetSimpleType(TypeName typeName)
+   at System.Reflection.TypeNameResolver.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Assembly requestingAssembly, Boolean throwOnError, Boolean ignoreCase, Boolean extensibleParser)
+   at System.Type.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Boolean throwOnError)
+   at Hangfire.Common.TypeHelper.<>c.<DefaultTypeResolver>b__20_0(String name) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 83
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Common.TypeHelper.DefaultTypeResolver(String typeName) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 75
+   at Hangfire.Storage.InvocationData.<>c.<CachedDeserializeMethod>b__33_0(MethodDeserializerCacheKey key) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 339
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Storage.InvocationData.CachedDeserializeMethod(Func`2 typeResolver, String typeName, String methodName, String parameterTypes, Type& type, MethodInfo& methodInfo) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 335
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 100
+   --- End of inner exception stack trace ---
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 118
+   at Hangfire.RecurringJobExtensions.TriggerRecurringJob(IBackgroundJobFactory factory, JobStorage storage, IStorageConnection connection, IProfiler profiler, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobExtensions.cs:line 115
+   at Hangfire.Server.RecurringJobScheduler.ScheduleRecurringJob(BackgroundProcessContext context, IStorageConnection connection, String recurringJobId, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\Server\RecurringJobScheduler.cs:line 333
+2026-06-11 01:32:23.709 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 1168.8544 ms
+2026-06-11 01:32:23.757 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 7.3531 ms
+2026-06-11 01:32:23.871 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 120.6319 ms
+2026-06-11 01:32:24.366 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 242.2244 ms
+2026-06-11 01:32:25.204 +03:00 [INF] HTTP GET /scalar/favicon.svg responded 200 in 0.5245 ms
+2026-06-11 01:32:37.159 +03:00 [WRN] Recurring job 'DeleteOtpAuthService' can't be scheduled due to an error and will be retried in 00:00:15.
+Hangfire.Common.JobLoadException: Could not load the job. See inner exception for the details.
+ ---> System.IO.FileNotFoundException: Could not resolve assembly 'ProxyBuilder'.
+   at System.Reflection.TypeNameResolver.GetType(String escapedTypeName, ReadOnlySpan`1 nestedTypeNames, TypeName parsedName)
+   at System.Reflection.TypeNameResolver.Resolve(TypeName typeName)
+   at System.Reflection.TypeNameResolver.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Assembly requestingAssembly, Boolean throwOnError, Boolean ignoreCase, Boolean extensibleParser)
+   at System.Type.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Boolean throwOnError)
+   at Hangfire.Common.TypeHelper.<>c.<DefaultTypeResolver>b__20_0(String name) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 83
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Common.TypeHelper.DefaultTypeResolver(String typeName) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 75
+   at Hangfire.Storage.InvocationData.<>c.<CachedDeserializeMethod>b__33_0(MethodDeserializerCacheKey key) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 339
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Storage.InvocationData.CachedDeserializeMethod(Func`2 typeResolver, String typeName, String methodName, String parameterTypes, Type& type, MethodInfo& methodInfo) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 335
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 100
+   --- End of inner exception stack trace ---
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 118
+   at Hangfire.RecurringJobExtensions.TriggerRecurringJob(IBackgroundJobFactory factory, JobStorage storage, IStorageConnection connection, IProfiler profiler, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobExtensions.cs:line 115
+   at Hangfire.Server.RecurringJobScheduler.ScheduleRecurringJob(BackgroundProcessContext context, IStorageConnection connection, String recurringJobId, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\Server\RecurringJobScheduler.cs:line 333
+2026-06-11 01:32:52.179 +03:00 [WRN] Recurring job 'DeleteOtpAuthService' can't be scheduled due to an error and will be retried in 00:00:15.
+Hangfire.Common.JobLoadException: Could not load the job. See inner exception for the details.
+ ---> System.IO.FileNotFoundException: Could not resolve assembly 'ProxyBuilder'.
+   at System.Reflection.TypeNameResolver.GetType(String escapedTypeName, ReadOnlySpan`1 nestedTypeNames, TypeName parsedName)
+   at System.Reflection.TypeNameResolver.Resolve(TypeName typeName)
+   at System.Reflection.TypeNameResolver.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Assembly requestingAssembly, Boolean throwOnError, Boolean ignoreCase, Boolean extensibleParser)
+   at System.Type.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Boolean throwOnError)
+   at Hangfire.Common.TypeHelper.<>c.<DefaultTypeResolver>b__20_0(String name) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 83
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Common.TypeHelper.DefaultTypeResolver(String typeName) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 75
+   at Hangfire.Storage.InvocationData.<>c.<CachedDeserializeMethod>b__33_0(MethodDeserializerCacheKey key) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 339
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Storage.InvocationData.CachedDeserializeMethod(Func`2 typeResolver, String typeName, String methodName, String parameterTypes, Type& type, MethodInfo& methodInfo) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 335
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 100
+   --- End of inner exception stack trace ---
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 118
+   at Hangfire.RecurringJobExtensions.TriggerRecurringJob(IBackgroundJobFactory factory, JobStorage storage, IStorageConnection connection, IProfiler profiler, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobExtensions.cs:line 115
+   at Hangfire.Server.RecurringJobScheduler.ScheduleRecurringJob(BackgroundProcessContext context, IStorageConnection connection, String recurringJobId, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\Server\RecurringJobScheduler.cs:line 333
+2026-06-11 01:33:07.199 +03:00 [WRN] Recurring job 'DeleteOtpAuthService' can't be scheduled due to an error and will be retried in 00:00:15.
+Hangfire.Common.JobLoadException: Could not load the job. See inner exception for the details.
+ ---> System.IO.FileNotFoundException: Could not resolve assembly 'ProxyBuilder'.
+   at System.Reflection.TypeNameResolver.GetType(String escapedTypeName, ReadOnlySpan`1 nestedTypeNames, TypeName parsedName)
+   at System.Reflection.TypeNameResolver.Resolve(TypeName typeName)
+   at System.Reflection.TypeNameResolver.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Assembly requestingAssembly, Boolean throwOnError, Boolean ignoreCase, Boolean extensibleParser)
+   at System.Type.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Boolean throwOnError)
+   at Hangfire.Common.TypeHelper.<>c.<DefaultTypeResolver>b__20_0(String name) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 83
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Common.TypeHelper.DefaultTypeResolver(String typeName) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 75
+   at Hangfire.Storage.InvocationData.<>c.<CachedDeserializeMethod>b__33_0(MethodDeserializerCacheKey key) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 339
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Storage.InvocationData.CachedDeserializeMethod(Func`2 typeResolver, String typeName, String methodName, String parameterTypes, Type& type, MethodInfo& methodInfo) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 335
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 100
+   --- End of inner exception stack trace ---
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 118
+   at Hangfire.RecurringJobExtensions.TriggerRecurringJob(IBackgroundJobFactory factory, JobStorage storage, IStorageConnection connection, IProfiler profiler, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobExtensions.cs:line 115
+   at Hangfire.Server.RecurringJobScheduler.ScheduleRecurringJob(BackgroundProcessContext context, IStorageConnection connection, String recurringJobId, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\Server\RecurringJobScheduler.cs:line 333
+2026-06-11 01:33:07.759 +03:00 [INF] HTTP POST /api/Auth/login responded 307 in 1.7203 ms
+2026-06-11 01:33:07.878 +03:00 [INF] Endpoint executing: Auth.Login (User: Anonymous) with args: {"model":{"Email_or_username":"ezzatw122","Password":"Ezz@tW122@###","$type":"LoginDTO"}}
+2026-06-11 01:33:07.886 +03:00 [INF] Calling service method IAuthService.GetTokenAsync with args: {"model":{"Email_or_username":"ezzatw122","Password":"Ezz@tW122@###","$type":"LoginDTO"}}
+2026-06-11 01:33:08.234 +03:00 [INF] Service method IAuthService.GetTokenAsync succeeded in 342ms
+2026-06-11 01:33:08.236 +03:00 [INF] Endpoint executed successfully: Auth.Login (User: Anonymous) returning status 200 in 352ms
+2026-06-11 01:33:08.248 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 475.3373 ms
+2026-06-11 01:33:22.220 +03:00 [WRN] Recurring job 'DeleteOtpAuthService' can't be scheduled due to an error and will be retried in 00:00:15.
+Hangfire.Common.JobLoadException: Could not load the job. See inner exception for the details.
+ ---> System.IO.FileNotFoundException: Could not resolve assembly 'ProxyBuilder'.
+   at System.Reflection.TypeNameResolver.GetType(String escapedTypeName, ReadOnlySpan`1 nestedTypeNames, TypeName parsedName)
+   at System.Reflection.TypeNameResolver.Resolve(TypeName typeName)
+   at System.Reflection.TypeNameResolver.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Assembly requestingAssembly, Boolean throwOnError, Boolean ignoreCase, Boolean extensibleParser)
+   at System.Type.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Boolean throwOnError)
+   at Hangfire.Common.TypeHelper.<>c.<DefaultTypeResolver>b__20_0(String name) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 83
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Common.TypeHelper.DefaultTypeResolver(String typeName) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 75
+   at Hangfire.Storage.InvocationData.<>c.<CachedDeserializeMethod>b__33_0(MethodDeserializerCacheKey key) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 339
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Storage.InvocationData.CachedDeserializeMethod(Func`2 typeResolver, String typeName, String methodName, String parameterTypes, Type& type, MethodInfo& methodInfo) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 335
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 100
+   --- End of inner exception stack trace ---
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 118
+   at Hangfire.RecurringJobExtensions.TriggerRecurringJob(IBackgroundJobFactory factory, JobStorage storage, IStorageConnection connection, IProfiler profiler, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobExtensions.cs:line 115
+   at Hangfire.Server.RecurringJobScheduler.ScheduleRecurringJob(BackgroundProcessContext context, IStorageConnection connection, String recurringJobId, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\Server\RecurringJobScheduler.cs:line 333
+2026-06-11 01:33:37.236 +03:00 [ERR] Recurring job 'DeleteOtpAuthService' can't be scheduled due to an error and will be disabled.
+Hangfire.Common.JobLoadException: Could not load the job. See inner exception for the details.
+ ---> System.IO.FileNotFoundException: Could not resolve assembly 'ProxyBuilder'.
+   at System.Reflection.TypeNameResolver.GetType(String escapedTypeName, ReadOnlySpan`1 nestedTypeNames, TypeName parsedName)
+   at System.Reflection.TypeNameResolver.Resolve(TypeName typeName)
+   at System.Reflection.TypeNameResolver.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Assembly requestingAssembly, Boolean throwOnError, Boolean ignoreCase, Boolean extensibleParser)
+   at System.Type.GetType(String typeName, Func`2 assemblyResolver, Func`4 typeResolver, Boolean throwOnError)
+   at Hangfire.Common.TypeHelper.<>c.<DefaultTypeResolver>b__20_0(String name) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 83
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Common.TypeHelper.DefaultTypeResolver(String typeName) in C:\projects\hangfire-525\src\Hangfire.Core\Common\TypeHelper.cs:line 75
+   at Hangfire.Storage.InvocationData.<>c.<CachedDeserializeMethod>b__33_0(MethodDeserializerCacheKey key) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 339
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Hangfire.Storage.InvocationData.CachedDeserializeMethod(Func`2 typeResolver, String typeName, String methodName, String parameterTypes, Type& type, MethodInfo& methodInfo) in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 335
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 100
+   --- End of inner exception stack trace ---
+   at Hangfire.Storage.InvocationData.DeserializeJob() in C:\projects\hangfire-525\src\Hangfire.Core\Storage\InvocationData.cs:line 118
+   at Hangfire.RecurringJobExtensions.TriggerRecurringJob(IBackgroundJobFactory factory, JobStorage storage, IStorageConnection connection, IProfiler profiler, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobExtensions.cs:line 115
+   at Hangfire.Server.RecurringJobScheduler.ScheduleRecurringJob(BackgroundProcessContext context, IStorageConnection connection, String recurringJobId, RecurringJobEntity recurringJob, DateTime now) in C:\projects\hangfire-525\src\Hangfire.Core\Server\RecurringJobScheduler.cs:line 333
+2026-06-11 01:33:45.810 +03:00 [INF] HTTP GET /api/Destinations responded 307 in 0.0828 ms
+2026-06-11 01:33:45.887 +03:00 [INF] Endpoint executing: Destinations.GetAll (User: ezzatw122) with args: {"pageIndex":1,"pageSize":10,"cityId":1}
+2026-06-11 01:33:45.913 +03:00 [INF] Calling service method IDestinationService.GetAllAsync with args: {"pageIndex":1,"pageSize":10,"cityId":1,"countryId":null,"interestId":null,"sortBy":"Rating"}
+2026-06-11 01:33:46.031 +03:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-06-11 01:33:46.158 +03:00 [INF] Service method IDestinationService.GetAllAsync succeeded in 240ms
+2026-06-11 01:33:46.160 +03:00 [INF] Endpoint executed successfully: Destinations.GetAll (User: ezzatw122) returning status 200 in 270ms
+2026-06-11 01:33:46.165 +03:00 [INF] HTTP GET /api/Destinations responded 200 in 351.7232 ms
+2026-06-11 01:40:23.893 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-11 01:40:25.263 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-11 01:40:25.435 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-11 01:40:25.587 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-11 01:40:25.593 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-11 01:40:25.669 +03:00 [INF] Now listening on: https://localhost:7219
+2026-06-11 01:40:25.670 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-11 01:40:25.711 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: .@HangFireTravio'
+2026-06-11 01:40:25.711 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-11 01:40:25.712 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-11 01:40:25.718 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 01:40:25.719 +03:00 [INF] Hosting environment: Development
+2026-06-11 01:40:25.720 +03:00 [INF] Content root path: D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API
+2026-06-11 01:40:25.729 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce successfully announced in 7.4356 ms
+2026-06-11 01:40:25.731 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-11 01:40:25.735 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce all the dispatchers started
+2026-06-11 01:40:26.359 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 121.7165 ms
+2026-06-11 01:40:26.382 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 5.5156 ms
+2026-06-11 01:40:26.391 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 14.1862 ms
+2026-06-11 01:40:26.947 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 261.7274 ms
+2026-06-11 01:40:37.537 +03:00 [INF] HTTP POST /api/Auth/login responded 307 in 0.7044 ms
+2026-06-11 01:40:37.607 +03:00 [INF] Endpoint executing: Auth.Login (User: Anonymous) with args: {"model":{"Email_or_username":"ezzatw122","Password":"Ezz@tW122@###","$type":"LoginDTO"}}
+2026-06-11 01:40:37.614 +03:00 [INF] Calling service method IAuthService.GetTokenAsync with args: {"model":{"Email_or_username":"ezzatw122","Password":"Ezz@tW122@###","$type":"LoginDTO"}}
+2026-06-11 01:40:37.860 +03:00 [INF] Service method IAuthService.GetTokenAsync succeeded in 242ms
+2026-06-11 01:40:37.863 +03:00 [INF] Endpoint executed successfully: Auth.Login (User: Anonymous) returning status 200 in 250ms
+2026-06-11 01:40:37.873 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 320.8089 ms
+2026-06-11 01:40:51.721 +03:00 [INF] HTTP GET /api/Destinations/1 responded 307 in 0.1041 ms
+2026-06-11 01:40:51.760 +03:00 [INF] Endpoint executing: Destinations.GetById (User: ezzatw122) with args: {"id":1}
+2026-06-11 01:40:51.763 +03:00 [INF] Calling service method IDestinationService.GetByIdAsync with args: {"id":1}
+2026-06-11 01:40:51.793 +03:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-06-11 01:40:51.869 +03:00 [INF] Service method IDestinationService.GetByIdAsync succeeded in 104ms
+2026-06-11 01:40:51.871 +03:00 [INF] Endpoint executed successfully: Destinations.GetById (User: ezzatw122) returning status 200 in 109ms
+2026-06-11 01:40:51.877 +03:00 [INF] HTTP GET /api/Destinations/1 responded 200 in 152.7023 ms
+2026-06-11 01:41:39.235 +03:00 [INF] HTTP GET /api/Destinations/1/reviews responded 307 in 0.0624 ms
+2026-06-11 01:41:39.256 +03:00 [INF] Endpoint executing: Destinations.GetReviews (User: ezzatw122) with args: {"destinationId":1,"pageIndex":1,"pageSize":10}
+2026-06-11 01:41:39.262 +03:00 [INF] Calling service method IDestinationService.GetReviewsAsync with args: {"destinationId":1,"pageIndex":1,"pageSize":10,"currentUserId":"ff1768b1-c6f9-408c-a7d6-daa11a52210b"}
+2026-06-11 01:41:39.447 +03:00 [INF] Service method IDestinationService.GetReviewsAsync succeeded in 178ms
+2026-06-11 01:41:39.448 +03:00 [INF] Endpoint executed successfully: Destinations.GetReviews (User: ezzatw122) returning status 200 in 188ms
+2026-06-11 01:41:39.452 +03:00 [INF] HTTP GET /api/Destinations/1/reviews responded 200 in 208.1805 ms
+2026-06-11 01:44:08.492 +03:00 [INF] HTTP GET /api/Destinations/1/reviews responded 307 in 0.0475 ms
+2026-06-11 01:44:08.507 +03:00 [INF] Endpoint executing: Destinations.GetReviews (User: ezzatw122) with args: {"destinationId":1,"pageIndex":1,"pageSize":100}
+2026-06-11 01:44:08.514 +03:00 [INF] Calling service method IDestinationService.GetReviewsAsync with args: {"destinationId":1,"pageIndex":1,"pageSize":100,"currentUserId":"ff1768b1-c6f9-408c-a7d6-daa11a52210b"}
+2026-06-11 01:44:08.537 +03:00 [INF] Service method IDestinationService.GetReviewsAsync succeeded in 18ms
+2026-06-11 01:44:08.539 +03:00 [INF] Endpoint executed successfully: Destinations.GetReviews (User: ezzatw122) returning status 200 in 25ms
+2026-06-11 01:44:08.543 +03:00 [INF] HTTP GET /api/Destinations/1/reviews responded 200 in 43.7564 ms
+2026-06-11 01:45:25.736 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-11 01:49:51.945 +03:00 [WRN] Stopping the server due to DomainUnload or ProcessExit event...
+2026-06-11 01:49:51.946 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce caught stopping signal...
+2026-06-11 01:49:51.948 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce caught stopped signal...
+2026-06-11 01:49:51.949 +03:00 [WRN] Server desktop-vpea1s0:1532:39531dce caught shutdown signal...
+2026-06-11 01:49:51.950 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce All dispatchers stopped
+2026-06-11 01:49:51.971 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce successfully reported itself as stopped in 19.8478 ms
+2026-06-11 01:49:51.972 +03:00 [INF] Server desktop-vpea1s0:1532:39531dce has been stopped in total 23.9709 ms
+2026-06-11 01:52:21.636 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-11 01:52:22.853 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-11 01:52:23.021 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-11 01:52:23.150 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-11 01:52:23.163 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-11 01:52:23.300 +03:00 [INF] Now listening on: https://localhost:7219
+2026-06-11 01:52:23.302 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-11 01:52:23.372 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: .@HangFireTravio'
+2026-06-11 01:52:23.374 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-11 01:52:23.375 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-11 01:52:23.385 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 01:52:23.386 +03:00 [INF] Hosting environment: Development
+2026-06-11 01:52:23.387 +03:00 [INF] Content root path: D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API
+2026-06-11 01:52:23.415 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c successfully announced in 26.8858 ms
+2026-06-11 01:52:23.420 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-11 01:52:23.439 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c all the dispatchers started
+2026-06-11 01:52:23.921 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 93.0756 ms
+2026-06-11 01:52:23.943 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 5.6629 ms
+2026-06-11 01:52:23.949 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 11.0300 ms
+2026-06-11 01:52:24.520 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 268.2752 ms
+2026-06-11 02:00:42.692 +03:00 [WRN] Stopping the server due to DomainUnload or ProcessExit event...
+2026-06-11 02:00:42.694 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c caught stopping signal...
+2026-06-11 02:00:42.696 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c caught stopped signal...
+2026-06-11 02:00:42.697 +03:00 [WRN] Server desktop-vpea1s0:7860:1612d13c caught shutdown signal...
+2026-06-11 02:00:42.698 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c All dispatchers stopped
+2026-06-11 02:00:42.705 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c successfully reported itself as stopped in 5.6043 ms
+2026-06-11 02:00:42.706 +03:00 [INF] Server desktop-vpea1s0:7860:1612d13c has been stopped in total 10.356 ms
+2026-06-11 03:32:05.417 +03:00 [FTL] Host terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Travio.API.Program.Main(String[] args) in D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API\Program.cs:line 38
+2026-06-11 03:58:13.928 +03:00 [FTL] Host terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Travio.API.Program.Main(String[] args) in D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API\Program.cs:line 38
+2026-06-11 04:02:46.492 +03:00 [FTL] Host terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Travio.API.Program.Main(String[] args) in D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API\Program.cs:line 38
+2026-06-11 04:02:55.483 +03:00 [FTL] Host terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Travio.API.Program.Main(String[] args) in D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API\Program.cs:line 38
+2026-06-11 04:41:13.093 +03:00 [FTL] Host terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Travio.API.Program.Main(String[] args) in D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API\Program.cs:line 38

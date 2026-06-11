@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.RateLimiting;
+using Travio.API.Logging;
+using Microsoft.Extensions.Logging;
 using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Community;
@@ -119,21 +121,21 @@ public static class ServiceCollectionExtensions
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
         // Services
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IProfileService, ProfileService>();
-        services.AddScoped<IDestinationService, DestinationService>();
-        services.AddScoped<ICommunityService, CommunityService>();
-        services.AddScoped<ISurveyService, SurveyService>();
-        services.AddScoped<IUserFavoriteService, UserFavoriteService>();
-        services.AddScoped<ISavedTripService, SavedTripService>();
-        services.AddScoped<IChatHistoryService, ChatHistoryService>();
-        services.AddTransient<IGoogleAuthService, GoogleAuthService>();
-        services.AddTransient<IEmailSender, MailKitEmailSender>();
-        services.AddScoped<IStripeWebhookService, StripeWebhookService>();
-        services.AddScoped<IPaymentGatewayService, StripePaymentGatewayService>();
+        services.AddLoggedScoped<IAuthService, AuthService>();
+        services.AddLoggedScoped<IProfileService, ProfileService>();
+        services.AddLoggedScoped<IDestinationService, DestinationService>();
+        services.AddLoggedScoped<ICommunityService, CommunityService>();
+        services.AddLoggedScoped<ISurveyService, SurveyService>();
+        services.AddLoggedScoped<IUserFavoriteService, UserFavoriteService>();
+        services.AddLoggedScoped<ISavedTripService, SavedTripService>();
+        services.AddLoggedScoped<IChatHistoryService, ChatHistoryService>();
+        services.AddLoggedTransient<IGoogleAuthService, GoogleAuthService>();
+        services.AddLoggedTransient<IEmailSender, MailKitEmailSender>();
+        services.AddLoggedScoped<IStripeWebhookService, StripeWebhookService>();
+        services.AddLoggedScoped<IPaymentGatewayService, StripePaymentGatewayService>();
 
         var duffelToken = configuration["Duffel:AccessToken"];
-        services.AddHttpClient<IDuffelFlightBookingService, DuffelFlightBookingService>(client =>
+        services.AddHttpClient<DuffelFlightBookingService>(client =>
         {
             client.BaseAddress = new Uri("https://api.duffel.com/");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", duffelToken);
@@ -142,7 +144,14 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("Duffel-Version", "v2");
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
-        services.AddHttpClient<IDuffelHotelsService, DuffelHotelsService>(client =>
+        services.AddScoped<IDuffelFlightBookingService>(provider =>
+        {
+            var target = provider.GetRequiredService<DuffelFlightBookingService>();
+            var logger = provider.GetRequiredService<ILogger<IDuffelFlightBookingService>>();
+            return LoggingDecorator<IDuffelFlightBookingService>.Create(target, logger);
+        });
+
+        services.AddHttpClient<DuffelHotelsService>(client =>
         {
             client.BaseAddress = new Uri("https://api.duffel.com/");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", duffelToken);
@@ -151,14 +160,42 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("Duffel-Version", "v2");
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
-        services.AddHttpClient<ITripPlanerService, TripPlanerService>(client =>
+        services.AddScoped<IDuffelHotelsService>(provider =>
+        {
+            var target = provider.GetRequiredService<DuffelHotelsService>();
+            var logger = provider.GetRequiredService<ILogger<IDuffelHotelsService>>();
+            return LoggingDecorator<IDuffelHotelsService>.Create(target, logger);
+        });
+
+        services.AddHttpClient<TripPlanerService>(client =>
         {
             client.BaseAddress = new Uri("http://127.0.0.1:8000/");
             client.Timeout = TimeSpan.FromMinutes(3);
         });
-       services.AddMemoryCache();
-        services.AddHttpClient<ICurrencyExchangeService, CurrencyExchangeService>();
-        services.AddHttpClient<IGeocodingService, NominatimGeocodingService>();
+        services.AddScoped<ITripPlanerService>(provider =>
+        {
+            var target = provider.GetRequiredService<TripPlanerService>();
+            var logger = provider.GetRequiredService<ILogger<ITripPlanerService>>();
+            return LoggingDecorator<ITripPlanerService>.Create(target, logger);
+        });
+
+        services.AddMemoryCache();
+
+        services.AddHttpClient<CurrencyExchangeService>();
+        services.AddScoped<ICurrencyExchangeService>(provider =>
+        {
+            var target = provider.GetRequiredService<CurrencyExchangeService>();
+            var logger = provider.GetRequiredService<ILogger<ICurrencyExchangeService>>();
+            return LoggingDecorator<ICurrencyExchangeService>.Create(target, logger);
+        });
+
+        services.AddHttpClient<NominatimGeocodingService>();
+        services.AddScoped<IGeocodingService>(provider =>
+        {
+            var target = provider.GetRequiredService<NominatimGeocodingService>();
+            var logger = provider.GetRequiredService<ILogger<IGeocodingService>>();
+            return LoggingDecorator<IGeocodingService>.Create(target, logger);
+        });
         services.AddRateLimiter(options =>
         {
           
@@ -215,7 +252,7 @@ public static class ServiceCollectionExtensions
 
         // 3. Register the typed HttpClient with base URL and the auth handler attached.
         //    The HotelbedsAuthHandler intercepts every request to inject Api-key and X-Signature headers.
-        services.AddHttpClient<IHotelbedsService, HotelbedsService>(client =>
+        services.AddHttpClient<HotelbedsService>(client =>
         {
             var baseUrl = configuration["HotelbedsSettings:BaseUrl"]
                 ?? "https://api.test.hotelbeds.com/hotel-api/1.0/";
@@ -225,6 +262,13 @@ public static class ServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(60);
         })
         .AddHttpMessageHandler<HotelbedsAuthHandler>();
+
+        services.AddScoped<IHotelbedsService>(provider =>
+        {
+            var target = provider.GetRequiredService<HotelbedsService>();
+            var logger = provider.GetRequiredService<ILogger<IHotelbedsService>>();
+            return LoggingDecorator<IHotelbedsService>.Create(target, logger);
+        });
 
         services.AddHttpClient("HotelbedsContentApi", client =>
         {
@@ -269,6 +313,34 @@ public static class ServiceCollectionExtensions
             options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
         });
 
+        return services;
+    }
+
+    public static IServiceCollection AddLoggedScoped<TInterface, TImplementation>(this IServiceCollection services)
+        where TInterface : class
+        where TImplementation : class, TInterface
+    {
+        services.AddScoped<TImplementation>();
+        services.AddScoped<TInterface>(provider =>
+        {
+            var target = provider.GetRequiredService<TImplementation>();
+            var logger = provider.GetRequiredService<ILogger<TInterface>>();
+            return LoggingDecorator<TInterface>.Create(target, logger);
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddLoggedTransient<TInterface, TImplementation>(this IServiceCollection services)
+        where TInterface : class
+        where TImplementation : class, TInterface
+    {
+        services.AddTransient<TImplementation>();
+        services.AddTransient<TInterface>(provider =>
+        {
+            var target = provider.GetRequiredService<TImplementation>();
+            var logger = provider.GetRequiredService<ILogger<TInterface>>();
+            return LoggingDecorator<TInterface>.Create(target, logger);
+        });
         return services;
     }
 }

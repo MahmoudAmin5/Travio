@@ -16,7 +16,12 @@ public static class CountryLandmarkImagesSeed
 
     public static async Task SeedAsync(ApplicationDbContext context)
     {
-        var imagesFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Landmarks_Images");
+        var imagesFolderPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "Landmarks_Images");
+        
+        if (!Directory.Exists(imagesFolderPath))
+        {
+            imagesFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Landmarks_Images");
+        }
 
         if (!Directory.Exists(imagesFolderPath))
         {

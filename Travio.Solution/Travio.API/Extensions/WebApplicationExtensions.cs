@@ -1,10 +1,8 @@
-using Hangfire;
-using HangfireBasicAuthenticationFilter;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Serilog;
 using Travio.API.Hubs;
 using Travio.API.Middleware;
-using Travio.Core.Contracts.Services.Auth;
 using Travio.Infrastructure;
 
 namespace Travio.API.Extensions;
@@ -43,6 +41,7 @@ public static class WebApplicationExtensions
     public static WebApplication ConfigureMiddleware(this WebApplication app)
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseSerilogRequestLogging();
 
         if (app.Environment.IsDevelopment())
         {
@@ -60,22 +59,20 @@ public static class WebApplicationExtensions
         return app;
     }
 
-    public static WebApplication ConfigureHangfire(this WebApplication app)
-    {
-        app.UseHangfireDashboard("/jobs", new DashboardOptions
-        {
-            DashboardTitle = "Travio Jobs",
-            Authorization = [new HangfireCustomBasicAuthenticationFilter
-            {
-                User = app.Configuration.GetValue<string>("Hangfire:user"),
-                Pass = app.Configuration.GetValue<string>("Hangfire:pass")
-            }]
-        });
+    //public static WebApplication ConfigureHangfire(this WebApplication app)
+    //{
+    //    app.UseHangfireDashboard("/jobs", new DashboardOptions
+    //    {
+    //        DashboardTitle = "Travio Jobs",
+    //        Authorization = [new HangfireCustomBasicAuthenticationFilter
+    //        {
+    //            User = app.Configuration.GetValue<string>("Hangfire:user"),
+    //            Pass = app.Configuration.GetValue<string>("Hangfire:pass")
+    //        }]
+    //    });
 
-        using var scope = app.Services.CreateScope();
-        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-        RecurringJob.AddOrUpdate("DeleteOtpAuthService", () => authService.DeleteOtps(), Cron.Daily);
+    //    RecurringJob.AddOrUpdate<IAuthService>("DeleteOtpAuthService", service => service.DeleteOtps(), Cron.Daily);
 
-        return app;
-    }
+    //    return app;
+    //}
 }
