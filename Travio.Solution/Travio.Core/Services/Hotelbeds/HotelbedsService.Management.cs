@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Travio.Core.Domain.Entities.Hotelbeds;
 using Travio.Core.Domain.Enums.Booking;
+using Travio.Core.Domain.Specifications.Hotels;
 using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.DTOs.HotelbedsDTOs.Requests;
 using Travio.Core.DTOs.HotelbedsDTOs.Responses;
@@ -25,10 +26,10 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<List<UserHotelBookingDto>>("User must be authenticated.");
 
-                var bookings = await _bookingRepository.ListAsync(cancellationToken);
+                // FIX MAJOR-4: Use Ardalis Specification — pushes WHERE + ORDER BY to SQL
+                var spec = new HotelBookingsByUserIdSpec(userId);
+                var bookings = await _bookingRepository.ListAsync(spec, cancellationToken);
                 var userBookings = bookings
-                    .Where(b => b.UserId == userId)
-                    .OrderByDescending(b => b.CreatedAt)
                     .Select(b => new UserHotelBookingDto
                     {
                         Id = b.Id,
@@ -64,9 +65,9 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<BookingDetailResponseDto>("User must be authenticated.");
 
-                // Ownership check from DB
-                var allBookings = await _bookingRepository.ListAsync(cancellationToken);
-                var dbBooking = allBookings.FirstOrDefault(b => b.HotelbedsReference == reference);
+                // FIX MAJOR-4: Use Specification instead of loading entire table
+                var spec = new HotelBookingByReferenceSpec(reference);
+                var dbBooking = await _bookingRepository.FirstOrDefaultAsync(spec, cancellationToken);
                 if (dbBooking is null)
                     return new ServiceResponse<BookingDetailResponseDto>("Booking not found.");
                 if (dbBooking.UserId != userId)
@@ -92,7 +93,7 @@ namespace Travio.Core.Services.Hotelbeds
                     Status = b.Status ?? string.Empty,
                     CreationDate = b.CreationDate ?? string.Empty,
                     HolderName = b.Holder is not null ? $"{b.Holder.Name} {b.Holder.Surname}".Trim() : string.Empty,
-                    TotalNet = decimal.TryParse(b.TotalNet, out var net) ? net : 0,
+                    TotalNet = b.TotalNet ?? 0,
                     Currency = b.Currency ?? string.Empty,
                     CancellationReference = b.CancellationReference,
                     Hotel = b.Hotel is not null ? new BookingHotelDto
@@ -127,9 +128,9 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<BookingCancellationResponseDto>("User must be authenticated.");
 
-                // Ownership check
-                var allBookings = await _bookingRepository.ListAsync(cancellationToken);
-                var dbBooking = allBookings.FirstOrDefault(b => b.HotelbedsReference == reference);
+                // FIX MAJOR-4: Use Specification instead of loading entire table
+                var spec = new HotelBookingByReferenceSpec(reference);
+                var dbBooking = await _bookingRepository.FirstOrDefaultAsync(spec, cancellationToken);
                 if (dbBooking is null)
                     return new ServiceResponse<BookingCancellationResponseDto>("Booking not found.");
                 if (dbBooking.UserId != userId)
@@ -320,9 +321,9 @@ namespace Travio.Core.Services.Hotelbeds
                     DestinationName = h.DestinationName ?? string.Empty,
                     Latitude = decimal.TryParse(h.Latitude, out var lat) ? lat : null,
                     Longitude = decimal.TryParse(h.Longitude, out var lng) ? lng : null,
-                    MinRate = decimal.TryParse(h.MinRate, out var min) ? Math.Round(min * exchangeRate * 1.15m, 2) : 0,
-                    MaxRate = decimal.TryParse(h.MaxRate, out var max) ? Math.Round(max * exchangeRate * 1.15m, 2) : 0,
-                    Currency = "USD"
+                    MinRate = decimal.TryParse(h.MinRate, out var min) ? Math.Round(min * exchangeRate * CorporateMarkupMultiplier, 2) : 0,
+                    MaxRate = decimal.TryParse(h.MaxRate, out var max) ? Math.Round(max * exchangeRate * CorporateMarkupMultiplier, 2) : 0,
+                    Currency = DisplayCurrency
                 }).ToList()
             };
         }
@@ -374,17 +375,33 @@ namespace Travio.Core.Services.Hotelbeds
                     Name = roomName,
                     Images = habImages,
                     RoomFacilities = roomFacilities,
-                    Rates = r.Rates?.Select(rate => new RateDto
-                    {
-                        RateKey = rate.RateKey ?? string.Empty,
-                        RateClass = rate.RateClass ?? string.Empty,
-                        Price = decimal.TryParse(rate.Net, out var net) ? Math.Round(net * 1.15m * exchangeRate, 2) : 0,
-                        BoardCode = rate.BoardCode ?? string.Empty,
-                        BoardName = rate.BoardName ?? string.Empty,
-                        Allotment = rate.Allotment,
-                        CancellationPolicies = rate.CancellationPolicies?.Select(cp => new CancellationPolicyDto
-                        { Amount = decimal.TryParse(cp.Amount, out var amt) ? Math.Round(amt * exchangeRate, 2) : 0, From = cp.From ?? string.Empty }).ToList() ?? new()
-                    }).ToList() ?? new()
+                    Rates = r.Rates?
+    // 1. Group the rates by Meal Plan (e.g., "RO") and Refundability (e.g., "NRF" vs "NOR")
+    .GroupBy(rate => new
+    {
+        Board = rate.BoardCode ?? string.Empty,
+        Class = rate.RateClass ?? string.Empty
+    })
+    // 2. For each group, sort by price (cheapest first) and grab only the top one
+    .Select(group => group
+        .OrderBy(rate => decimal.TryParse(rate.Net, out var net) ? net : decimal.MaxValue)
+        .First()
+    )
+    // 3. Now project that beautifully filtered list into your DTO just like before
+    .Select(rate => new RateDto
+    {
+        RateKey = rate.RateKey ?? string.Empty,
+        RateClass = rate.RateClass ?? string.Empty,
+        Price = decimal.TryParse(rate.Net, out var net) ? Math.Round(net * CorporateMarkupMultiplier * exchangeRate, 2) : 0m,
+        BoardCode = rate.BoardCode ?? string.Empty,
+        BoardName = rate.BoardName ?? string.Empty,
+        Allotment = rate.Allotment,
+        CancellationPolicies = rate.CancellationPolicies?.Select(cp => new CancellationPolicyDto
+        {
+            Amount = decimal.TryParse(cp.Amount, out var amt) ? Math.Round(amt * exchangeRate, 2) : 0m,
+            From = cp.From ?? string.Empty
+        }).ToList() ?? new()
+    }).ToList() ?? new()
                 };
             }).ToList();
         }
@@ -401,8 +418,8 @@ namespace Travio.Core.Services.Hotelbeds
                     Name = h.Name ?? string.Empty,
                     CategoryCode = h.CategoryCode ?? string.Empty,
                     DestinationCode = h.DestinationCode ?? string.Empty,
-                    TotalPrice = decimal.TryParse(h.TotalNet, out var t) ? Math.Round(t * 1.15m * exchangeRate, 2) : 0,
-                    Currency = "USD",
+                    TotalPrice = decimal.TryParse(h.TotalNet, out var t) ? Math.Round(t * CorporateMarkupMultiplier * exchangeRate, 2) : 0,
+                    Currency = DisplayCurrency,
                     CheckIn = h.CheckIn ?? string.Empty,
                     CheckOut = h.CheckOut ?? string.Empty,
                     Rooms = MapRooms(h.Rooms, null, null, exchangeRate)
@@ -419,8 +436,8 @@ namespace Travio.Core.Services.Hotelbeds
                 BookingReference = b.Reference ?? string.Empty,
                 ClientReference = b.ClientReference ?? string.Empty,
                 Status = b.Status ?? string.Empty,
-                TotalPrice = decimal.TryParse(b.TotalNet, out var t) ? Math.Round(t * 1.15m * exchangeRate, 2) : 0,
-                Currency = "USD",
+                TotalPrice = b.TotalNet.HasValue ? Math.Round(b.TotalNet.Value * CorporateMarkupMultiplier * exchangeRate, 2) : 0,
+                Currency = DisplayCurrency,
                 CreationDate = b.CreationDate ?? string.Empty,
                 Hotel = b.Hotel is not null ? new BookingHotelDto
                 {
@@ -434,34 +451,8 @@ namespace Travio.Core.Services.Hotelbeds
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // PRIVATE: DB persistence & error extraction
+        // PRIVATE: Error extraction
         // ═══════════════════════════════════════════════════════════════════
-
-        private async Task PersistBookingRecordAsync(string userId, HotelBookingRequestDto request,
-            HotelbedsBookingDetail? detail, HotelBookingStatus status, decimal exchangeRate, CancellationToken ct)
-        {
-            try
-            {
-                var booking = new HotelBooking
-                {
-                    UserId = userId,
-                    HotelId = detail?.Hotel?.Code ?? 0,
-                    HotelName = detail?.Hotel?.Name ?? string.Empty,
-                    CheckIn = DateOnly.TryParse(detail?.Hotel?.CheckIn, out var ci) ? ci : DateOnly.FromDateTime(DateTime.UtcNow),
-                    CheckOut = DateOnly.TryParse(detail?.Hotel?.CheckOut, out var co) ? co : DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
-                    TotalPrice = decimal.TryParse(detail?.TotalNet, out var p) ? Math.Round(p * exchangeRate * 1.15m, 2) : 0,
-                    Currency = "USD",
-                    HotelbedsReference = detail?.Reference,
-                    RateKey = request.RateKey,
-                    BookingStatus = status,
-                    RoomCount = request.Rooms?.Count ?? 1,
-                    CreatedAt = DateTime.UtcNow
-                };
-                await _bookingRepository.AddAsync(booking, ct);
-                await _bookingRepository.SaveChangesAsync(ct);
-            }
-            catch { /* Log in production — don't fail the booking response */ }
-        }
 
         private static async Task<string> ExtractErrorMessageAsync(HttpResponseMessage resp, CancellationToken ct)
         {
@@ -477,8 +468,13 @@ namespace Travio.Core.Services.Hotelbeds
             catch { }
             return $"HTTP {(int)resp.StatusCode} ({resp.ReasonPhrase})";
         }
+
         // ═══════════════════════════════════════════════════════════════════
         // ENDPOINT: INIT CHECKOUT (Stripe Payment Intent)
+        // FIX CRITICAL-3: Rollback DB on Stripe failure
+        // FIX MAJOR-2: Use Math.Round for cents conversion
+        // FIX MAJOR-3: Freeze exchange rate at checkout time
+        // FIX MAJOR-5: Use IPaymentGatewayService instead of new Stripe.PaymentIntentService()
         // ═══════════════════════════════════════════════════════════════════
 
         public async Task<ServiceResponse<CheckoutResponseDto>> InitCheckoutAsync(
@@ -489,8 +485,6 @@ namespace Travio.Core.Services.Hotelbeds
                 // ── Validation ────────────────────────────────────────────────
                 if (request is null)
                     return new ServiceResponse<CheckoutResponseDto>("Booking request cannot be null.");
-                if (string.IsNullOrWhiteSpace(request.RateKey))
-                    return new ServiceResponse<CheckoutResponseDto>("Rate key is required.");
                 if (string.IsNullOrWhiteSpace(request.HolderFirstName) || string.IsNullOrWhiteSpace(request.HolderLastName))
                     return new ServiceResponse<CheckoutResponseDto>("Holder's first and last name are required.");
                 if (request.Rooms is null || request.Rooms.Count == 0)
@@ -498,10 +492,25 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<CheckoutResponseDto>("User must be authenticated.");
 
-                // ── Step 1: Validate the rate via Hotelbeds CheckRate ─────────
+                // Validate that EVERY room has a non-empty RateKey and at least one pax
+                for (int i = 0; i < request.Rooms.Count; i++)
+                {
+                    var room = request.Rooms[i];
+                    if (string.IsNullOrWhiteSpace(room.RateKey))
+                        return new ServiceResponse<CheckoutResponseDto>($"Room {i + 1} is missing a rate key.");
+                    if (room.Paxes is null || room.Paxes.Count == 0)
+                        return new ServiceResponse<CheckoutResponseDto>($"Room {i + 1} must have at least one guest.");
+                    if (!room.Paxes.Any(p => p.Type == "AD"))
+                        return new ServiceResponse<CheckoutResponseDto>($"Room {i + 1} must have at least one adult (Type = \"AD\").");
+                }
+
+                // ── Step 1: Validate ALL rates via Hotelbeds CheckRate ─────────
+                // Send one room entry per rate key — Hotelbeds returns COMBINED TotalNet.
                 var checkRateApiRequest = new HotelbedsCheckRateRequest
                 {
-                    Rooms = new List<HotelbedsCheckRateRoom> { new() { RateKey = request.RateKey } }
+                    Rooms = request.Rooms
+                        .Select(r => new HotelbedsCheckRateRoom { RateKey = r.RateKey })
+                        .ToList()
                 };
                 var checkRateResponse = await _httpClient.PostAsJsonAsync("checkrates", checkRateApiRequest, JsonOptions, cancellationToken);
 
@@ -513,15 +522,18 @@ namespace Travio.Core.Services.Hotelbeds
 
                 var checkRateResult = await checkRateResponse.Content.ReadFromJsonAsync<HotelbedsCheckRateResponse>(JsonOptions, cancellationToken);
                 if (checkRateResult?.Hotel is null)
-                    return new ServiceResponse<CheckoutResponseDto>("The selected rate is no longer available. Please search again.");
+                    return new ServiceResponse<CheckoutResponseDto>("The selected rate(s) are no longer available. Please search again.");
 
-                // ── Step 2: Calculate final price (15% markup + currency conversion) ──
+                // ── Step 2: Calculate final price (freeze exchange rate + markup) ──
+                // TotalNet from CheckRate is the COMBINED wholesale price across ALL rooms
                 var wholesaleNet = decimal.TryParse(checkRateResult.Hotel.TotalNet, out var rawNet) ? rawNet : 0m;
                 if (wholesaleNet <= 0)
                     return new ServiceResponse<CheckoutResponseDto>("Invalid price returned from rate validation.");
 
-                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync("EUR", "USD", cancellationToken);
-                var finalPrice = Math.Round(wholesaleNet * 1.15m * exchangeRate, 2); // Markup + conversion
+                // Freeze the exchange rate — stored in DB so webhook doesn't re-fetch
+                var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(
+                    WholesaleCurrency, DisplayCurrency, cancellationToken);
+                var finalPrice = Math.Round(wholesaleNet * CorporateMarkupMultiplier * exchangeRate, 2);
 
                 // ── Step 3: Persist PendingPayment record ─────────────────────
                 var h = checkRateResult.Hotel;
@@ -533,11 +545,15 @@ namespace Travio.Core.Services.Hotelbeds
                     CheckIn = DateOnly.TryParse(h.CheckIn, out var ci) ? ci : DateOnly.FromDateTime(DateTime.UtcNow),
                     CheckOut = DateOnly.TryParse(h.CheckOut, out var co) ? co : DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
                     TotalPrice = finalPrice,
-                    Currency = "USD",
-                    RateKey = request.RateKey,
+                    Currency = DisplayCurrency,
+                    // Store comma-separated rate keys for audit trail
+                    RateKey = string.Join(",", request.Rooms.Select(r => r.RateKey)),
                     BookingStatus = HotelBookingStatus.PendingPayment,
                     RoomCount = request.Rooms.Count,
                     GuestDataJson = JsonSerializer.Serialize(request, JsonOptions),
+                    // Freeze financial data for the webhook
+                    WholesaleNetEur = wholesaleNet,
+                    ExchangeRateAtCheckout = exchangeRate,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -545,42 +561,47 @@ namespace Travio.Core.Services.Hotelbeds
                 await _bookingRepository.SaveChangesAsync(cancellationToken);
 
                 // ── Step 4: Create Stripe PaymentIntent ───────────────────────
-                // CRITICAL: Stripe expects amounts in the smallest currency unit (cents for USD).
-                var amountInCents = (long)(finalPrice * 100);
+                var amountInCents = (long)Math.Round(finalPrice * 100m, MidpointRounding.AwayFromZero);
 
-                var stripeService = new Stripe.PaymentIntentService();
-                var stripeOptions = new Stripe.PaymentIntentCreateOptions
+                try
                 {
-                    Amount = amountInCents,
-                    Currency = "usd",
-                    Metadata = new Dictionary<string, string>
+                    var piResult = await _paymentGateway.CreatePaymentIntentAsync(
+                        amountInCents, DisplayCurrency.ToLowerInvariant(), booking.Id, "Hotel", cancellationToken);
+
+                    // ── Step 5: Link PaymentIntent to our booking ─────────────────
+                    booking.StripePaymentIntentId = piResult.Id;
+                    await _bookingRepository.UpdateAsync(booking, cancellationToken);
+                    await _bookingRepository.SaveChangesAsync(cancellationToken);
+
+                    var responseDto = new CheckoutResponseDto
                     {
-                        { "BookingId", booking.Id.ToString() },
-                        { "BookingType", "Hotel" }
-                    }
-                };
+                        ClientSecret = piResult.ClientSecret,
+                        BookingId = booking.Id,
+                        TotalPrice = finalPrice,
+                        Currency = DisplayCurrency
+                    };
 
-                var paymentIntent = await stripeService.CreateAsync(stripeOptions, cancellationToken: cancellationToken);
-
-                // ── Step 5: Link PaymentIntent to our booking ─────────────────
-                booking.StripePaymentIntentId = paymentIntent.Id;
-                await _bookingRepository.UpdateAsync(booking, cancellationToken);
-                await _bookingRepository.SaveChangesAsync(cancellationToken);
-
-                var responseDto = new CheckoutResponseDto
+                    return new ServiceResponse<CheckoutResponseDto>(responseDto, "Checkout initialized. Proceed to payment.");
+                }
+                catch (Exception stripeEx)
                 {
-                    ClientSecret = paymentIntent.ClientSecret,
-                    BookingId = booking.Id,
-                    TotalPrice = finalPrice,
-                    Currency = "USD"
-                };
-
-                return new ServiceResponse<CheckoutResponseDto>(responseDto, "Checkout initialized. Proceed to payment.");
-            }
-            catch (Stripe.StripeException ex)
-            {
-                _logger.LogError(ex, "Stripe error during checkout initialization.");
-                return new ServiceResponse<CheckoutResponseDto>($"Payment initialization failed: {ex.Message}");
+                    // Clean up the orphaned PendingPayment DB record
+                    _logger.LogError(stripeEx,
+                        "Stripe PaymentIntent creation failed for BookingId {BookingId}. Rolling back DB record.",
+                        booking.Id);
+                    try
+                    {
+                        await _bookingRepository.DeleteAsync(booking, cancellationToken);
+                        await _bookingRepository.SaveChangesAsync(cancellationToken);
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        _logger.LogError(rollbackEx,
+                            "Failed to rollback orphaned PendingPayment record for BookingId {BookingId}.",
+                            booking.Id);
+                    }
+                    return new ServiceResponse<CheckoutResponseDto>($"Payment initialization failed: {stripeEx.Message}");
+                }
             }
             catch (Exception ex)
             {

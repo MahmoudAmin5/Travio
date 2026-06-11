@@ -132,6 +132,7 @@ public static class ServiceCollectionExtensions
         services.AddLoggedTransient<IGoogleAuthService, GoogleAuthService>();
         services.AddLoggedTransient<IEmailSender, MailKitEmailSender>();
         services.AddLoggedScoped<IStripeWebhookService, StripeWebhookService>();
+        services.AddLoggedScoped<IPaymentGatewayService, StripePaymentGatewayService>();
 
         var duffelToken = configuration["Duffel:AccessToken"];
         services.AddHttpClient<DuffelFlightBookingService>(client =>

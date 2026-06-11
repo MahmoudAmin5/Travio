@@ -77,7 +77,7 @@ namespace Travio.API.Controllers
         public async Task<IActionResult> CheckRate([FromBody] HotelCheckRateRequestDto request, CancellationToken ct)
         {
             if (request is null) return BadRequest(new ApiResponse(400, "CheckRate request body is required."));
-            if (string.IsNullOrWhiteSpace(request.RateKey)) return BadRequest(new ApiResponse(400, "Rate key is required."));
+            if (request.Rooms is null || request.Rooms.Count == 0) return BadRequest(new ApiResponse(400, "At least one room with a rate key is required."));
 
             var response = await _hotelbedsService.CheckRateAsync(request, ct);
             return response.Success ? Ok(response) : BadRequest(new ApiResponse(400, response.Message));
