@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Travio.Core.Domain.Entities.Destinations;
 
@@ -23,7 +23,12 @@ public class WorldCitiesSeed
     public static async Task SeedAsync(ApplicationDbContext context)
     {
         // 1. Path to your JSON file (ensure the file is in the root or set to 'Copy to Output Directory')
-        string jsonPath = "D:\\work\\GraduationProject\\Travio\\Travio\\Travio.Solution\\Travio.Core\\Data\\WorldCities.json";
+        string jsonPath = Path.Combine(AppContext.BaseDirectory, "Data", "WorldCities.json");
+        
+        if (!File.Exists(jsonPath))
+        {
+            jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Travio.Core", "Data", "WorldCities.json");
+        }
 
         if (!File.Exists(jsonPath))
         {

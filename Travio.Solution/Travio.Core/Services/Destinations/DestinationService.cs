@@ -56,7 +56,7 @@ public class DestinationService : IDestinationService
         return destinations.Adapt<IEnumerable<DestinationDto>>();
     }
 
-    public async Task<Pagination<DestinationDto>> SearchByNameAsync(string keyword, int pageIndex, int pageSize, List<int>? interestIds = null)
+    public async Task<Pagination<DestinationDto>> SearchByNameAsync(string? keyword, int pageIndex, int pageSize, List<int>? interestIds = null)
     {
         var skip = (pageIndex - 1) * pageSize;
         var dataSpec = new DestinationSearchSpec(keyword, skip, pageSize, interestIds);

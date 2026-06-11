@@ -5,19 +5,22 @@ namespace Travio.Core.Domain.Specifications.Destinations;
 
 public class DestinationSearchSpec : Specification<Destination>
 {
-    public DestinationSearchSpec(string keyword, int skip, int take, List<int>? interestIds = null)
+    public DestinationSearchSpec(string? keyword, int skip, int take, List<int>? interestIds = null)
     {
-        var lowerKeyword = keyword.ToLower();
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var lowerKeyword = keyword.ToLower();
 
-        Query.Where(x =>
-            x.Name.ToLower().Contains(lowerKeyword) ||
-            x.Description.ToLower().Contains(lowerKeyword) ||
-            x.City.Name.ToLower().Contains(lowerKeyword) ||
-            x.City.Country.Name.ToLower().Contains(lowerKeyword) ||
-            x.City.Country.Continent.Name.ToLower().Contains(lowerKeyword) ||
-            x.DestinationInterests.Any(di =>
-                di.Interest.InterestName.ToLower().Contains(lowerKeyword))
-        );
+            Query.Where(x =>
+                x.Name.ToLower().Contains(lowerKeyword) ||
+                x.Description.ToLower().Contains(lowerKeyword) ||
+                x.City.Name.ToLower().Contains(lowerKeyword) ||
+                x.City.Country.Name.ToLower().Contains(lowerKeyword) ||
+                x.City.Country.Continent.Name.ToLower().Contains(lowerKeyword) ||
+                x.DestinationInterests.Any(di =>
+                    di.Interest.InterestName.ToLower().Contains(lowerKeyword))
+            );
+        }
 
         if (interestIds is { Count: > 0 })
         {

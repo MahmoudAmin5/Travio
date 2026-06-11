@@ -50,11 +50,11 @@ public class DestinationSeed
         if (await context.Destinations.AnyAsync()) return;
 
         // Ensure we load the file correctly relative to the project where it runs
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Travio.Core", "Data", "travio_final_with_urls.json");
+        string jsonPath = Path.Combine(AppContext.BaseDirectory, "Data", "travio_final_with_urls.json");
         
         if (!File.Exists(jsonPath))
         {
-            jsonPath = @"D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.Core\Data\travio_final_with_urls.json";
+            jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Travio.Core", "Data", "travio_final_with_urls.json");
         }
 
         if (!File.Exists(jsonPath))
