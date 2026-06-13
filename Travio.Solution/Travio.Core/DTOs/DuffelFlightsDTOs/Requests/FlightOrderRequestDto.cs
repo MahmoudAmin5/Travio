@@ -9,10 +9,13 @@ namespace Travio.Core.DTOs.DuffelFlightsDTOs.Requests
     public class FlightOrderRequestDto
     {
         public string OfferId { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Currency { get; set; }
         public List<PassengerDetailsDto> Passengers { get; set; } = new();
     }
     public class PassengerDetailsDto
     {
+        public string Id { get; set; }
         public string Title { get; set; } 
         public string GivenName { get; set; } 
         public string FamilyName { get; set; }

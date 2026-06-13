@@ -5,13 +5,13 @@ using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.RateLimiting;
 using Travio.API.Logging;
-using Microsoft.Extensions.Logging;
 using Travio.API.OpenApiTransformers;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Community;
@@ -19,6 +19,7 @@ using Travio.Core.Contracts.Services.CurruncyExchange;
 using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Contracts.Services.DuffelFlights;
 using Travio.Core.Contracts.Services.DuffelHotels;
+using Travio.Core.Contracts.Services.Email;
 using Travio.Core.Contracts.Services.GeocodingService;
 using Travio.Core.Contracts.Services.Hotelbeds;
 using Travio.Core.Contracts.Services.Payment;
@@ -34,6 +35,7 @@ using Travio.Core.Services.DuffelHotels;
 using Travio.Core.Services.Hotelbeds;
 using Travio.Core.Services.Payment;
 using Travio.Core.Services.Shared.CurrencyExchange;
+using Travio.Core.Services.Shared.Email;
 using Travio.Core.Services.Shared.GeocodingService;
 using Travio.Core.Services.Survey;
 using Travio.Core.Services.TripPlaner;
@@ -133,6 +135,7 @@ public static class ServiceCollectionExtensions
         services.AddLoggedTransient<IEmailSender, MailKitEmailSender>();
         services.AddLoggedScoped<IStripeWebhookService, StripeWebhookService>();
         services.AddLoggedScoped<IPaymentGatewayService, StripePaymentGatewayService>();
+        services.AddTransient<IEmailService, EmailService>();
 
         var duffelToken = configuration["Duffel:AccessToken"];
         services.AddHttpClient<DuffelFlightBookingService>(client =>

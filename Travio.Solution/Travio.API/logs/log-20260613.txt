@@ -1,0 +1,432 @@
+2026-06-13 14:01:27.541 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 14:01:42.306 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 14:01:43.319 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 14:01:44.047 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 14:01:44.084 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 14:01:44.174 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 14:01:44.229 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 14:01:44.230 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 14:01:44.231 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 14:01:44.256 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 14:01:44.257 +03:00 [INF] Hosting environment: Development
+2026-06-13 14:01:44.257 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 14:01:44.429 +03:00 [INF] Server desktop-5d1ds1r:10780:2eff1ad8 successfully announced in 173.2243 ms
+2026-06-13 14:01:44.439 +03:00 [INF] Server desktop-5d1ds1r:10780:2eff1ad8 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 14:01:44.798 +03:00 [INF] Server desktop-5d1ds1r:10780:2eff1ad8 all the dispatchers started
+2026-06-13 14:01:48.524 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 14:01:53.531 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 5010.1674 ms
+2026-06-13 14:01:53.987 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 167.5609 ms
+2026-06-13 14:01:54.002 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 181.8861 ms
+2026-06-13 14:01:55.025 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 5.1032 ms
+2026-06-13 14:01:55.071 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 45.8356 ms
+2026-06-13 14:01:55.333 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 262.7698 ms
+2026-06-13 14:02:28.694 +03:00 [INF] Endpoint executing: FlightBooking.SearchFlights (User: Anonymous) with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:02:28.741 +03:00 [INF] Calling service method IDuffelFlightBookingService.SearchFlightsAsync with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:02:31.719 +03:00 [INF] Service method IDuffelFlightBookingService.SearchFlightsAsync succeeded in 2963ms
+2026-06-13 14:02:31.726 +03:00 [INF] Endpoint executed successfully: FlightBooking.SearchFlights (User: Anonymous) returning status 200 in 2989ms
+2026-06-13 14:02:31.760 +03:00 [INF] HTTP GET /api/FlightBooking/flights/search responded 200 in 3295.7556 ms
+2026-06-13 14:05:02.327 +03:00 [INF] Endpoint executing: FlightBooking.SearchFlights (User: Anonymous) with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":2,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:05:02.360 +03:00 [INF] Calling service method IDuffelFlightBookingService.SearchFlightsAsync with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":2,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:05:05.007 +03:00 [INF] Service method IDuffelFlightBookingService.SearchFlightsAsync succeeded in 2629ms
+2026-06-13 14:05:05.010 +03:00 [INF] Endpoint executed successfully: FlightBooking.SearchFlights (User: Anonymous) returning status 200 in 2651ms
+2026-06-13 14:05:05.027 +03:00 [INF] HTTP GET /api/FlightBooking/flights/search responded 200 in 2915.2938 ms
+2026-06-13 14:14:50.894 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:14:51.219 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 307ms
+2026-06-13 14:14:51.268 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 749.0496 ms
+2026-06-13 14:15:18.060 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:15:18.194 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 89ms
+2026-06-13 14:15:18.197 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 190.5059 ms
+2026-06-13 14:15:18.211 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:15:18.240 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 27ms
+2026-06-13 14:15:18.241 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 46.8799 ms
+2026-06-13 14:15:20.603 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:15:20.623 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 17ms
+2026-06-13 14:15:20.626 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 24.8340 ms
+2026-06-13 14:15:20.714 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:15:20.751 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 34ms
+2026-06-13 14:15:20.753 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 41.3079 ms
+2026-06-13 14:15:21.113 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:15:21.144 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 28ms
+2026-06-13 14:15:21.146 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 35.3397 ms
+2026-06-13 14:15:21.342 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:15:21.391 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 47ms
+2026-06-13 14:15:21.393 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 52.0209 ms
+2026-06-13 14:28:54.434 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:28:54.553 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 104ms
+2026-06-13 14:28:54.576 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 209.9594 ms
+2026-06-13 14:44:46.459 +03:00 [INF] Endpoint executing: FlightBooking.SearchFlights (User: Anonymous) with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:44:46.490 +03:00 [INF] Calling service method IDuffelFlightBookingService.SearchFlightsAsync with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:44:48.778 +03:00 [INF] Service method IDuffelFlightBookingService.SearchFlightsAsync succeeded in 2280ms
+2026-06-13 14:44:48.783 +03:00 [INF] Endpoint executed successfully: FlightBooking.SearchFlights (User: Anonymous) returning status 200 in 2292ms
+2026-06-13 14:44:48.830 +03:00 [INF] HTTP GET /api/FlightBooking/flights/search responded 200 in 2463.7617 ms
+2026-06-13 14:46:04.791 +03:00 [INF] HTTP POST /api/FlightBooking/checkout responded 401 in 64.9369 ms
+2026-06-13 14:46:22.542 +03:00 [INF] Endpoint executing: Auth.Login (User: Anonymous) with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 14:46:22.550 +03:00 [INF] Calling service method IAuthService.GetTokenAsync with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 14:46:24.897 +03:00 [INF] Service method IAuthService.GetTokenAsync succeeded in 2342ms
+2026-06-13 14:46:24.899 +03:00 [INF] Endpoint executed successfully: Auth.Login (User: Anonymous) returning status 200 in 2350ms
+2026-06-13 14:46:24.914 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 2587.8591 ms
+2026-06-13 14:46:40.850 +03:00 [INF] Endpoint executing: FlightBooking.Checkout (User: mahmoudamin2) with args: {"request":{"OfferId":"off_0000B7I0CIIbq52UwgttX0","Passengers":[{"Id":"pas_0000B7I0CI3qc6VSdQqE4o","Title":"MR","GivenName":"Mahmoud","FamilyName":"Amin","BornOn":"2004-06-08","Email":"mahmoud886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestAPI"}}
+2026-06-13 14:46:40.861 +03:00 [INF] Calling service method IDuffelFlightBookingService.CreateCheckoutSessionAsync with args: {"request":{"UserId":"5de36390-c95c-42ae-a1c0-725210797414","OfferId":"off_0000B7I0CIIbq52UwgttX0","Passengers":[{"Id":"pas_0000B7I0CI3qc6VSdQqE4o","Title":"MR","GivenName":"Mahmoud","FamilyName":"Amin","BornOn":"2004-06-08","Email":"mahmoud886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestDto"}}
+2026-06-13 14:46:42.267 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:46:42.391 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 121ms
+2026-06-13 14:46:42.396 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 162.8353 ms
+2026-06-13 14:46:42.499 +03:00 [INF] Service method IDuffelFlightBookingService.CreateCheckoutSessionAsync succeeded in 1631ms
+2026-06-13 14:46:42.500 +03:00 [INF] Endpoint executed successfully: FlightBooking.Checkout (User: mahmoudamin2) returning status 200 in 1642ms
+2026-06-13 14:46:42.503 +03:00 [INF] HTTP POST /api/FlightBooking/checkout responded 200 in 1746.5833 ms
+2026-06-13 14:46:58.539 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:46:58.571 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 29ms
+2026-06-13 14:46:58.573 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 35.3280 ms
+2026-06-13 14:46:58.793 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:46:58.815 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 20ms
+2026-06-13 14:46:58.818 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 25.1093 ms
+2026-06-13 14:47:01.086 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:47:01.108 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 20ms
+2026-06-13 14:47:01.110 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 23.8671 ms
+2026-06-13 14:47:01.320 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:47:01.335 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 13ms
+2026-06-13 14:47:01.337 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 17.4168 ms
+2026-06-13 14:47:01.632 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:47:01.654 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 20ms
+2026-06-13 14:47:01.657 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 25.8547 ms
+2026-06-13 14:47:01.870 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:47:01.886 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 15ms
+2026-06-13 14:47:01.888 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 19.2474 ms
+2026-06-13 14:50:40.635 +03:00 [INF] Endpoint executing: FlightBooking.Checkout (User: mahmoudamin2) with args: {"request":{"OfferId":"off_0000B7I0CIIbq52UwgttX0","Passengers":[{"Id":"pas_0000B7I0CI3qc6VSdQqE4o","Title":"MR","GivenName":"Mahmoud","FamilyName":"Amin","BornOn":"2004-06-08","Email":"mahmoud886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestAPI"}}
+2026-06-13 14:50:40.657 +03:00 [INF] Calling service method IDuffelFlightBookingService.CreateCheckoutSessionAsync with args: {"request":{"UserId":"5de36390-c95c-42ae-a1c0-725210797414","OfferId":"off_0000B7I0CIIbq52UwgttX0","Passengers":[{"Id":"pas_0000B7I0CI3qc6VSdQqE4o","Title":"MR","GivenName":"Mahmoud","FamilyName":"Amin","BornOn":"2004-06-08","Email":"mahmoud886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestDto"}}
+2026-06-13 14:50:41.940 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:50:42.120 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 104ms
+2026-06-13 14:50:42.130 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 199.9288 ms
+2026-06-13 14:50:42.389 +03:00 [INF] Service method IDuffelFlightBookingService.CreateCheckoutSessionAsync succeeded in 1725ms
+2026-06-13 14:50:42.394 +03:00 [INF] Endpoint executed successfully: FlightBooking.Checkout (User: mahmoudamin2) returning status 200 in 1742ms
+2026-06-13 14:50:42.400 +03:00 [INF] HTTP POST /api/FlightBooking/checkout responded 200 in 1956.2649 ms
+2026-06-13 14:51:12.074 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:51:12.101 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 24ms
+2026-06-13 14:51:12.103 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 37.6386 ms
+2026-06-13 14:51:12.189 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:51:12.214 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 23ms
+2026-06-13 14:51:12.216 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 29.6261 ms
+2026-06-13 14:51:14.353 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:51:14.384 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 29ms
+2026-06-13 14:51:14.386 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 33.1013 ms
+2026-06-13 14:51:14.448 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:51:14.468 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 18ms
+2026-06-13 14:51:14.470 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 22.5749 ms
+2026-06-13 14:51:14.922 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:51:14.950 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 26ms
+2026-06-13 14:51:14.951 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:51:14.953 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 32.7517 ms
+2026-06-13 14:51:14.972 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 17ms
+2026-06-13 14:51:14.976 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 25.1554 ms
+2026-06-13 14:51:29.042 +03:00 [WRN] Stopping the server due to DomainUnload or ProcessExit event...
+2026-06-13 14:51:29.044 +03:00 [INF] Server desktop-5d1ds1r:10780:2eff1ad8 caught stopping signal...
+2026-06-13 14:51:29.047 +03:00 [INF] Server desktop-5d1ds1r:10780:2eff1ad8 caught stopped signal...
+2026-06-13 14:51:29.048 +03:00 [WRN] Server desktop-5d1ds1r:10780:2eff1ad8 caught shutdown signal...
+2026-06-13 14:51:29.080 +03:00 [WRN] Server desktop-5d1ds1r:10780:2eff1ad8 stopped non-gracefully due to ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler. Outstanding work on those dispatchers could be aborted, and there can be delays in background processing. This server instance will be incorrectly shown as active for a while. To avoid non-graceful shutdowns, investigate what prevents from stopping gracefully and add CancellationToken support for those methods.
+2026-06-13 14:51:29.753 +03:00 [INF] Server desktop-5d1ds1r:10780:2eff1ad8 successfully reported itself as stopped in 598.5368 ms
+2026-06-13 14:51:29.755 +03:00 [INF] Server desktop-5d1ds1r:10780:2eff1ad8 has been stopped in total 707.6617 ms
+2026-06-13 14:52:12.319 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 14:52:24.359 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 14:52:25.265 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 14:52:25.393 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 14:52:25.424 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 14:52:25.507 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 14:52:25.559 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 14:52:25.560 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 14:52:25.561 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 14:52:25.587 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 14:52:25.587 +03:00 [INF] Hosting environment: Development
+2026-06-13 14:52:25.588 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 14:52:25.738 +03:00 [INF] Server desktop-5d1ds1r:6204:4ae65b64 successfully announced in 160.0569 ms
+2026-06-13 14:52:25.774 +03:00 [INF] Server desktop-5d1ds1r:6204:4ae65b64 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 14:52:26.232 +03:00 [INF] Server desktop-5d1ds1r:6204:4ae65b64 all the dispatchers started
+2026-06-13 14:52:26.478 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 14:52:26.766 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 288.1779 ms
+2026-06-13 14:52:26.878 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 43.8577 ms
+2026-06-13 14:52:26.909 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 76.6583 ms
+2026-06-13 14:52:27.391 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 0.6930 ms
+2026-06-13 14:52:27.401 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 3.6699 ms
+2026-06-13 14:52:27.863 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 618.1576 ms
+2026-06-13 14:52:43.324 +03:00 [INF] Endpoint executing: Auth.Login (User: Anonymous) with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 14:52:43.332 +03:00 [INF] Calling service method IAuthService.GetTokenAsync with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 14:52:44.194 +03:00 [INF] Service method IAuthService.GetTokenAsync succeeded in 860ms
+2026-06-13 14:52:44.197 +03:00 [INF] Endpoint executed successfully: Auth.Login (User: Anonymous) returning status 200 in 866ms
+2026-06-13 14:52:44.219 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 1014.1937 ms
+2026-06-13 14:53:17.452 +03:00 [INF] Endpoint executing: FlightBooking.SearchFlights (User: mahmoudamin2) with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:53:17.461 +03:00 [INF] Calling service method IDuffelFlightBookingService.SearchFlightsAsync with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 14:53:19.490 +03:00 [INF] Service method IDuffelFlightBookingService.SearchFlightsAsync succeeded in 2024ms
+2026-06-13 14:53:19.494 +03:00 [INF] Endpoint executed successfully: FlightBooking.SearchFlights (User: mahmoudamin2) returning status 200 in 2035ms
+2026-06-13 14:53:19.509 +03:00 [INF] HTTP GET /api/FlightBooking/flights/search responded 200 in 2121.6211 ms
+2026-06-13 14:54:25.874 +03:00 [INF] Endpoint executing: FlightBooking.Checkout (User: mahmoudamin2) with args: {"request":{"OfferId":"off_0000B7I0xPmVj8q8BpCdjo","Passengers":[{"Id":"pas_0000B7I0xPVsPGwOGvLSqI","Title":"mr","GivenName":"mahmoud","FamilyName":"Amin","BornOn":"2004-08-02","Email":"mahmoud8886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestAPI"}}
+2026-06-13 14:54:25.884 +03:00 [INF] Calling service method IDuffelFlightBookingService.CreateCheckoutSessionAsync with args: {"request":{"UserId":"5de36390-c95c-42ae-a1c0-725210797414","OfferId":"off_0000B7I0xPmVj8q8BpCdjo","Passengers":[{"Id":"pas_0000B7I0xPVsPGwOGvLSqI","Title":"mr","GivenName":"mahmoud","FamilyName":"Amin","BornOn":"2004-08-02","Email":"mahmoud8886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestDto"}}
+2026-06-13 14:54:27.105 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 14:54:27.358 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 246ms
+2026-06-13 14:54:27.376 +03:00 [INF] Service method IDuffelFlightBookingService.CreateCheckoutSessionAsync succeeded in 1484ms
+2026-06-13 14:54:27.377 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 400 in 351.9707 ms
+2026-06-13 14:54:27.379 +03:00 [INF] Endpoint executed successfully: FlightBooking.Checkout (User: mahmoudamin2) returning status 200 in 1497ms
+2026-06-13 14:54:27.386 +03:00 [INF] HTTP POST /api/FlightBooking/checkout responded 200 in 1549.9452 ms
+2026-06-13 15:00:57.132 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 15:01:09.853 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 15:01:10.695 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 15:01:10.835 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 15:01:10.906 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 15:01:11.034 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 15:01:11.117 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 15:01:11.119 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 15:01:11.120 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 15:01:11.151 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 15:01:11.152 +03:00 [INF] Hosting environment: Development
+2026-06-13 15:01:11.153 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 15:01:11.316 +03:00 [INF] Server desktop-5d1ds1r:28388:e222e563 successfully announced in 163.5658 ms
+2026-06-13 15:01:11.321 +03:00 [INF] Server desktop-5d1ds1r:28388:e222e563 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 15:01:11.513 +03:00 [INF] Server desktop-5d1ds1r:28388:e222e563 all the dispatchers started
+2026-06-13 15:01:13.085 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 15:01:13.380 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 295.9059 ms
+2026-06-13 15:01:13.562 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 86.3529 ms
+2026-06-13 15:01:13.635 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 3.3023 ms
+2026-06-13 15:01:13.650 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 174.5508 ms
+2026-06-13 15:01:14.858 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 118.8101 ms
+2026-06-13 15:01:15.004 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 890.8356 ms
+2026-06-13 15:02:40.910 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 15:02:57.948 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 15:02:59.463 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 15:02:59.563 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 15:02:59.573 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 15:02:59.595 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 15:02:59.643 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 15:02:59.644 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 15:02:59.644 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 15:02:59.667 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 15:02:59.670 +03:00 [INF] Hosting environment: Development
+2026-06-13 15:02:59.670 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 15:02:59.778 +03:00 [INF] Server desktop-5d1ds1r:25024:64a97b4d successfully announced in 123.9899 ms
+2026-06-13 15:02:59.782 +03:00 [INF] Server desktop-5d1ds1r:25024:64a97b4d is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 15:02:59.787 +03:00 [INF] Server desktop-5d1ds1r:25024:64a97b4d all the dispatchers started
+2026-06-13 15:02:59.858 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-13 15:03:00.422 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 15:03:00.519 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 96.9801 ms
+2026-06-13 15:03:00.560 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 9.3589 ms
+2026-06-13 15:03:00.574 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 23.3137 ms
+2026-06-13 15:03:00.975 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 0.3158 ms
+2026-06-13 15:03:00.980 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 2.8578 ms
+2026-06-13 15:03:01.137 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 301.4211 ms
+2026-06-13 15:04:20.568 +03:00 [INF] Endpoint executing: Auth.Login (User: Anonymous) with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 15:04:20.574 +03:00 [INF] Calling service method IAuthService.GetTokenAsync with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 15:04:21.679 +03:00 [INF] Service method IAuthService.GetTokenAsync succeeded in 1102ms
+2026-06-13 15:04:21.688 +03:00 [INF] Endpoint executed successfully: Auth.Login (User: Anonymous) returning status 200 in 1115ms
+2026-06-13 15:04:21.712 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 1194.0194 ms
+2026-06-13 15:04:59.061 +03:00 [INF] Endpoint executing: FlightBooking.SearchFlights (User: Anonymous) with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 15:04:59.067 +03:00 [INF] Calling service method IDuffelFlightBookingService.SearchFlightsAsync with args: {"request":{"Origin":"CAI","Destination":"LHR","DepartureDate":"2026-06-18","Adults":1,"MaxStops":null,"CabinClass":"economy","$type":"FlightSearchRequestDto"}}
+2026-06-13 15:05:01.406 +03:00 [INF] Service method IDuffelFlightBookingService.SearchFlightsAsync succeeded in 2335ms
+2026-06-13 15:05:01.407 +03:00 [INF] Endpoint executed successfully: FlightBooking.SearchFlights (User: Anonymous) returning status 200 in 2342ms
+2026-06-13 15:05:01.416 +03:00 [INF] HTTP GET /api/FlightBooking/flights/search responded 200 in 2388.4619 ms
+2026-06-13 15:05:47.048 +03:00 [INF] HTTP POST /api/FlightBooking/checkout responded 401 in 6.1836 ms
+2026-06-13 15:05:54.145 +03:00 [INF] HTTP POST /api/FlightBooking/checkout responded 401 in 1.2904 ms
+2026-06-13 15:06:16.388 +03:00 [INF] Endpoint executing: FlightBooking.Checkout (User: mahmoudamin2) with args: {"request":{"OfferId":"off_0000B7I207hHCdv5q5XDcN","Passengers":[{"Id":"pas_0000B7I207PWaMJU2LIvuE","Title":"MR","GivenName":"Mahmoud","FamilyName":"Amin","BornOn":"2004-08-02","Email":"mahmoud886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestAPI"}}
+2026-06-13 15:06:16.397 +03:00 [INF] Calling service method IDuffelFlightBookingService.CreateCheckoutSessionAsync with args: {"request":{"UserId":"5de36390-c95c-42ae-a1c0-725210797414","OfferId":"off_0000B7I207hHCdv5q5XDcN","Passengers":[{"Id":"pas_0000B7I207PWaMJU2LIvuE","Title":"MR","GivenName":"Mahmoud","FamilyName":"Amin","BornOn":"2004-08-02","Email":"mahmoud886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"CheckoutRequestDto"}}
+2026-06-13 15:06:17.434 +03:00 [INF] Service method IDuffelFlightBookingService.CreateCheckoutSessionAsync succeeded in 1030ms
+2026-06-13 15:06:17.438 +03:00 [INF] Endpoint executed successfully: FlightBooking.Checkout (User: mahmoudamin2) returning status 200 in 1042ms
+2026-06-13 15:06:17.440 +03:00 [INF] HTTP POST /api/FlightBooking/checkout responded 200 in 1085.5549 ms
+2026-06-13 15:06:17.520 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:06:17.575 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 53ms
+2026-06-13 15:06:17.582 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 88.8596 ms
+2026-06-13 15:06:34.879 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:06:34.897 +03:00 [INF] Calling service method IStripeWebhookService.ProcessPaymentSuccessAsync with args: {"paymentIntent":{"Id":"pi_3ThqKLRilPOhpRwH1Soz6ThS","Object":"payment_intent","Amount":15014,"AmountCapturable":0,"AmountDetails":{"DiscountAmount":0,"Error":null,"LineItems":null,"Shipping":null,"Tax":null,"Tip":{"Amount":0,"RawJObject":[],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentAmountDetailsTip"},"RawJObject":[[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentAmountDetails"},"AmountReceived":15014,"ApplicationId":null,"Application":null,"ApplicationFeeAmount":null,"AutomaticPaymentMethods":{"AllowRedirects":"always","Enabled":true,"RawJObject":[[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentAutomaticPaymentMethods"},"CanceledAt":null,"CancellationReason":null,"CaptureMethod":"automatic_async","ClientSecret":"pi_3ThqKLRilPOhpRwH1Soz6ThS_secret_r2xy39plLG9LxkvF6HWl2nc9k","ConfirmationMethod":"automatic","Created":"2026-06-13T12:06:17.0000000Z","Currency":"usd","CustomerId":null,"Customer":null,"CustomerAccount":null,"Description":null,"ExcludedPaymentMethodTypes":null,"Hooks":null,"LastPaymentError":null,"LatestChargeId":"ch_3ThqKLRilPOhpRwH1CdFTsOM","LatestCharge":null,"Livemode":false,"ManagedPayments":{"Enabled":false,"RawJObject":[[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentManagedPayments"},"Metadata":{"OfferId":"off_0000B7I207hHCdv5q5XDcN","UserId":"5de36390-c95c-42ae-a1c0-725210797414"},"NextAction":null,"OnBehalfOfId":null,"OnBehalfOf":null,"PaymentDetails":null,"PaymentMethodId":"pm_1ThqKcRilPOhpRwHCeieCyqb","PaymentMethod":null,"PaymentMethodConfigurationDetails":{"Id":"pmc_1ROV0DRilPOhpRwHykeVhAM9","Parent":null,"RawJObject":[[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodConfigurationDetails"},"PaymentMethodOptions":{"AcssDebit":null,"Affirm":null,"AfterpayClearpay":null,"Alipay":null,"Alma":null,"AmazonPay":null,"AuBecsDebit":null,"BacsDebit":null,"Bancontact":null,"Billie":null,"Blik":null,"Boleto":null,"Card":{"CaptureMethod":null,"Installments":null,"MandateOptions":null,"Network":null,"RequestExtendedAuthorization":null,"RequestIncrementalAuthorization":null,"RequestMulticapture":null,"RequestOvercapture":null,"RequestThreeDSecure":"automatic","RequireCvcRecollection":false,"SetupFutureUsage":null,"StatementDescriptorSuffixKana":null,"StatementDescriptorSuffixKanji":null,"RawJObject":[[[]],[[]],[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodOptionsCard"},"CardPresent":null,"Cashapp":null,"Crypto":null,"CustomerBalance":null,"Eps":null,"Fpx":null,"Giropay":null,"Grabpay":null,"Ideal":null,"InteracPresent":null,"KakaoPay":null,"Klarna":null,"Konbini":null,"KrCard":null,"Link":{"CaptureMethod":null,"PersistentToken":null,"SetupFutureUsage":null,"RawJObject":[[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodOptionsLink"},"MbWay":null,"Mobilepay":null,"Multibanco":null,"NaverPay":null,"NzBankAccount":null,"Oxxo":null,"P24":null,"PayByBank":null,"Payco":null,"Paynow":null,"Paypal":null,"Payto":null,"Pix":null,"Promptpay":null,"RevolutPay":null,"SamsungPay":null,"Satispay":null,"SepaDebit":null,"Sofort":null,"Swish":null,"Twint":null,"Upi":null,"UsBankAccount":null,"WechatPay":null,"Zip":null,"RawJObject":[[[[[]],[[]],[[]],[[]]]],[[[[]]]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodOptions"},"PaymentMethodTypes":["card","link"],"PresentmentDetails":null,"Processing":null,"ReceiptEmail":null,"ReviewId":null,"Review":null,"SetupFutureUsage":null,"Shipping":null,"SourceId":null,"Source":null,"StatementDescriptor":null,"StatementDescriptorSuffix":null,"Status":"succeeded","TransferData":null,"TransferGroup":null,"RawJObject":[[[]],[[]],[[]],[[]],[[[[]]]],[[]],[[]],[[]],[[[[]],[[]]]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[[[]]]],[[[[]],[[]]]],[[]],[[]],[[]],[[[[]],[[]]]],[[[[[[]],[[]],[[]],[[]]]],[[[[]]]]]],[[[],[]]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntent"}}
+2026-06-13 15:06:35.053 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:06:35.064 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 8ms
+2026-06-13 15:06:35.065 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 16.6264 ms
+2026-06-13 15:06:35.154 +03:00 [INF] Calling service method IDuffelFlightBookingService.CreateOrderAsync with args: {"request":{"OfferId":"off_0000B7I207hHCdv5q5XDcN","TotalAmount":150.14,"Currency":"USD","Passengers":[{"Id":"pas_0000B7I207PWaMJU2LIvuE","Title":"MR","GivenName":"Mahmoud","FamilyName":"Amin","BornOn":"2004-08-02","Email":"mahmoud886.amin@gmail.com","PhoneNumber":"+201009563953","Gender":"m","$type":"PassengerDetailsDto"}],"$type":"FlightOrderRequestDto"}}
+2026-06-13 15:06:35.512 +03:00 [INF] Service method IDuffelFlightBookingService.CreateOrderAsync succeeded in 349ms
+2026-06-13 15:06:37.377 +03:00 [INF] Service method IStripeWebhookService.ProcessPaymentSuccessAsync succeeded in 2400ms
+2026-06-13 15:06:37.378 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 2498ms
+2026-06-13 15:06:37.380 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 2501.7653 ms
+2026-06-13 15:06:37.968 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:06:37.970 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 0ms
+2026-06-13 15:06:37.971 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 3.4063 ms
+2026-06-13 15:07:59.934 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-13 15:09:05.508 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 15:09:16.898 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 15:09:18.114 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 15:09:18.237 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 15:09:18.267 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 15:09:18.348 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 15:09:18.405 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 15:09:18.406 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 15:09:18.407 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 15:09:18.428 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 15:09:18.429 +03:00 [INF] Hosting environment: Development
+2026-06-13 15:09:18.430 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 15:09:18.602 +03:00 [INF] Server desktop-5d1ds1r:5804:f5ff44e3 successfully announced in 172.1009 ms
+2026-06-13 15:09:18.647 +03:00 [INF] Server desktop-5d1ds1r:5804:f5ff44e3 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 15:09:18.955 +03:00 [INF] Server desktop-5d1ds1r:5804:f5ff44e3 all the dispatchers started
+2026-06-13 15:09:19.440 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 15:09:19.746 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 305.8690 ms
+2026-06-13 15:09:19.855 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 42.0034 ms
+2026-06-13 15:09:19.911 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 98.0211 ms
+2026-06-13 15:09:20.547 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 0.6763 ms
+2026-06-13 15:09:20.563 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 16.2131 ms
+2026-06-13 15:09:21.022 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 780.4196 ms
+2026-06-13 15:09:52.656 +03:00 [INF] Generating Flight Ticket for Booking "019ec0e0-2bda-70a2-a9e8-43bae29b3bf9"
+2026-06-13 15:09:52.892 +03:00 [INF] Calling service method IEmailSender.SendEmailAsync with args: {"toEmail":"mahmoud886.amin@gmail.com","subject":"Flight E-Ticket (PNR: MSOB2Y)","htmlMessage":"<!DOCTYPE html>\r\n<html>\r\n<body style=\"background-color: #F4F5F7; margin: 0; padding: 40px 20px; font-family: Arial, sans-serif;\">\r\n    <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);\">\r\n        <!-- Logo Section -->\r\n                    <tr>\r\n                        <td align=\"center\" style=\"padding: 48px 24px 32px 24px;\">\r\n                            <img src=\"https://res.cloudinary.com/dn8tsma3t/image/upload/v1773413577/travlo22_b5j7mo.png\" alt=\"Travlo\" width=\"150\" style=\"display: block; width: 150px; max-width: 100%; height: auto;\">\r\n                        </td>\r\n                    </tr>\r\n        <tr><td style=\"height: 4px; background-color: #006666;\"></td></tr>\r\n        <tr>\r\n            <td style=\"padding: 40px;\">\r\n                <h1 style=\"margin: 0 0 20px 0; color: #006666; font-size: 24px; text-align: center;\">E-Ticket Confirmed ✈️</h1>\r\n                <p style=\"color: #555555; line-height: 1.6;\">Hello mahmoud,</p>\r\n                <p style=\"color: #555555; line-height: 1.6;\">Your flight has been ticketed. Please keep this email handy for your records and check-in process.</p>\r\n                \r\n                <div style=\"background-color: #FFF9E6; border-left: 4px solid #F2A900; padding: 15px; margin: 25px 0;\">\r\n                    <p style=\"margin: 5px 0; color: #555555;\"><strong>Status:</strong> <span style=\"color: #006666; font-weight: bold;\">Confirmed</span></p>\r\n                    <p style=\"margin: 5px 0; color: #555555;\"><strong>Amount Paid:</strong> USD 150.14</p>\r\n                </div>\r\n\r\n                <div style=\"text-align: center; margin-top: 30px; padding: 20px; border: 1px dashed #cccccc; border-radius: 8px;\">\r\n                    <p style=\"font-size: 14px; color: #888888; text-transform: uppercase; margin-bottom: 5px;\">Passenger Name Record (PNR)</p>\r\n                    <h2 style=\"margin: 0; color: #F2A900; font-size: 32px; letter-spacing: 4px;\">MSOB2Y</h2>\r\n                    <p style=\"margin: 10px 0 0 0; font-size: 12px; color: #888888;\">Use this code on the airline's website to manage your flight.</p>\r\n                </div>\r\n            </td>\r\n        </tr>\r\n        <tr>\r\n            <td align=\"center\" style=\"padding: 20px; background-color: #f9fafc; color: #888888; font-size: 12px;\">\r\n                © 2026 Travio. Have a great flight!\r\n            </td>\r\n        </tr>\r\n    </table>\r\n</body>\r\n</html>"}
+2026-06-13 15:09:55.840 +03:00 [INF] Service method IEmailSender.SendEmailAsync succeeded in 2937ms
+2026-06-13 15:09:55.843 +03:00 [INF] Flight E-Ticket sent successfully to mahmoud886.amin@gmail.com
+2026-06-13 15:12:40.332 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 15:12:52.010 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 15:12:52.805 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 15:12:52.921 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 15:12:52.952 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 15:12:53.034 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 15:12:53.100 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 15:12:53.101 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 15:12:53.102 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 15:12:53.124 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 15:12:53.125 +03:00 [INF] Hosting environment: Development
+2026-06-13 15:12:53.126 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 15:12:53.281 +03:00 [INF] Server desktop-5d1ds1r:10916:2fd43897 successfully announced in 157.0455 ms
+2026-06-13 15:12:53.287 +03:00 [INF] Server desktop-5d1ds1r:10916:2fd43897 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 15:12:53.716 +03:00 [INF] Server desktop-5d1ds1r:10916:2fd43897 all the dispatchers started
+2026-06-13 15:12:53.907 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 15:12:54.150 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 242.6464 ms
+2026-06-13 15:12:54.269 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 35.0760 ms
+2026-06-13 15:12:54.299 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 70.8661 ms
+2026-06-13 15:12:54.818 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 0.6587 ms
+2026-06-13 15:12:54.826 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 8.4060 ms
+2026-06-13 15:12:55.124 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 538.6263 ms
+2026-06-13 15:13:11.969 +03:00 [INF] Endpoint executing: Auth.Login (User: Anonymous) with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 15:13:11.984 +03:00 [INF] Calling service method IAuthService.GetTokenAsync with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 15:13:12.884 +03:00 [INF] Service method IAuthService.GetTokenAsync succeeded in 897ms
+2026-06-13 15:13:13.002 +03:00 [INF] Endpoint executed successfully: Auth.Login (User: Anonymous) returning status 200 in 1018ms
+2026-06-13 15:13:13.109 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 1443.0201 ms
+2026-06-13 15:14:13.822 +03:00 [INF] Endpoint executing: Hotels.Search (User: mahmoudamin2) with args: {"request":{"CheckIn":"2026-06-18","CheckOut":"2026-06-19","DestinationCode":null,"DestinationName":"Cairo","Latitude":null,"Longitude":null,"RadiusInKm":null,"HotelCodes":[1],"Occupancies":[{"Adults":1,"Children":0,"ChildrenAges":[],"$type":"OccupancyDto"}],"MaxHotels":10,"MinCategory":null,"MaxCategory":null,"$type":"HotelAvailabilityRequestDto"},"ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3788","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:14:13.839 +03:00 [INF] Calling service method IHotelbedsService.SearchAvailabilityAsync with args: {"request":{"CheckIn":"2026-06-18","CheckOut":"2026-06-19","DestinationCode":null,"DestinationName":"Cairo","Latitude":null,"Longitude":null,"RadiusInKm":null,"HotelCodes":[1],"Occupancies":[{"Adults":1,"Children":0,"ChildrenAges":[],"$type":"OccupancyDto"}],"MaxHotels":10,"MinCategory":null,"MaxCategory":null,"$type":"HotelAvailabilityRequestDto"},"cancellationToken":"[REDACTED]"}
+2026-06-13 15:14:13.860 +03:00 [INF] Calling service method IGeocodingService.GetCoordinatesAsync with args: {"address":"Cairo","ct":{"IsCancellationRequested":false,"CanBeCanceled":false,"WaitHandle":{"Handle":"3792","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:14:14.376 +03:00 [INF] Service method IGeocodingService.GetCoordinatesAsync succeeded in 510ms
+2026-06-13 15:14:15.460 +03:00 [INF] Calling service method ICurrencyExchangeService.GetExchangeRateAsync with args: {"baseCurrency":"EUR","targetCurrency":"USD","ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3788","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:14:15.715 +03:00 [INF] Service method ICurrencyExchangeService.GetExchangeRateAsync succeeded in 249ms
+2026-06-13 15:14:16.081 +03:00 [INF] Service method IHotelbedsService.SearchAvailabilityAsync succeeded in 2231ms
+2026-06-13 15:14:16.082 +03:00 [INF] Endpoint executed successfully: Hotels.Search (User: mahmoudamin2) returning status 200 in 2244ms
+2026-06-13 15:14:16.092 +03:00 [INF] HTTP POST /api/Hotels/search responded 200 in 2372.8041 ms
+2026-06-13 15:14:39.641 +03:00 [INF] Endpoint executing: Hotels.GetDetails (User: mahmoudamin2) with args: {"hotelCode":6711,"query":{"CheckIn":"2026-06-18","CheckOut":"2026-06-19","Adults":1,"Children":0,"ChildrenAges":null,"$type":"HotelDetailsQueryDto"},"ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3788","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:14:39.648 +03:00 [INF] Calling service method IHotelbedsService.GetHotelDetailsAsync with args: {"hotelCode":6711,"query":{"CheckIn":"2026-06-18","CheckOut":"2026-06-19","Adults":1,"Children":0,"ChildrenAges":null,"$type":"HotelDetailsQueryDto"},"cancellationToken":"[REDACTED]"}
+2026-06-13 15:14:39.659 +03:00 [INF] Calling service method ICurrencyExchangeService.GetExchangeRateAsync with args: {"baseCurrency":"EUR","targetCurrency":"USD","ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3788","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:14:39.666 +03:00 [INF] Service method ICurrencyExchangeService.GetExchangeRateAsync succeeded in 0ms
+2026-06-13 15:14:40.011 +03:00 [INF] Service method IHotelbedsService.GetHotelDetailsAsync succeeded in 358ms
+2026-06-13 15:14:40.012 +03:00 [INF] Endpoint executed successfully: Hotels.GetDetails (User: mahmoudamin2) returning status 200 in 364ms
+2026-06-13 15:14:40.021 +03:00 [INF] HTTP GET /api/Hotels/6711/details responded 200 in 401.5916 ms
+2026-06-13 15:15:17.545 +03:00 [INF] Endpoint executing: Hotels.Checkout (User: mahmoudamin2) with args: {"request":{"HolderFirstName":"Mahmoud","HolderLastName":"Amin","Remark":null,"Rooms":[{"RateKey":"20260618|20260619|W|138|6711|SGL.AS|GAR-NRF |RO||1~1~0||P@07~~2491e~-417925566~N~~~NRF~~86F5FF76D121405178135288011605AAUK000100000000052491e","Paxes":[{"RoomId":1,"Type":"AD","Name":"Mahmnoud","Surname":"Amin","Age":null,"$type":"BookingPaxDto"}],"$type":"BookingRoomDto"}],"$type":"HotelBookingRequestDto"},"ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3788","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:15:17.561 +03:00 [INF] Calling service method IHotelbedsService.InitCheckoutAsync with args: {"request":{"HolderFirstName":"Mahmoud","HolderLastName":"Amin","Remark":null,"Rooms":[{"RateKey":"20260618|20260619|W|138|6711|SGL.AS|GAR-NRF |RO||1~1~0||P@07~~2491e~-417925566~N~~~NRF~~86F5FF76D121405178135288011605AAUK000100000000052491e","Paxes":[{"RoomId":1,"Type":"AD","Name":"Mahmnoud","Surname":"Amin","Age":null,"$type":"BookingPaxDto"}],"$type":"BookingRoomDto"}],"$type":"HotelBookingRequestDto"},"userId":"5de36390-c95c-42ae-a1c0-725210797414","cancellationToken":"[REDACTED]"}
+2026-06-13 15:15:17.882 +03:00 [INF] Calling service method ICurrencyExchangeService.GetExchangeRateAsync with args: {"baseCurrency":"EUR","targetCurrency":"USD","ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3788","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:15:17.889 +03:00 [INF] Service method ICurrencyExchangeService.GetExchangeRateAsync succeeded in 0ms
+2026-06-13 15:15:18.041 +03:00 [INF] Calling service method IPaymentGatewayService.CreatePaymentIntentAsync with args: {"amountInCents":4088,"currency":"usd","bookingId":"019ec0e8-6b83-7666-a26b-efbc3b048f87","bookingType":"Hotel","ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3788","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:15:18.816 +03:00 [INF] Stripe PaymentIntent created: pi_3ThqT4RilPOhpRwH0Qj0GCuA for BookingId "019ec0e8-6b83-7666-a26b-efbc3b048f87", Amount: 4088 usd.
+2026-06-13 15:15:18.820 +03:00 [INF] Service method IPaymentGatewayService.CreatePaymentIntentAsync succeeded in 771ms
+2026-06-13 15:15:18.913 +03:00 [INF] Service method IHotelbedsService.InitCheckoutAsync succeeded in 1344ms
+2026-06-13 15:15:18.915 +03:00 [INF] Endpoint executed successfully: Hotels.Checkout (User: mahmoudamin2) returning status 200 in 1358ms
+2026-06-13 15:15:18.930 +03:00 [INF] HTTP POST /api/Hotels/checkout responded 200 in 1408.9883 ms
+2026-06-13 15:15:19.015 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:15:19.058 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 38ms
+2026-06-13 15:15:19.060 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 106.6302 ms
+2026-06-13 15:16:12.913 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:16:12.913 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:16:12.980 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 63ms
+2026-06-13 15:16:12.983 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 153.1123 ms
+2026-06-13 15:16:13.017 +03:00 [INF] Calling service method IStripeWebhookService.ProcessPaymentSuccessAsync with args: {"paymentIntent":{"Id":"pi_3ThqT4RilPOhpRwH0Qj0GCuA","Object":"payment_intent","Amount":4088,"AmountCapturable":0,"AmountDetails":{"DiscountAmount":0,"Error":null,"LineItems":null,"Shipping":null,"Tax":null,"Tip":{"Amount":0,"RawJObject":[],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentAmountDetailsTip"},"RawJObject":[[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentAmountDetails"},"AmountReceived":4088,"ApplicationId":null,"Application":null,"ApplicationFeeAmount":null,"AutomaticPaymentMethods":{"AllowRedirects":"always","Enabled":true,"RawJObject":[[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentAutomaticPaymentMethods"},"CanceledAt":null,"CancellationReason":null,"CaptureMethod":"automatic_async","ClientSecret":"pi_3ThqT4RilPOhpRwH0Qj0GCuA_secret_gj5gOctZS6EKGwJ2aC7gulSp8","ConfirmationMethod":"automatic","Created":"2026-06-13T12:15:18.0000000Z","Currency":"usd","CustomerId":null,"Customer":null,"CustomerAccount":null,"Description":null,"ExcludedPaymentMethodTypes":null,"Hooks":null,"LastPaymentError":null,"LatestChargeId":"ch_3ThqT4RilPOhpRwH09KjgHGW","LatestCharge":null,"Livemode":false,"ManagedPayments":{"Enabled":false,"RawJObject":[[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentManagedPayments"},"Metadata":{"BookingType":"Hotel","BookingId":"019ec0e8-6b83-7666-a26b-efbc3b048f87"},"NextAction":null,"OnBehalfOfId":null,"OnBehalfOf":null,"PaymentDetails":null,"PaymentMethodId":"pm_1ThqTwRilPOhpRwHI5zr6wzA","PaymentMethod":null,"PaymentMethodConfigurationDetails":{"Id":"pmc_1ROV0DRilPOhpRwHykeVhAM9","Parent":null,"RawJObject":[[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodConfigurationDetails"},"PaymentMethodOptions":{"AcssDebit":null,"Affirm":null,"AfterpayClearpay":null,"Alipay":null,"Alma":null,"AmazonPay":null,"AuBecsDebit":null,"BacsDebit":null,"Bancontact":null,"Billie":null,"Blik":null,"Boleto":null,"Card":{"CaptureMethod":null,"Installments":null,"MandateOptions":null,"Network":null,"RequestExtendedAuthorization":null,"RequestIncrementalAuthorization":null,"RequestMulticapture":null,"RequestOvercapture":null,"RequestThreeDSecure":"automatic","RequireCvcRecollection":false,"SetupFutureUsage":null,"StatementDescriptorSuffixKana":null,"StatementDescriptorSuffixKanji":null,"RawJObject":[[[]],[[]],[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodOptionsCard"},"CardPresent":null,"Cashapp":null,"Crypto":null,"CustomerBalance":null,"Eps":null,"Fpx":null,"Giropay":null,"Grabpay":null,"Ideal":null,"InteracPresent":null,"KakaoPay":null,"Klarna":null,"Konbini":null,"KrCard":null,"Link":{"CaptureMethod":null,"PersistentToken":null,"SetupFutureUsage":null,"RawJObject":[[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodOptionsLink"},"MbWay":null,"Mobilepay":null,"Multibanco":null,"NaverPay":null,"NzBankAccount":null,"Oxxo":null,"P24":null,"PayByBank":null,"Payco":null,"Paynow":null,"Paypal":null,"Payto":null,"Pix":null,"Promptpay":null,"RevolutPay":null,"SamsungPay":null,"Satispay":null,"SepaDebit":null,"Sofort":null,"Swish":null,"Twint":null,"Upi":null,"UsBankAccount":null,"WechatPay":null,"Zip":null,"RawJObject":[[[[[]],[[]],[[]],[[]]]],[[[[]]]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntentPaymentMethodOptions"},"PaymentMethodTypes":["card","link"],"PresentmentDetails":null,"Processing":null,"ReceiptEmail":null,"ReviewId":null,"Review":null,"SetupFutureUsage":null,"Shipping":null,"SourceId":null,"Source":null,"StatementDescriptor":null,"StatementDescriptorSuffix":null,"Status":"succeeded","TransferData":null,"TransferGroup":null,"RawJObject":[[[]],[[]],[[]],[[]],[[[[]]]],[[]],[[]],[[]],[[[[]],[[]]]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[[[]]]],[[[[]],[[]]]],[[]],[[]],[[]],[[[[]],[[]]]],[[[[[[]],[[]],[[]],[[]]]],[[[[]]]]]],[[[],[]]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]],[[]]],"RawJsonElement":{"ValueKind":"Object","$type":"JsonElement"},"StripeResponse":null,"$type":"PaymentIntent"}}
+2026-06-13 15:16:13.310 +03:00 [INF] Webhook ignored: Hotel booking "019ec0e8-6b83-7666-a26b-efbc3b048f87" status is "ProcessingWebhook" (not PendingPayment).
+2026-06-13 15:16:13.312 +03:00 [INF] Service method IStripeWebhookService.ProcessPaymentSuccessAsync succeeded in 170ms
+2026-06-13 15:16:13.313 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 397ms
+2026-06-13 15:16:13.315 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 568.5371 ms
+2026-06-13 15:16:15.593 +03:00 [INF] Endpoint executing: Stripe.StripeWebhook (User: Anonymous) with args: {}
+2026-06-13 15:16:15.596 +03:00 [INF] Endpoint executed successfully: Stripe.StripeWebhook (User: Anonymous) returning status 200 in 1ms
+2026-06-13 15:16:15.598 +03:00 [INF] HTTP POST /api/Stripe/webhook responded 200 in 9.2214 ms
+2026-06-13 15:17:53.826 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-13 15:18:54.575 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 15:19:08.911 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 15:19:10.708 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 15:19:10.836 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 15:19:10.869 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 15:19:10.963 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 15:19:11.016 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 15:19:11.016 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 15:19:11.017 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 15:19:11.046 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 15:19:11.047 +03:00 [INF] Hosting environment: Development
+2026-06-13 15:19:11.048 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 15:19:11.198 +03:00 [INF] Server desktop-5d1ds1r:11808:31af9ba8 successfully announced in 151.4456 ms
+2026-06-13 15:19:11.204 +03:00 [INF] Server desktop-5d1ds1r:11808:31af9ba8 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 15:19:11.458 +03:00 [INF] Server desktop-5d1ds1r:11808:31af9ba8 all the dispatchers started
+2026-06-13 15:19:12.383 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 15:19:12.606 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 225.4156 ms
+2026-06-13 15:19:12.724 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 27.7625 ms
+2026-06-13 15:19:12.747 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 51.5543 ms
+2026-06-13 15:19:13.315 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 0.7222 ms
+2026-06-13 15:19:13.369 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 53.9293 ms
+2026-06-13 15:19:13.615 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 570.7304 ms
+2026-06-13 15:22:24.711 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-13 15:22:39.664 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-13 15:22:40.493 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-13 15:22:40.683 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-13 15:22:40.712 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-13 15:22:40.788 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-13 15:22:40.838 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-13 15:22:40.840 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-13 15:22:40.841 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-13 15:22:40.857 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-13 15:22:40.858 +03:00 [INF] Hosting environment: Development
+2026-06-13 15:22:40.858 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-13 15:22:41.223 +03:00 [INF] Server desktop-5d1ds1r:1540:b26ad24f successfully announced in 365.0538 ms
+2026-06-13 15:22:41.257 +03:00 [INF] Server desktop-5d1ds1r:1540:b26ad24f is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-13 15:22:41.498 +03:00 [INF] Server desktop-5d1ds1r:1540:b26ad24f all the dispatchers started
+2026-06-13 15:22:41.656 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-06-13 15:22:41.833 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 176.3033 ms
+2026-06-13 15:22:42.039 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 132.6465 ms
+2026-06-13 15:22:42.074 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 169.6946 ms
+2026-06-13 15:22:42.687 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 0.4622 ms
+2026-06-13 15:22:42.775 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 88.8905 ms
+2026-06-13 15:22:43.026 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 582.6639 ms
+2026-06-13 15:25:00.331 +03:00 [INF] Endpoint executing: Auth.Login (User: Anonymous) with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 15:25:00.355 +03:00 [INF] Calling service method IAuthService.GetTokenAsync with args: {"model":{"Email_or_username":"mahmoudamin2","Password":"123456789Mahmoud*","$type":"LoginDTO"}}
+2026-06-13 15:25:01.796 +03:00 [INF] Service method IAuthService.GetTokenAsync succeeded in 1435ms
+2026-06-13 15:25:01.801 +03:00 [INF] Endpoint executed successfully: Auth.Login (User: Anonymous) returning status 200 in 1452ms
+2026-06-13 15:25:01.838 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 1953.2108 ms
+2026-06-13 15:25:29.002 +03:00 [INF] Endpoint executing: Hotels.GetMyBookings (User: mahmoudamin2) with args: {"ct":{"IsCancellationRequested":false,"CanBeCanceled":true,"WaitHandle":{"Handle":"3688","SafeWaitHandle":{"IsInvalid":false,"IsClosed":false,"$type":"SafeWaitHandle"},"$type":"ManualResetEvent"},"$type":"CancellationToken"}}
+2026-06-13 15:25:29.010 +03:00 [INF] Calling service method IHotelbedsService.GetUserBookingsAsync with args: {"userId":"5de36390-c95c-42ae-a1c0-725210797414","cancellationToken":"[REDACTED]"}
+2026-06-13 15:25:29.168 +03:00 [INF] Service method IHotelbedsService.GetUserBookingsAsync succeeded in 156ms
+2026-06-13 15:25:29.169 +03:00 [INF] Endpoint executed successfully: Hotels.GetMyBookings (User: mahmoudamin2) returning status 200 in 161ms
+2026-06-13 15:25:29.182 +03:00 [INF] HTTP GET /api/Hotels/my-bookings responded 200 in 297.5347 ms
+2026-06-13 15:27:41.591 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-13 15:38:21.277 +03:00 [WRN] Stopping the server due to DomainUnload or ProcessExit event...
+2026-06-13 15:38:21.288 +03:00 [INF] Server desktop-5d1ds1r:1540:b26ad24f caught stopping signal...
+2026-06-13 15:38:21.461 +03:00 [INF] Server desktop-5d1ds1r:1540:b26ad24f caught stopped signal...
+2026-06-13 15:38:21.470 +03:00 [WRN] Server desktop-5d1ds1r:1540:b26ad24f caught shutdown signal...
+2026-06-13 15:38:21.493 +03:00 [WRN] Server desktop-5d1ds1r:1540:b26ad24f stopped non-gracefully due to Worker. Outstanding work on those dispatchers could be aborted, and there can be delays in background processing. This server instance will be incorrectly shown as active for a while. To avoid non-graceful shutdowns, investigate what prevents from stopping gracefully and add CancellationToken support for those methods.

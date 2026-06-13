@@ -1,7 +1,9 @@
+using Hangfire;
 using Microsoft.Extensions.Logging;
 using Stripe;
 using System.Text.Json;
 using Travio.Core.Contracts.Services.DuffelFlights;
+using Travio.Core.Contracts.Services.Email;
 using Travio.Core.Contracts.Services.Hotelbeds;
 using Travio.Core.Contracts.Services.Payment;
 using Travio.Core.Domain.Entities.Duffel;
@@ -21,6 +23,7 @@ namespace Travio.Core.Services.Payment
         private readonly IHotelbedsService _hotelbedsService;
         private readonly IPaymentGatewayService _paymentGateway;
         private readonly ILogger<StripeWebhookService> _logger;
+        private readonly IBackgroundJobClient _backgroundJobClient;
 
         public StripeWebhookService(
             IGenericRepository<FlightBooking> flightRepo,
@@ -28,7 +31,8 @@ namespace Travio.Core.Services.Payment
             IDuffelFlightBookingService flightBookingService,
             IHotelbedsService hotelbedsService,
             IPaymentGatewayService paymentGateway,
-            ILogger<StripeWebhookService> logger)
+            ILogger<StripeWebhookService> logger,
+            IBackgroundJobClient backgroundJobClient)
         {
             _flightRepo = flightRepo;
             _hotelRepo = hotelRepo;
@@ -36,6 +40,7 @@ namespace Travio.Core.Services.Payment
             _hotelbedsService = hotelbedsService;
             _paymentGateway = paymentGateway;
             _logger = logger;
+            _backgroundJobClient = backgroundJobClient;
         }
 
         public async Task<bool> ProcessPaymentSuccessAsync(PaymentIntent paymentIntent)
@@ -47,7 +52,7 @@ namespace Travio.Core.Services.Payment
             {
                 return await ProcessHotelBookingAsync(paymentIntent);
             }
-            
+
             // Default to Flight for backward compatibility
             return await ProcessFlightBookingAsync(stripeIntentId);
         }
@@ -156,6 +161,7 @@ namespace Travio.Core.Services.Payment
         // FLIGHT BOOKING — Unchanged (uses existing pattern)
         // ═══════════════════════════════════════════════════════════════════
 
+
         private async Task<bool> ProcessFlightBookingAsync(string stripeIntentId)
         {
             var spec = new BookingByStripeIntentIdSpec(stripeIntentId);
@@ -167,22 +173,31 @@ namespace Travio.Core.Services.Payment
                 return false;
             }
 
-            if (booking.BookingStatus != FlightBookingStatus.PendingPayment)
+            // 👇 1. THE IDEMPOTENCY GUARD: Ignore duplicate Stripe webhooks immediately
+            if (booking.BookingStatus == FlightBookingStatus.Confirmed ||
+        booking.BookingStatus == FlightBookingStatus.RefundRequest ||
+        booking.BookingStatus == FlightBookingStatus.Failed)
             {
-                _logger.LogInformation($"Webhook ignored. Flight booking status is currently {booking.BookingStatus}.");
                 return true;
             }
 
-            booking.BookingStatus = FlightBookingStatus.ProcessingWebhook;
+            // 👇 2. RESTORE YOUR LOCK: Check if another thread is currently processing it
+            if (booking.BookingStatus == FlightBookingStatus.ProcessingWebhook)
+            {
+                _logger.LogInformation($"Webhook ignored. Flight booking is currently being processed by another thread.");
+                return true;
+            }
 
+            // 👇 3. CLAIM THE LOCK: Tell the database "I am working on this!"
+            booking.BookingStatus = FlightBookingStatus.ProcessingWebhook;
             try
             {
                 await _flightRepo.UpdateAsync(booking);
             }
-            catch (Exception) 
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
             {
-                _logger.LogWarning($"RACE CONDITION AVOIDED: Another thread is processing Flight Intent {stripeIntentId}.");
-                return true; 
+                _logger.LogWarning($"RACE CONDITION AVOIDED: Another thread just claimed Intent {stripeIntentId}.");
+                return true;
             }
 
             var savedPassengers = string.IsNullOrEmpty(booking.PassengersJson)
@@ -192,6 +207,8 @@ namespace Travio.Core.Services.Payment
             var orderRequest = new FlightOrderRequestDto
             {
                 OfferId = booking.OfferId,
+                TotalAmount = booking.TotalPrice,
+                Currency = booking.Currency,
                 Passengers = savedPassengers
             };
 
@@ -201,27 +218,59 @@ namespace Travio.Core.Services.Payment
             {
                 _logger.LogCritical($"Duffel booking failed for Intent {stripeIntentId}. Reason: {duffelResult.Message}");
 
+                // Process the refund first (talk to Stripe)
+                bool isRefunded = false;
                 try
                 {
-                    var refundResult = await _paymentGateway.RefundPaymentAsync(
-                        stripeIntentId, "requested_by_customer");
-                    booking.BookingStatus = refundResult.Success
-                        ? FlightBookingStatus.RefundRequest
-                        : FlightBookingStatus.Failed;
+                    var refundResult = await _paymentGateway.RefundPaymentAsync(stripeIntentId, "requested_by_customer");
+                    isRefunded = refundResult.Success;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogCritical($"Refund failed for Flight Intent {stripeIntentId}. Error: {ex.Message}");
-                    booking.BookingStatus = FlightBookingStatus.Failed;
                 }
 
-                await _flightRepo.UpdateAsync(booking);
-                return false;
+                // RE-FETCH THE BOOKING TO GET THE FRESH ROW VERSION
+                booking = await _flightRepo.FirstOrDefaultAsync(new BookingByStripeIntentIdSpec(stripeIntentId));
+
+                // Apply the correct failure status and save
+                if (booking != null)
+                {
+                    booking.BookingStatus = isRefunded
+                        ? FlightBookingStatus.RefundRequest
+                        : FlightBookingStatus.Failed;
+
+                    try
+                    {
+                        await _flightRepo.UpdateAsync(booking);
+                    }
+                    catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+                    {
+                        _logger.LogWarning($"Concurrency avoided: Another thread already updated the failure status for Intent {stripeIntentId}.");
+                    }
+                }
+
+                // Return TRUE so Stripe marks the event as handled and stops retrying
+                return true;
             }
 
             booking.PNR = duffelResult.Data.PNR;
             booking.BookingStatus = FlightBookingStatus.Confirmed;
-            await _flightRepo.UpdateAsync(booking);
+
+            // 👇 2. THE SUCCESS CONCURRENCY CATCH: Safely handle race conditions
+            try
+            {
+                await _flightRepo.UpdateAsync(booking);
+
+                _backgroundJobClient.Enqueue<IEmailService>(emailService =>
+                    emailService.SendFlightTicketAsync(booking.Id, booking.UserId));
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+            {
+                // Thread 1 already saved this perfectly. We can safely ignore Thread 2.
+                _logger.LogWarning($"Concurrency avoided: Another thread already confirmed Flight Intent {stripeIntentId}.");
+                return true;
+            }
 
             return true;
         }
