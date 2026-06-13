@@ -283,3 +283,34 @@ Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
    at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
    at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
    at Travio.API.Program.Main(String[] args) in D:\work\GraduationProject\Travio\Travio\Travio.Solution\Travio.API\Program.cs:line 38
+2026-06-11 17:35:46.869 +03:00 [WRN] No store type was specified for the decimal property 'TotalPrice' on entity type 'FlightBooking'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-06-11 17:36:01.610 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-11 17:36:02.598 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-11 17:36:02.744 +03:00 [INF] HotelbedsStaticDataSyncJob starting.
+2026-06-11 17:36:02.784 +03:00 [INF] HotelbedsStaticDataSyncJob completed successfully.
+2026-06-11 17:36:02.971 +03:00 [INF] Now listening on: https://localhost:7219
+2026-06-11 17:36:02.972 +03:00 [INF] Now listening on: http://localhost:5116
+2026-06-11 17:36:03.074 +03:00 [INF] Starting Hangfire Server using job storage: 'SQL Server: db55624.public.databaseasp.net@db55624'
+2026-06-11 17:36:03.076 +03:00 [INF] Using the following options for SQL Server job storage: Queue poll interval: 00:00:00.
+2026-06-11 17:36:03.077 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-11 17:36:03.102 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 17:36:03.103 +03:00 [INF] Hosting environment: Development
+2026-06-11 17:36:03.104 +03:00 [INF] Content root path: D:\Tarvio\Travio.Solution\Travio.API
+2026-06-11 17:36:03.280 +03:00 [INF] Server desktop-5d1ds1r:8180:49d70b02 successfully announced in 175.5313 ms
+2026-06-11 17:36:03.315 +03:00 [INF] Server desktop-5d1ds1r:8180:49d70b02 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, SqlServerHeartbeatProcess, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-11 17:36:03.811 +03:00 [INF] Server desktop-5d1ds1r:8180:49d70b02 all the dispatchers started
+2026-06-11 17:36:05.041 +03:00 [INF] HTTP GET /scalar/v1 responded 200 in 451.3318 ms
+2026-06-11 17:36:05.296 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 79.0373 ms
+2026-06-11 17:36:05.338 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 120.9803 ms
+2026-06-11 17:36:06.313 +03:00 [INF] HTTP GET /openapi/v1.json responded 200 in 541.4089 ms
+2026-06-11 17:36:08.189 +03:00 [INF] HTTP GET /scalar/scalar.aspnetcore.js responded 200 in 0.9052 ms
+2026-06-11 17:36:08.204 +03:00 [INF] HTTP GET /scalar/scalar.js responded 200 in 4.9487 ms
+2026-06-11 17:51:27.702 +03:00 [INF] Endpoint executing: Auth.Register (User: Anonymous) with args: {"model":{"FirstName":"mahmoud","LastName":"Amin","Username":"mahmoudamin2","Email":"mahmoud886.amin@gmail.com","Password":"123456789Mahmoud*","ConfirmPassword":"123456789Mahmoud*","$type":"RegisterDTO"}}
+2026-06-11 17:51:27.736 +03:00 [INF] Calling service method IAuthService.RegisterAsync with args: {"model":{"FirstName":"mahmoud","LastName":"Amin","Username":"mahmoudamin2","Email":"mahmoud886.amin@gmail.com","Password":"123456789Mahmoud*","ConfirmPassword":"123456789Mahmoud*","$type":"RegisterDTO"}}
+2026-06-11 17:51:30.124 +03:00 [INF] Service method IAuthService.RegisterAsync succeeded in 2383ms
+2026-06-11 17:51:30.131 +03:00 [INF] Endpoint executed successfully: Auth.Register (User: Anonymous) returning status 200 in 2398ms
+2026-06-11 17:51:30.171 +03:00 [INF] HTTP POST /api/Auth/register responded 200 in 3037.3405 ms

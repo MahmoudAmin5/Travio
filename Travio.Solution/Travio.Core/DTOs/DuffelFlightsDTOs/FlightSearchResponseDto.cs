@@ -18,6 +18,7 @@ namespace Travio.Core.DTOs.DuffelFlightsDTOs
         public string OriginCityName { get; set; }
         public string DestinationCityName { get; set; }
         public string AirlineLogoUrl { get; set; }
+        public List<string> PassengerIds { get; set; } = new List<string>();
 
         public List<FlightSegmentDto> Segments { get; set; } = new();
     }

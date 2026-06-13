@@ -77,6 +77,15 @@ namespace Travio.Core.Services.DuffelFlights
                 }
                 using var jsonDoc = JsonDocument.Parse(responseString);
                 var offers = jsonDoc.RootElement.GetProperty("data").GetProperty("offers").EnumerateArray();
+                var dataElement = jsonDoc.RootElement.GetProperty("data");
+                var passengerIds = new List<string>();
+                // 👇 Notice we are reading from dataElement here, not RootElement
+                var duffelPassengers = dataElement.GetProperty("passengers").EnumerateArray();
+
+                foreach (var p in duffelPassengers)
+                {
+                    passengerIds.Add(p.GetProperty("id").GetString());
+                }
 
                 var flights = new List<FlightSearchResponseDto>();
 
@@ -115,6 +124,7 @@ namespace Travio.Core.Services.DuffelFlights
                             // --- ADD THE LOGO TO THE SEGMENT ---
                             AirlineLogoUrl = logoUrl,
 
+
                             FlightNumber = carrier.GetProperty("iata_code").GetString() + " " +
                                            seg.GetProperty("operating_carrier_flight_number").GetString(),
 
@@ -142,6 +152,7 @@ namespace Travio.Core.Services.DuffelFlights
                         Stops = calculatedStops < 0 ? 0 : calculatedStops,
 
                         AirlineLogoUrl = mappedSegments.FirstOrDefault()?.AirlineLogoUrl,
+                        PassengerIds = passengerIds,
 
                         Segments = mappedSegments
                     });
@@ -386,6 +397,7 @@ namespace Travio.Core.Services.DuffelFlights
 
                 var duffelPassengers = request.Passengers.Select(p => new
                 {
+                    id = p.Id,
                     type = "adult",
                     title = p.Title.ToLower(),
                     given_name = p.GivenName,
@@ -402,7 +414,19 @@ namespace Travio.Core.Services.DuffelFlights
                     {
                         type = "instant",
                         selected_offers = new[] { request.OfferId },
-                        passengers = duffelPassengers
+                        passengers = duffelPassengers,
+
+                       
+                        payments = new[]
+                {
+                    new
+                    {
+                        type = "balance",
+                        amount = request.TotalAmount.ToString("0.00"),
+                        currency = request.Currency
+                    }
+                }
+                       
                     }
                 };
 
@@ -412,6 +436,7 @@ namespace Travio.Core.Services.DuffelFlights
                 };
 
                 var jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
+                Console.WriteLine("\n=== DUFFEL PAYLOAD ===\n" + jsonPayload + "\n======================\n");
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
 
@@ -432,10 +457,15 @@ namespace Travio.Core.Services.DuffelFlights
                 using var jsonDoc = JsonDocument.Parse(responseString);
                 var data = jsonDoc.RootElement.GetProperty("data");
 
-
+                // 1. Safely extract the PNR
                 string pnr = data.TryGetProperty("booking_reference", out var bookingRef) && bookingRef.ValueKind != JsonValueKind.Null
                     ? bookingRef.GetString()
                     : "PENDING";
+
+                // 2. Safely extract the Order ID
+                string orderId = data.TryGetProperty("id", out var idElement)
+                    ? idElement.GetString()
+                    : "UNKNOWN_ID";
 
                 return new ServiceResponse<FlightOrderResponseDto>
                 {
@@ -443,10 +473,10 @@ namespace Travio.Core.Services.DuffelFlights
                     Message = "Flight booked successfully!",
                     Data = new FlightOrderResponseDto
                     {
-                        DuffelOrderId = data.GetProperty("id").GetString(),
+                        DuffelOrderId = orderId,
                         PNR = pnr,
-                        BookingStatus = data.GetProperty("booking_status").GetString()
-
+                        // 3. Hardcode the status! If we reached this line, the ticket is officially bought.
+                        BookingStatus = "Confirmed"
                     }
                 };
             }
