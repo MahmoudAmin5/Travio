@@ -45,11 +45,8 @@ public static class WebApplicationExtensions
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseSerilogRequestLogging();
 
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-            app.MapScalarApiReference();
-        }
+        app.MapOpenApi();
+        app.MapScalarApiReference();
         //app.UseRateLimiter();
         app.UseHttpsRedirection();
         app.UseStaticFiles();
