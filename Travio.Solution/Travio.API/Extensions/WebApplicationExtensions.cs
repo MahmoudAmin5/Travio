@@ -49,8 +49,10 @@ public static class WebApplicationExtensions
             app.MapScalarApiReference();
         }
         //app.UseRateLimiter();
-        app.UseStaticFiles();
         app.UseHttpsRedirection();
+        app.UseStaticFiles();
+        app.UseRouting();
+        app.UseCors("AllowAll");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

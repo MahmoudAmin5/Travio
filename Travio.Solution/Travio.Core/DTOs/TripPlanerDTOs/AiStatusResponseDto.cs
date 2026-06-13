@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Travio.Core.DTOs.TripPlanerDTOs;
 
@@ -16,6 +16,12 @@ public class AiStatusResponseDto
 
 public class ItineraryData
 {
+    [JsonPropertyName("city_name")]
+    public string? CityName { get; set; }
+
+    [JsonPropertyName("city_hero_image")]
+    public string? CityHeroImage { get; set; }
+
     [JsonPropertyName("recommended_hotels")]
     public List<RecommendedHotel>? RecommendedHotels { get; set; }
 
@@ -42,6 +48,9 @@ public class RecommendedHotel
 
     [JsonPropertyName("featured_image")]
     public string? FeaturedImage { get; set; }
+
+    [JsonPropertyName("coordinates")]
+    public Coordinates? Coordinates { get; set; }
 }
 
 
@@ -76,4 +85,16 @@ public class Activity
 
     [JsonPropertyName("featured_image")]
     public string? FeaturedImage { get; set; }
+
+    [JsonPropertyName("coordinates")]
+    public Coordinates? Coordinates { get; set; }
+}
+
+public class Coordinates
+{
+    [JsonPropertyName("latitude")]
+    public double? Latitude { get; set; }
+
+    [JsonPropertyName("longitude")]
+    public double? Longitude { get; set; }
 }

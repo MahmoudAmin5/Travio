@@ -10,6 +10,8 @@ public class SavedTripHotel
     public string? Address { get; set; }
     public string? Link { get; set; }
     public string? FeaturedImage { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 
     // Navigation
     public SavedTrip SavedTrip { get; set; } = null!;

@@ -44,6 +44,7 @@ public class SavedTripService : ISavedTripService
                 Id = t.Id,
                 Title = t.Title,
                 DestinationName = t.DestinationName,
+                CityHeroImage = t.CityHeroImage,
                 TotalDays = t.TotalDays,
                 IsFavorite = t.IsFavorite,
                 CreatedAt = t.CreatedAt
@@ -71,6 +72,7 @@ public class SavedTripService : ISavedTripService
                 Id = t.Id,
                 Title = t.Title,
                 DestinationName = t.DestinationName,
+                CityHeroImage = t.CityHeroImage,
                 TotalDays = t.TotalDays,
                 IsFavorite = t.IsFavorite,
                 CreatedAt = t.CreatedAt
@@ -99,6 +101,7 @@ public class SavedTripService : ISavedTripService
             Id = trip.Id,
             Title = trip.Title,
             DestinationName = trip.DestinationName,
+            CityHeroImage = trip.CityHeroImage,
             TotalDays = trip.TotalDays,
             IsFavorite = trip.IsFavorite,
             CreatedAt = trip.CreatedAt,
@@ -115,7 +118,9 @@ public class SavedTripService : ISavedTripService
                         SuggestedTime = a.SuggestedTime,
                         Description = a.Description,
                         Address = a.Address,
-                        FeaturedImage = a.FeaturedImage
+                        FeaturedImage = a.FeaturedImage,
+                        Latitude = a.Latitude,
+                        Longitude = a.Longitude
                     }).ToList()
             }).ToList(),
             Hotels = allHotels
@@ -127,7 +132,9 @@ public class SavedTripService : ISavedTripService
                     Rating = h.Rating,
                     Address = h.Address,
                     Link = h.Link,
-                    FeaturedImage = h.FeaturedImage
+                    FeaturedImage = h.FeaturedImage,
+                    Latitude = h.Latitude,
+                    Longitude = h.Longitude
                 }).ToList()
         };
 

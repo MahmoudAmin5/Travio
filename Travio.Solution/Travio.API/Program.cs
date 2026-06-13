@@ -22,9 +22,20 @@ namespace Travio.API
                     .Enrich.FromLogContext());
 
                 // Services
+                builder.Services.AddCors(options =>
+                {
+                    options.AddPolicy("AllowAll", policy =>
+                    {
+                        policy.SetIsOriginAllowed(_ => true)
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    });
+                });
+
                 builder.Services.AddControllers(options =>
                 {
-                    options.Filters.Add<Travio.API.Filters.EndpointLoggingFilter>();
+                    options.Filters.Add<Filters.EndpointLoggingFilter>();
                 });
                 builder.Services.AddDatabase(builder.Configuration);
                 builder.Services.AddIdentityConfiguration();

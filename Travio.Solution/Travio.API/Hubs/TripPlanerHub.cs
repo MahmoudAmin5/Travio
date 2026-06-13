@@ -118,7 +118,8 @@ public class TripPlanerHub : Hub
                     await Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"[Debug] Checked status: '{statusResponse.Status}'");
 
                     // Check if completed. We also check if Data is populated, which is a strong indicator it's done!
-                    if (statusResponse.Status?.ToLower() == "completed" ||
+                    if (statusResponse.Status?.ToLower() == "complete" ||
+                        statusResponse.Status?.ToLower() == "completed" ||
                         statusResponse.Status?.ToLower() == "success" ||
                         statusResponse.Data != null)
                     {
@@ -215,9 +216,11 @@ public class TripPlanerHub : Hub
         // Derive a title from the itinerary
         var totalDays = data.Itinerary?.Count ?? 0;
         var firstTheme = data.Itinerary?.FirstOrDefault()?.Theme;
-        var title = !string.IsNullOrEmpty(firstTheme)
-            ? $"{totalDays}-Day Trip: {firstTheme}"
-            : $"{totalDays}-Day Trip Plan";
+        var title = !string.IsNullOrEmpty(data.CityName)
+            ? $"{totalDays}-Day Trip to {data.CityName}"
+            : !string.IsNullOrEmpty(firstTheme)
+                ? $"{totalDays}-Day Trip: {firstTheme}"
+                : $"{totalDays}-Day Trip Plan";
 
         var rawJson = JsonSerializer.Serialize(data);
 
@@ -226,6 +229,8 @@ public class TripPlanerHub : Hub
             UserId = userId,
             ChatSessionId = chatSessionId,
             Title = title,
+            DestinationName = data.CityName,
+            CityHeroImage = data.CityHeroImage,
             TotalDays = totalDays,
             RawJson = rawJson,
             IsFavorite = false,
@@ -260,7 +265,9 @@ public class TripPlanerHub : Hub
                             SuggestedTime = activity.SuggestedTime,
                             Description = activity.Description,
                             Address = activity.Address,
-                            FeaturedImage = activity.FeaturedImage
+                            FeaturedImage = activity.FeaturedImage,
+                            Latitude = activity.Coordinates?.Latitude,
+                            Longitude = activity.Coordinates?.Longitude
                         };
 
                         await _activityRepo.AddAsync(savedActivity);
@@ -282,7 +289,9 @@ public class TripPlanerHub : Hub
                     Rating = hotel.Rating,
                     Address = hotel.Address,
                     Link = hotel.Link,
-                    FeaturedImage = hotel.FeaturedImage
+                    FeaturedImage = hotel.FeaturedImage,
+                    Latitude = hotel.Coordinates?.Latitude,
+                    Longitude = hotel.Coordinates?.Longitude
                 };
 
                 await _hotelRepo.AddAsync(savedHotel);

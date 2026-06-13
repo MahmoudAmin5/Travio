@@ -22,6 +22,9 @@ public class SavedTripConfiguration : IEntityTypeConfiguration<SavedTrip>
         builder.Property(x => x.DestinationName)
             .HasMaxLength(256);
 
+        builder.Property(x => x.CityHeroImage)
+            .HasMaxLength(1000);
+
         builder.Property(x => x.TotalDays)
             .IsRequired();
 
@@ -103,6 +106,9 @@ public class SavedTripActivityConfiguration : IEntityTypeConfiguration<SavedTrip
 
         builder.Property(x => x.FeaturedImage)
             .HasMaxLength(1000);
+
+        builder.Property(x => x.Latitude);
+        builder.Property(x => x.Longitude);
     }
 }
 
@@ -128,5 +134,8 @@ public class SavedTripHotelConfiguration : IEntityTypeConfiguration<SavedTripHot
 
         builder.Property(x => x.FeaturedImage)
             .HasMaxLength(1000);
+
+        builder.Property(x => x.Latitude);
+        builder.Property(x => x.Longitude);
     }
 }
