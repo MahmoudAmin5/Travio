@@ -5,6 +5,7 @@ public class SavedTripDetailDto
     public int Id { get; set; }
     public string Title { get; set; } = null!;
     public string? DestinationName { get; set; }
+    public string? CityHeroImage { get; set; }
     public int TotalDays { get; set; }
     public bool IsFavorite { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
@@ -27,6 +28,8 @@ public class SavedTripActivityDto
     public string? Description { get; set; }
     public string? Address { get; set; }
     public string? FeaturedImage { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }
 
 public class SavedTripHotelDto
@@ -37,4 +40,6 @@ public class SavedTripHotelDto
     public string? Address { get; set; }
     public string? Link { get; set; }
     public string? FeaturedImage { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }

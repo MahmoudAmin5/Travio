@@ -10,6 +10,8 @@ public class SavedTripActivity
     public string? Description { get; set; }
     public string? Address { get; set; }
     public string? FeaturedImage { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 
     // Navigation
     public SavedTripDay SavedTripDay { get; set; } = null!;
