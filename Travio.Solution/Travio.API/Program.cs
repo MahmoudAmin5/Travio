@@ -49,6 +49,7 @@ namespace Travio.API
                 var app = builder.Build();
                 await app.ApplyMigrationsAndSeedAsync();
                 app.ConfigureMiddleware();
+                app.ConfigureHangfire();
                 app.Run();
             }
             catch (Exception ex)
