@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services.Survey;
@@ -27,6 +27,7 @@ public class SurveyController : ControllerBase
 
     [HttpPost("user-preferences")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> SubmitSurvey([FromBody] List<UserPreferenceDto> preferences)
     {
         var validator = new UserPreferencesValidator();

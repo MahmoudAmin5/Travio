@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Travio.Core.Contracts.Services.TripPlaner;
 using Travio.Core.DTOs.TripPlanerDTOs;
 
@@ -20,6 +20,7 @@ public class AiController : ControllerBase
 
     // POST: api/ai/chat
     [HttpPost("chat")]
+    [ProducesResponseType(typeof(AiChatResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Chat([FromBody] AiChatRequestDto request)
     {
         try
@@ -39,6 +40,7 @@ public class AiController : ControllerBase
 
     // GET: api/ai/status/{threadId}
     [HttpGet("status/{threadId}")]
+    [ProducesResponseType(typeof(AiStatusResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStatus(string threadId)
     {
         if (string.IsNullOrWhiteSpace(threadId))

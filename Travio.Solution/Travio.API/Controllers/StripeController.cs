@@ -20,6 +20,7 @@ namespace Travio.API.Controllers
             _webhookSecret = config["Stripe:WebhookSecret"];
         }
         [HttpPost("webhook")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> StripeWebhook()
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();

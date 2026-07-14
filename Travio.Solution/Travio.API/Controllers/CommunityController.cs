@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -58,6 +58,7 @@ namespace Travio.API.Controllers
 
         }
         [HttpGet("feed")]
+        [ProducesResponseType(typeof(ServiceResponse<IEnumerable<PostResponseDTO>>), StatusCodes.Status200OK)]
         public async Task<ActionResult> GetCommunityFeed([FromQuery] int pageNumber = 0, [FromQuery] int pageSize = 10)
         {
             var userId = User.GetUserId();
@@ -71,6 +72,7 @@ namespace Travio.API.Controllers
             return Ok(feedResponse);
         }
         [HttpDelete("posts/{postId}")]
+        [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
         public async Task<ActionResult> DeletePost(int postId)
         {
             var userId = User.GetUserId();
@@ -85,6 +87,7 @@ namespace Travio.API.Controllers
         }
         [HttpPost("posts/{postId}/images")]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(ServiceResponse<List<string>>), StatusCodes.Status200OK)]
         public async Task<ActionResult> UploadPostImage(int postId, [FromForm] UploadPostImageDTO dto)
         {
             var validationResult = await _uploadPostImageValidator.ValidateAsync(dto);

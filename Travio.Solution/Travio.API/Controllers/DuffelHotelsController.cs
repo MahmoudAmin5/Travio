@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Travio.Core.Contracts.Services.DuffelHotels;
 using Travio.Core.DTOs.DuffelHotelsDTOs.Requests;
+using Travio.Core.DTOs.DuffelHotelsDTOs;
+using Travio.Core.DTOs.GenericResponse;
 
 namespace Travio.API.Controllers
 {
@@ -16,6 +18,7 @@ namespace Travio.API.Controllers
             _hotelsService = hotelsService;
         }
         [HttpGet("search")]
+        [ProducesResponseType(typeof(ServiceResponse<List<HotelSearchResultDto>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> SearchHotels([FromQuery] HotelSearchRequestDto request)
         {
 
@@ -36,6 +39,7 @@ namespace Travio.API.Controllers
     
 
         [HttpGet("details/{searchResultId}")]
+        [ProducesResponseType(typeof(ServiceResponse<HotelDetailsDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetHotelDetails(string searchResultId)
         {
             var response = await _hotelsService.GetHotelDetailsAsync(searchResultId);

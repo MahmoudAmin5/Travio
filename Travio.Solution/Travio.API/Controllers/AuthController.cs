@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Enums;
 using Travio.Core.DTOs;
+using Travio.Core.DTOs.GenericResponse;
 
 namespace Travio.API.Controllers;
 
@@ -26,6 +27,7 @@ public class AuthController : ControllerBase
 
 
     [HttpPost("register")]
+    [ProducesResponseType(typeof(AuthDTO), StatusCodes.Status200OK)]
     public async Task<IActionResult> RegisterAsync([FromBody] RegisterDTO model)
     {
 
@@ -36,6 +38,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
     [HttpPost("login")]
+    [ProducesResponseType(typeof(AuthDTO), StatusCodes.Status200OK)]
     public async Task<IActionResult> LoginAsync([FromBody] LoginDTO model)
     {
 
@@ -46,6 +49,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
     [HttpPost("google-login")]
+    [ProducesResponseType(typeof(AuthDTO), StatusCodes.Status200OK)]
     public async Task<IActionResult> GoogleLoginAsync([FromBody] GoogleLoginDTO model)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -55,6 +59,7 @@ public class AuthController : ControllerBase
 
     }
     [HttpPost("refreshToken")]
+    [ProducesResponseType(typeof(AuthDTO), StatusCodes.Status200OK)]
     public async Task<IActionResult> RefreshToken(RefreshTokenRequestDto refreshToken)
     {
         var result = await _authService.RefreshTokenAsync(refreshToken);
@@ -63,6 +68,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
     [HttpPost("Logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> RevokeToken([FromBody] LogoutDTO model)
     {
         var token = model.Token;
@@ -78,6 +84,7 @@ public class AuthController : ControllerBase
         return Ok();
     }
     [HttpPost("send-test")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> SendTest([FromQuery] string to)
     {
         if (string.IsNullOrWhiteSpace(to)) return BadRequest("Provide ?to=email@example.com");
@@ -159,6 +166,7 @@ public class AuthController : ControllerBase
         }
     }
     [HttpPost("forgot-password")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> ForgotPasswordAsync(ForgotPasswordDTO model)
     {
         var resultMessage = await _authService.ForgotPasswordAsync(model.Email);
@@ -166,6 +174,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("send-verify-email-otp")]
+    [ProducesResponseType(typeof(SendOtpResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SendVerifyEmailOtp(SendOtpRequestDto model)
     {
         if (model == null || string.IsNullOrWhiteSpace(model.Email))
@@ -175,6 +184,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
     [HttpPost("verify-email")]
+    [ProducesResponseType(typeof(VerifyOtpResponseDto), StatusCodes.Status200OK)]
     public async Task<ActionResult> VerifyEmailAsync(VerifyOtpRequestDto model)
     {
         if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
@@ -183,6 +193,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
     [HttpPost("verify-reset-password-otp")]
+    [ProducesResponseType(typeof(VerifyOtpResponseDto), StatusCodes.Status200OK)]
     public async Task<ActionResult> VerifyResetPasswordOTPAsync(VerifyOtpRequestDto model)
     {
         if (model == null || string.IsNullOrWhiteSpace(model.Email))
@@ -194,6 +205,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
     [HttpPost("reset-password")]
+    [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status200OK)]
     public async Task<ActionResult> ResetPasswordAsync(ResetPasswordDTO model)
     {
         var result = await _authService.ResetPasswordAsync(model);
