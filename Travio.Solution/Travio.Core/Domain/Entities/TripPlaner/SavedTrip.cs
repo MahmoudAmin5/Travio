@@ -9,6 +9,7 @@ public class SavedTrip
     public int? ChatSessionId { get; set; }
     public string Title { get; set; } = null!;
     public string? DestinationName { get; set; }
+    public string? CityHeroImage { get; set; }
     public int TotalDays { get; set; }
     public string? RawJson { get; set; }
     public bool IsFavorite { get; set; }
