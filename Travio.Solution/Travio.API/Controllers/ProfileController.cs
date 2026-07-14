@@ -1,9 +1,10 @@
-﻿   using Microsoft.AspNetCore.Authorization;
+   using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Travio.API.Errors;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.DTOs.ProfileDTOs;
+using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.Helpers;
 using Travio.Core.Services;
 
@@ -21,6 +22,7 @@ namespace Travio.API.Controllers
             _profileService = profileService;
         }
         [HttpGet]
+        [ProducesResponseType(typeof(ServiceResponse<UserProfileDTO>), StatusCodes.Status200OK)]
         public async Task <ActionResult> GetMyProfile()
         {
             var userId = User.GetUserId();
@@ -29,6 +31,7 @@ namespace Travio.API.Controllers
             return Ok(result);
         }
         [HttpPut("update-profile")]
+        [ProducesResponseType(typeof(ServiceResponse<UserProfileDTO>), StatusCodes.Status200OK)]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO model)
         {
             
@@ -48,6 +51,7 @@ namespace Travio.API.Controllers
             return Ok(result);
         }
         [HttpPost("upload-image")]
+        [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status200OK)]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
             
