@@ -8,11 +8,11 @@ namespace Travio.Core.Contracts.Services.Payment
     public interface IPaymentGatewayService
     {
         /// <summary>
-        /// Creates a Stripe PaymentIntent for the given amount.
+        /// Creates a Stripe PaymentIntent for the given amount using a deterministic Stripe IdempotencyKey.
         /// </summary>
         /// <param name="amountInCents">Amount in the smallest currency unit (e.g., cents for USD).</param>
         /// <param name="currency">ISO 4217 lowercase currency code (e.g., "usd").</param>
-        /// <param name="bookingId">Our internal booking ID — stored in Stripe metadata for webhook correlation.</param>
+        /// <param name="bookingId">Our internal booking ID — stored in Stripe metadata and used to derive the Stripe Idempotency-Key.</param>
         /// <param name="bookingType">Booking type label (e.g., "Hotel", "Flight") — stored in Stripe metadata.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>The PaymentIntent ID and client secret.</returns>
@@ -24,15 +24,17 @@ namespace Travio.Core.Contracts.Services.Payment
             CancellationToken ct = default);
 
         /// <summary>
-        /// Issues a full refund for a PaymentIntent.
+        /// Issues a full refund for a PaymentIntent using a deterministic Stripe IdempotencyKey.
         /// </summary>
         /// <param name="paymentIntentId">The Stripe PaymentIntent ID to refund.</param>
         /// <param name="reason">Refund reason for Stripe's records.</param>
+        /// <param name="bookingId">Optional internal booking ID for deterministic refund idempotency key generation.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Refund result with success/failure.</returns>
         Task<RefundResult> RefundPaymentAsync(
             string paymentIntentId,
             string reason = "requested_by_customer",
+            Guid? bookingId = null,
             CancellationToken ct = default);
     }
 

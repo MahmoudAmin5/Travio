@@ -1,10 +1,10 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Travio.Core.Domain.Entities.Hotelbeds;
 using Travio.Core.Domain.Enums.Booking;
-using Travio.Core.Domain.Specifications.Hotels;
 using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.DTOs.HotelbedsDTOs.Requests;
 using Travio.Core.DTOs.HotelbedsDTOs.Responses;
@@ -26,10 +26,12 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<List<UserHotelBookingDto>>("User must be authenticated.");
 
-                // FIX MAJOR-4: Use Ardalis Specification — pushes WHERE + ORDER BY to SQL
-                var spec = new HotelBookingsByUserIdSpec(userId);
-                var bookings = await _bookingRepository.ListAsync(spec, cancellationToken);
-                var userBookings = bookings
+                // Rule 6: Direct projection to DTO via .Select(...) backed by Covering Index IX_HotelBookings_UserId_CreatedAt
+                // Eliminates Clustered Index Key Lookups, Sort operator, and GuestDataJson LOB reads!
+                var userBookings = await _bookingRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.UserId == userId)
+                    .OrderByDescending(b => b.CreatedAt)
                     .Select(b => new UserHotelBookingDto
                     {
                         Id = b.Id,
@@ -43,7 +45,8 @@ namespace Travio.Core.Services.Hotelbeds
                         BookingStatus = b.BookingStatus.ToString(),
                         RoomCount = b.RoomCount,
                         CreatedAt = b.CreatedAt
-                    }).ToList();
+                    })
+                    .ToListAsync(cancellationToken);
 
                 return new ServiceResponse<List<UserHotelBookingDto>>(userBookings, $"Found {userBookings.Count} bookings.");
             }
@@ -65,15 +68,18 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<BookingDetailResponseDto>("User must be authenticated.");
 
-                // FIX MAJOR-4: Use Specification instead of loading entire table
-                var spec = new HotelBookingByReferenceSpec(reference);
-                var dbBooking = await _bookingRepository.FirstOrDefaultAsync(spec, cancellationToken);
+                // Rule 6: Direct projection on indexed HotelbedsReference column
+                var dbBooking = await _bookingRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.HotelbedsReference == reference)
+                    .Select(b => new { b.UserId })
+                    .FirstOrDefaultAsync(cancellationToken);
+
                 if (dbBooking is null)
                     return new ServiceResponse<BookingDetailResponseDto>("Booking not found.");
                 if (dbBooking.UserId != userId)
                     return new ServiceResponse<BookingDetailResponseDto>("You do not have permission to view this booking.");
 
-                // Get live details from Hotelbeds
                 var httpResponse = await _httpClient.GetAsync($"bookings/{reference}", cancellationToken);
                 if (!httpResponse.IsSuccessStatusCode)
                 {
@@ -128,9 +134,13 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<BookingCancellationResponseDto>("User must be authenticated.");
 
-                // FIX MAJOR-4: Use Specification instead of loading entire table
-                var spec = new HotelBookingByReferenceSpec(reference);
-                var dbBooking = await _bookingRepository.FirstOrDefaultAsync(spec, cancellationToken);
+                // Rule 6: Direct projection on indexed HotelbedsReference column
+                var dbBooking = await _bookingRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.HotelbedsReference == reference)
+                    .Select(b => new { b.Id, b.UserId, b.BookingStatus })
+                    .FirstOrDefaultAsync(cancellationToken);
+
                 if (dbBooking is null)
                     return new ServiceResponse<BookingCancellationResponseDto>("Booking not found.");
                 if (dbBooking.UserId != userId)
@@ -148,11 +158,12 @@ namespace Travio.Core.Services.Hotelbeds
 
                 var apiResponse = await httpResponse.Content.ReadFromJsonAsync<HotelbedsBookingResponse>(JsonOptions, cancellationToken);
 
-                // Update DB status
-                dbBooking.BookingStatus = HotelBookingStatus.Refunded;
-                dbBooking.UpdatedAt = DateTime.UtcNow;
-                await _bookingRepository.UpdateAsync(dbBooking, cancellationToken);
-                await _bookingRepository.SaveChangesAsync(cancellationToken);
+                // Rule 3: Set-based update directly on GetQueryable()
+                await _bookingRepository.GetQueryable()
+                    .Where(b => b.Id == dbBooking.Id && b.BookingStatus != HotelBookingStatus.Refunded)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(b => b.BookingStatus, HotelBookingStatus.Refunded)
+                        .SetProperty(b => b.UpdatedAt, DateTime.UtcNow), cancellationToken);
 
                 var dto = new BookingCancellationResponseDto
                 {
@@ -268,7 +279,6 @@ namespace Travio.Core.Services.Hotelbeds
                 req.Destination = new HotelbedsDestination { Code = dto.DestinationCode };
             else if (dto.Latitude.HasValue && dto.Longitude.HasValue)
             {
-                // THE FALLBACK: Use Geolocation instead of a Destination Code
                 req.Geolocation = new HotelbedsGeolocation
                 {
                     Latitude = dto.Latitude.Value,
@@ -338,7 +348,6 @@ namespace Travio.Core.Services.Hotelbeds
             if (rooms is null) return new();
             return rooms.Select(r =>
             {
-                // Map human-readable room name from Content API wildcards
                 var roomName = r.Name ?? string.Empty;
                 var contentRoom = contentRooms?.FirstOrDefault(cr => cr.RoomCode == r.Code);
                 if (contentRoom != null && !string.IsNullOrWhiteSpace(contentRoom.Description))
@@ -346,7 +355,6 @@ namespace Travio.Core.Services.Hotelbeds
                     roomName = contentRoom.Description;
                 }
 
-                // Map HAB photos
                 var habImages = contentImages?
                     .Where(i => i.ImageTypeCode == "HAB" && i.RoomCode == r.Code)
                     .Select(i => new HotelImageDto
@@ -356,12 +364,11 @@ namespace Travio.Core.Services.Hotelbeds
                         Order = i.VisualOrder
                     }).ToList() ?? new List<HotelImageDto>();
 
-                // Map room facilities — cross-reference Content API facilityCode against our local DB
                 var roomFacilities = new List<string>();
                 if (contentRoom?.RoomFacilities is not null && facilityLookup is not null)
                 {
                     roomFacilities = contentRoom.RoomFacilities
-                        .Where(rf => rf.IndYesOrNo != false) // Exclude explicitly disabled facilities
+                        .Where(rf => rf.IndYesOrNo != false)
                         .Select(rf => facilityLookup.TryGetValue(rf.FacilityCode, out var desc) ? desc : null)
                         .Where(desc => !string.IsNullOrWhiteSpace(desc))
                         .Distinct()
@@ -376,32 +383,29 @@ namespace Travio.Core.Services.Hotelbeds
                     Images = habImages,
                     RoomFacilities = roomFacilities,
                     Rates = r.Rates?
-    // 1. Group the rates by Meal Plan (e.g., "RO") and Refundability (e.g., "NRF" vs "NOR")
-    .GroupBy(rate => new
-    {
-        Board = rate.BoardCode ?? string.Empty,
-        Class = rate.RateClass ?? string.Empty
-    })
-    // 2. For each group, sort by price (cheapest first) and grab only the top one
-    .Select(group => group
-        .OrderBy(rate => decimal.TryParse(rate.Net, out var net) ? net : decimal.MaxValue)
-        .First()
-    )
-    // 3. Now project that beautifully filtered list into your DTO just like before
-    .Select(rate => new RateDto
-    {
-        RateKey = rate.RateKey ?? string.Empty,
-        RateClass = rate.RateClass ?? string.Empty,
-        Price = decimal.TryParse(rate.Net, out var net) ? Math.Round(net * CorporateMarkupMultiplier * exchangeRate, 2) : 0m,
-        BoardCode = rate.BoardCode ?? string.Empty,
-        BoardName = rate.BoardName ?? string.Empty,
-        Allotment = rate.Allotment,
-        CancellationPolicies = rate.CancellationPolicies?.Select(cp => new CancellationPolicyDto
-        {
-            Amount = decimal.TryParse(cp.Amount, out var amt) ? Math.Round(amt * exchangeRate, 2) : 0m,
-            From = cp.From ?? string.Empty
-        }).ToList() ?? new()
-    }).ToList() ?? new()
+                        .GroupBy(rate => new
+                        {
+                            Board = rate.BoardCode ?? string.Empty,
+                            Class = rate.RateClass ?? string.Empty
+                        })
+                        .Select(group => group
+                            .OrderBy(rate => decimal.TryParse(rate.Net, out var net) ? net : decimal.MaxValue)
+                            .First()
+                        )
+                        .Select(rate => new RateDto
+                        {
+                            RateKey = rate.RateKey ?? string.Empty,
+                            RateClass = rate.RateClass ?? string.Empty,
+                            Price = decimal.TryParse(rate.Net, out var net) ? Math.Round(net * CorporateMarkupMultiplier * exchangeRate, 2) : 0m,
+                            BoardCode = rate.BoardCode ?? string.Empty,
+                            BoardName = rate.BoardName ?? string.Empty,
+                            Allotment = rate.Allotment,
+                            CancellationPolicies = rate.CancellationPolicies?.Select(cp => new CancellationPolicyDto
+                            {
+                                Amount = decimal.TryParse(cp.Amount, out var amt) ? Math.Round(amt * exchangeRate, 2) : 0m,
+                                From = cp.From ?? string.Empty
+                            }).ToList() ?? new()
+                        }).ToList() ?? new()
                 };
             }).ToList();
         }
@@ -470,11 +474,7 @@ namespace Travio.Core.Services.Hotelbeds
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // ENDPOINT: INIT CHECKOUT (Stripe Payment Intent)
-        // FIX CRITICAL-3: Rollback DB on Stripe failure
-        // FIX MAJOR-2: Use Math.Round for cents conversion
-        // FIX MAJOR-3: Freeze exchange rate at checkout time
-        // FIX MAJOR-5: Use IPaymentGatewayService instead of new Stripe.PaymentIntentService()
+        // ENDPOINT: INIT CHECKOUT (Stripe Payment Intent with Idempotency & UoW)
         // ═══════════════════════════════════════════════════════════════════
 
         public async Task<ServiceResponse<CheckoutResponseDto>> InitCheckoutAsync(
@@ -492,7 +492,6 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(userId))
                     return new ServiceResponse<CheckoutResponseDto>("User must be authenticated.");
 
-                // Validate that EVERY room has a non-empty RateKey and at least one pax
                 for (int i = 0; i < request.Rooms.Count; i++)
                 {
                     var room = request.Rooms[i];
@@ -505,7 +504,6 @@ namespace Travio.Core.Services.Hotelbeds
                 }
 
                 // ── Step 1: Validate ALL rates via Hotelbeds CheckRate ─────────
-                // Send one room entry per rate key — Hotelbeds returns COMBINED TotalNet.
                 var checkRateApiRequest = new HotelbedsCheckRateRequest
                 {
                     Rooms = request.Rooms
@@ -525,58 +523,108 @@ namespace Travio.Core.Services.Hotelbeds
                     return new ServiceResponse<CheckoutResponseDto>("The selected rate(s) are no longer available. Please search again.");
 
                 // ── Step 2: Calculate final price (freeze exchange rate + markup) ──
-                // TotalNet from CheckRate is the COMBINED wholesale price across ALL rooms
                 var wholesaleNet = decimal.TryParse(checkRateResult.Hotel.TotalNet, out var rawNet) ? rawNet : 0m;
                 if (wholesaleNet <= 0)
                     return new ServiceResponse<CheckoutResponseDto>("Invalid price returned from rate validation.");
 
-                // Freeze the exchange rate — stored in DB so webhook doesn't re-fetch
                 var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(
                     WholesaleCurrency, DisplayCurrency, cancellationToken);
                 var finalPrice = Math.Round(wholesaleNet * CorporateMarkupMultiplier * exchangeRate, 2);
 
-                // ── Step 3: Persist PendingPayment record ─────────────────────
                 var h = checkRateResult.Hotel;
-                var booking = new HotelBooking
+                var checkInDate = DateOnly.TryParse(h.CheckIn, out var ci) ? ci : DateOnly.FromDateTime(DateTime.UtcNow);
+                var checkOutDate = DateOnly.TryParse(h.CheckOut, out var co) ? co : DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
+                var combinedRateKey = string.Join(",", request.Rooms.Select(r => r.RateKey));
+                var guestDataJson = JsonSerializer.Serialize(request, JsonOptions);
+                var now = DateTime.UtcNow;
+                var staleCutoff = now.AddMinutes(-15);
+
+                // Rule 3: Clean up any expired PendingPayment checkouts (> 15 mins old) for this user + hotel + stay
+                await _bookingRepository.GetQueryable()
+                    .Where(b => b.UserId == userId &&
+                                b.HotelId == h.Code &&
+                                b.CheckIn == checkInDate &&
+                                b.CheckOut == checkOutDate &&
+                                b.BookingStatus == HotelBookingStatus.PendingPayment &&
+                                b.CreatedAt < staleCutoff)
+                    .ExecuteDeleteAsync(cancellationToken);
+
+                // Rule 6: Check if an active PendingPayment booking already exists for this user + hotel + stay
+                var existingPending = await _bookingRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.UserId == userId &&
+                                b.HotelId == h.Code &&
+                                b.CheckIn == checkInDate &&
+                                b.CheckOut == checkOutDate &&
+                                b.BookingStatus == HotelBookingStatus.PendingPayment)
+                    .Select(b => new { b.Id })
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                Guid bookingId;
+                if (existingPending != null)
                 {
-                    UserId = userId,
-                    HotelId = h.Code,
-                    HotelName = h.Name ?? string.Empty,
-                    CheckIn = DateOnly.TryParse(h.CheckIn, out var ci) ? ci : DateOnly.FromDateTime(DateTime.UtcNow),
-                    CheckOut = DateOnly.TryParse(h.CheckOut, out var co) ? co : DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
-                    TotalPrice = finalPrice,
-                    Currency = DisplayCurrency,
-                    // Store comma-separated rate keys for audit trail
-                    RateKey = string.Join(",", request.Rooms.Select(r => r.RateKey)),
-                    BookingStatus = HotelBookingStatus.PendingPayment,
-                    RoomCount = request.Rooms.Count,
-                    GuestDataJson = JsonSerializer.Serialize(request, JsonOptions),
-                    // Freeze financial data for the webhook
-                    WholesaleNetEur = wholesaleNet,
-                    ExchangeRateAtCheckout = exchangeRate,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    bookingId = existingPending.Id;
 
-                await _bookingRepository.AddAsync(booking, cancellationToken);
-                await _bookingRepository.SaveChangesAsync(cancellationToken);
+                    // Rule 3: Update rate/guest details if the user modified rooms within the same checkout window
+                    await _bookingRepository.GetQueryable()
+                        .Where(b => b.Id == bookingId && b.BookingStatus == HotelBookingStatus.PendingPayment)
+                        .ExecuteUpdateAsync(s => s
+                            .SetProperty(b => b.TotalPrice, finalPrice)
+                            .SetProperty(b => b.RateKey, combinedRateKey)
+                            .SetProperty(b => b.RoomCount, request.Rooms.Count)
+                            .SetProperty(b => b.GuestDataJson, guestDataJson)
+                            .SetProperty(b => b.WholesaleNetEur, wholesaleNet)
+                            .SetProperty(b => b.ExchangeRateAtCheckout, exchangeRate)
+                            .SetProperty(b => b.UpdatedAt, now), cancellationToken);
+                }
+                else
+                {
+                    // ── Step 3: Persist PendingPayment record inside UoW ───────────
+                    var booking = new HotelBooking
+                    {
+                        UserId = userId,
+                        HotelId = h.Code,
+                        HotelName = h.Name ?? string.Empty,
+                        CheckIn = checkInDate,
+                        CheckOut = checkOutDate,
+                        TotalPrice = finalPrice,
+                        Currency = DisplayCurrency,
+                        RateKey = combinedRateKey,
+                        BookingStatus = HotelBookingStatus.PendingPayment,
+                        RoomCount = request.Rooms.Count,
+                        GuestDataJson = guestDataJson,
+                        WholesaleNetEur = wholesaleNet,
+                        ExchangeRateAtCheckout = exchangeRate,
+                        CreatedAt = now
+                    };
 
-                // ── Step 4: Create Stripe PaymentIntent ───────────────────────
+                    await _unitOfWork.ExecuteAsync(async () =>
+                    {
+                        await _bookingRepository.AddAsync(booking, cancellationToken);
+                    }, cancellationToken);
+
+                    bookingId = booking.Id;
+                }
+
+                // ── Step 4: Create Stripe PaymentIntent (with Deterministic IdempotencyKey) ──
                 var amountInCents = (long)Math.Round(finalPrice * 100m, MidpointRounding.AwayFromZero);
 
                 try
                 {
                     var piResult = await _paymentGateway.CreatePaymentIntentAsync(
-                        amountInCents, DisplayCurrency.ToLowerInvariant(), booking.Id, "Hotel", cancellationToken);
+                        amountInCents, DisplayCurrency.ToLowerInvariant(), bookingId, "Hotel", cancellationToken);
 
-                    // ── Step 5: Link PaymentIntent to our booking ─────────────────
-                    booking.StripePaymentIntentId = piResult.Id;
-                    await _bookingRepository.UpdateAsync(booking, cancellationToken);
-                    await _bookingRepository.SaveChangesAsync(cancellationToken);
+                    // ── Step 5: Link PaymentIntent to our booking via Rule 3 ExecuteUpdateAsync ─
+                    await _bookingRepository.GetQueryable()
+                        .Where(b => b.Id == bookingId)
+                        .ExecuteUpdateAsync(s => s
+                            .SetProperty(b => b.StripePaymentIntentId, piResult.Id)
+                            .SetProperty(b => b.UpdatedAt, DateTime.UtcNow), cancellationToken);
 
                     var responseDto = new CheckoutResponseDto
                     {
                         ClientSecret = piResult.ClientSecret,
-                        BookingId = booking.Id,
+                        BookingId = bookingId,
                         TotalPrice = finalPrice,
                         Currency = DisplayCurrency
                     };
@@ -585,20 +633,20 @@ namespace Travio.Core.Services.Hotelbeds
                 }
                 catch (Exception stripeEx)
                 {
-                    // Clean up the orphaned PendingPayment DB record
                     _logger.LogError(stripeEx,
                         "Stripe PaymentIntent creation failed for BookingId {BookingId}. Rolling back DB record.",
-                        booking.Id);
+                        bookingId);
                     try
                     {
-                        await _bookingRepository.DeleteAsync(booking, cancellationToken);
-                        await _bookingRepository.SaveChangesAsync(cancellationToken);
+                        await _bookingRepository.GetQueryable()
+                            .Where(b => b.Id == bookingId && b.BookingStatus == HotelBookingStatus.PendingPayment)
+                            .ExecuteDeleteAsync(cancellationToken);
                     }
                     catch (Exception rollbackEx)
                     {
                         _logger.LogError(rollbackEx,
                             "Failed to rollback orphaned PendingPayment record for BookingId {BookingId}.",
-                            booking.Id);
+                            bookingId);
                     }
                     return new ServiceResponse<CheckoutResponseDto>($"Payment initialization failed: {stripeEx.Message}");
                 }

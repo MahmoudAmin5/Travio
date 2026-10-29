@@ -11,7 +11,6 @@ using Travio.Core.Contracts.Services.Payment;
 using Travio.Core.Domain.Entities.Hotelbeds;
 using Travio.Core.Domain.Enums.Booking;
 using Travio.Core.Domain.Infrastructure.Contract;
-using Travio.Core.Domain.Specifications.Hotels;
 using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.DTOs.HotelbedsDTOs.Requests;
 using Travio.Core.DTOs.HotelbedsDTOs.Responses;
@@ -27,6 +26,7 @@ namespace Travio.Core.Services.Hotelbeds
         private readonly IGenericRepository<HotelBooking> _bookingRepository;
         private readonly IGenericRepository<HotelDestination> _destinationRepository;
         private readonly IGenericRepository<HotelFacility> _facilityRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMemoryCache _cache;
         private readonly ICurrencyExchangeService _currencyExchangeService;
         private readonly IPaymentGatewayService _paymentGateway;
@@ -55,6 +55,7 @@ namespace Travio.Core.Services.Hotelbeds
             IGenericRepository<HotelBooking> bookingRepository,
             IGenericRepository<HotelDestination> destinationRepository,
             IGenericRepository<HotelFacility> facilityRepository,
+            IUnitOfWork unitOfWork,
             IMemoryCache cache,
             IOptions<HotelbedsSettings> settings,
             ICurrencyExchangeService currencyExchangeService,
@@ -66,6 +67,7 @@ namespace Travio.Core.Services.Hotelbeds
             _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
             _destinationRepository = destinationRepository ?? throw new ArgumentNullException(nameof(destinationRepository));
             _facilityRepository = facilityRepository ?? throw new ArgumentNullException(nameof(facilityRepository));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _currencyExchangeService = currencyExchangeService;
             _paymentGateway = paymentGateway ?? throw new ArgumentNullException(nameof(paymentGateway));
@@ -85,12 +87,22 @@ namespace Travio.Core.Services.Hotelbeds
                 if (string.IsNullOrWhiteSpace(query))
                     return new ServiceResponse<List<HotelDestination>>(new List<HotelDestination>(), "Query is empty.");
 
-                var destinations = await _destinationRepository.ListAsync(cancellationToken);
-                var results = destinations
-                    .Where(d => d.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                                d.Code.Equals(query, StringComparison.OrdinalIgnoreCase))
+                var normalized = query.Trim();
+
+                // Rule 6: Push filter + projection directly to SQL instead of loading the entire table into memory
+                var results = await _destinationRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(d => d.Code == normalized || d.Name.StartsWith(normalized) || d.Name.Contains(normalized))
+                    .OrderBy(d => d.Code == normalized ? 0 : d.Name.StartsWith(normalized) ? 1 : 2)
                     .Take(10)
-                    .ToList();
+                    .Select(d => new HotelDestination
+                    {
+                        Code = d.Code,
+                        Name = d.Name,
+                        CountryCode = d.CountryCode,
+                        LastSyncedAt = d.LastSyncedAt
+                    })
+                    .ToListAsync(cancellationToken);
 
                 return new ServiceResponse<List<HotelDestination>>(results, "Success");
             }
@@ -119,34 +131,20 @@ namespace Travio.Core.Services.Hotelbeds
                     return new ServiceResponse<HotelAvailabilityResponseDto>("Either a destination code or hotel codes must be provided.");
                 if (!string.IsNullOrWhiteSpace(request.DestinationName))
                 {
-                    //var spec = new DestinationByNameSpec(request.DestinationName);
-
-                    //// 2. Query the database using the Repository
-                    //var destinationMatch = await _destinationRepository.FirstOrDefaultAsync(spec);
-
-                    //if (destinationMatch != null && !string.IsNullOrEmpty(destinationMatch.Code))
-                    //{
-                    //    request.DestinationCode = destinationMatch.Code; // Success! We have the code.
-                    //}
-
-                    //// 2. THE FALLBACK: Local DB failed. Call an external geocoder.
-                    //_logger.LogWarning("Destination '{Name}' not in local DB. Falling back to Geocoder.", request.DestinationName);
-
                     var coordinates = await _geocodingService.GetCoordinatesAsync(request.DestinationName);
 
                     if (coordinates != null)
                     {
                         request.Latitude = coordinates.Value.Lat;
                         request.Longitude = coordinates.Value.Lng;
-                        request.RadiusInKm = 20; // Search a 20km circle around this point
+                        request.RadiusInKm = 20;
                     }
                     else
                     {
                         return new ServiceResponse<HotelAvailabilityResponseDto>("We couldn't locate this destination on the map.");
                     }
-
                 }
-                //var distcode = _destinationRepository.FirstOrDefaultAsync();
+
                 var apiRequest = BuildAvailabilityRequest(request);
                 var httpResponse = await _httpClient.PostAsJsonAsync("hotels", apiRequest, JsonOptions, cancellationToken);
 
@@ -161,11 +159,10 @@ namespace Travio.Core.Services.Hotelbeds
                     return new ServiceResponse<HotelAvailabilityResponseDto>(
                         new HotelAvailabilityResponseDto { Hotels = new(), TotalHotels = 0 },
                         "No hotels found matching your search criteria.");
+
                 var exchangeRate = await _currencyExchangeService.GetExchangeRateAsync(WholesaleCurrency, DisplayCurrency, cancellationToken);
                 var responseDto = MapAvailabilityResponse(apiResponse, exchangeRate);
 
-
-                // Enrich with images from Content API
                 var hotelCodes = responseDto.Hotels.Select(h => h.Code).ToList();
                 var contentMap = await GetHotelContentBatchAsync(hotelCodes, cancellationToken);
                 foreach (var hotel in responseDto.Hotels)
@@ -200,14 +197,11 @@ namespace Travio.Core.Services.Hotelbeds
                 if (hotelCode <= 0)
                     return new ServiceResponse<HotelDetailResponseDto>("A valid hotel code is required.");
 
-
                 var contentMap = await GetHotelContentBatchAsync(new List<int> { hotelCode }, cancellationToken);
                 if (!contentMap.TryGetValue(hotelCode, out var content))
                     return new ServiceResponse<HotelDetailResponseDto>("Hotel not found in Hotelbeds.");
 
                 string rawCategoryCode = content.CategoryCode ?? string.Empty;
-
-                // 2. Instantly resolve it using your new static helper!
                 string resolvedCategoryName = HotelbedsCategoryMapper.GetCategoryName(rawCategoryCode);
                 var dto = new HotelDetailResponseDto
                 {
@@ -217,8 +211,8 @@ namespace Travio.Core.Services.Hotelbeds
                     CategoryCode = rawCategoryCode,
                     CategoryName = resolvedCategoryName,
                     AccommodationType = HotelbedsAccommodationMapper.GetName(
-        content.AccommodationType?.Code,
-        content.AccommodationType?.TypeDescription),
+                        content.AccommodationType?.Code,
+                        content.AccommodationType?.TypeDescription),
                     Address = content.Address?.Content ?? string.Empty,
                     PostalCode = content.PostalCode ?? string.Empty,
                     City = content.City?.Content ?? string.Empty,
@@ -242,7 +236,6 @@ namespace Travio.Core.Services.Hotelbeds
                     }).ToList() ?? new()
                 };
 
-                // 3. If dates provided, get live availability
                 if (!string.IsNullOrWhiteSpace(query?.CheckIn) && !string.IsNullOrWhiteSpace(query?.CheckOut))
                 {
                     var availRequest = new HotelAvailabilityRequestDto
@@ -271,7 +264,6 @@ namespace Travio.Core.Services.Hotelbeds
                         var hotelAvail = availResponse?.Hotels?.Hotels?.FirstOrDefault();
                         if (hotelAvail is not null)
                         {
-                            // Load facility lookup for room-level facility resolution
                             var facilityLookup = await GetFacilityLookupAsync(cancellationToken);
                             dto.Rooms = MapRooms(hotelAvail.Rooms, content.Rooms, content.Images, exchangeRate, facilityLookup);
                             dto.MinRate = decimal.TryParse(hotelAvail.MinRate, out var min) ? Math.Round(min * CorporateMarkupMultiplier * exchangeRate, 2) : null;
@@ -305,15 +297,12 @@ namespace Travio.Core.Services.Hotelbeds
                 if (request.Rooms is null || request.Rooms.Count == 0)
                     return new ServiceResponse<HotelCheckRateResponseDto>("At least one room with a rate key is required.");
 
-                // Validate every room has a non-empty rate key
                 for (int i = 0; i < request.Rooms.Count; i++)
                 {
                     if (string.IsNullOrWhiteSpace(request.Rooms[i].RateKey))
                         return new ServiceResponse<HotelCheckRateResponseDto>($"Room {i + 1} is missing a rate key.");
                 }
 
-                // Build the CheckRate payload — one room entry per rate key in the cart.
-                // Hotelbeds treats this as a shopping cart and returns the COMBINED TotalNet.
                 var apiRequest = new HotelbedsCheckRateRequest
                 {
                     Rooms = request.Rooms
@@ -353,12 +342,34 @@ namespace Travio.Core.Services.Hotelbeds
         {
             try
             {
-                // 1. Load the existing PendingPayment/ProcessingWebhook booking
-                var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
+                // Rule 6: Direct projection on GetQueryable() — fetch only the columns required for supplier fulfillment
+                var booking = await _bookingRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.Id == bookingId)
+                    .Select(b => new
+                    {
+                        b.GuestDataJson,
+                        b.ExchangeRateAtCheckout,
+                        b.BookingStatus,
+                        b.HotelbedsReference
+                    })
+                    .FirstOrDefaultAsync(cancellationToken);
+
                 if (booking is null)
                     return new ServiceResponse<HotelBookingResponseDto>($"Booking {bookingId} not found.");
 
-                // 2. Deserialize guest data — FAIL if corrupt (don't book with fake names)
+                // Idempotency guard if already confirmed
+                if (booking.BookingStatus == HotelBookingStatus.Confirmed && !string.IsNullOrWhiteSpace(booking.HotelbedsReference))
+                {
+                    return new ServiceResponse<HotelBookingResponseDto>(
+                        new HotelBookingResponseDto
+                        {
+                            BookingReference = booking.HotelbedsReference,
+                            Status = "CONFIRMED"
+                        },
+                        $"Hotel already booked! Reference: {booking.HotelbedsReference}");
+                }
+
                 if (string.IsNullOrWhiteSpace(booking.GuestDataJson))
                     return new ServiceResponse<HotelBookingResponseDto>("GuestDataJson is empty — cannot fulfill booking.");
 
@@ -376,7 +387,7 @@ namespace Travio.Core.Services.Hotelbeds
                 if (guestRequest is null)
                     return new ServiceResponse<HotelBookingResponseDto>("GuestDataJson deserialized to null.");
 
-                // 3. Build and submit booking to Hotelbeds
+                // Submit booking to Hotelbeds with deterministic clientReference
                 var clientRef = $"TRV-{bookingId.ToString("N")[..12].ToUpperInvariant()}";
                 var apiRequest = BuildBookingRequest(guestRequest, clientRef);
                 var httpResponse = await _httpClient.PostAsJsonAsync("bookings", apiRequest, JsonOptions, cancellationToken);
@@ -391,14 +402,17 @@ namespace Travio.Core.Services.Hotelbeds
                 if (apiResponse?.Booking is null)
                     return new ServiceResponse<HotelBookingResponseDto>("Booking response was empty from Hotelbeds.");
 
-                // 4. UPDATE the existing row (no new INSERT)
-                booking.HotelbedsReference = apiResponse.Booking.Reference;
-                booking.BookingStatus = HotelBookingStatus.Confirmed;
-                booking.UpdatedAt = DateTime.UtcNow;
-                await _bookingRepository.UpdateAsync(booking, cancellationToken);
-                await _bookingRepository.SaveChangesAsync(cancellationToken);
+                var reference = apiResponse.Booking.Reference;
+                var now = DateTime.UtcNow;
 
-                // 5. Map response using the frozen exchange rate from checkout
+                // Rule 3: Set-based update of only the confirmation columns (never re-writes GuestDataJson or RateKey)
+                await _bookingRepository.GetQueryable()
+                    .Where(b => b.Id == bookingId)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(b => b.HotelbedsReference, reference)
+                        .SetProperty(b => b.BookingStatus, HotelBookingStatus.Confirmed)
+                        .SetProperty(b => b.UpdatedAt, now), cancellationToken);
+
                 var exchangeRate = booking.ExchangeRateAtCheckout > 0
                     ? booking.ExchangeRateAtCheckout
                     : await _currencyExchangeService.GetExchangeRateAsync(WholesaleCurrency, DisplayCurrency, cancellationToken);
@@ -423,10 +437,6 @@ namespace Travio.Core.Services.Hotelbeds
         // PRIVATE: Facility Lookup Cache (from local DB)
         // ═══════════════════════════════════════════════════════════════════
 
-        /// <summary>
-        /// Loads the facility lookup table from the database and caches it in memory for 24h.
-        /// Returns a dictionary mapping FacilityCode → human-readable description.
-        /// </summary>
         private async Task<IReadOnlyDictionary<int, string>> GetFacilityLookupAsync(CancellationToken ct)
         {
             const string cacheKey = "hotelbeds_facility_lookup";
@@ -435,9 +445,14 @@ namespace Travio.Core.Services.Hotelbeds
 
             try
             {
-                var facilities = await _facilityRepository.ListAsync(ct);
-                var lookup = facilities
+                // Rule 6: Direct projection on GetQueryable()
+                var facilities = await _facilityRepository.GetQueryable()
+                    .AsNoTracking()
                     .Where(f => !string.IsNullOrWhiteSpace(f.Description))
+                    .Select(f => new { f.FacilityCode, f.Description })
+                    .ToListAsync(ct);
+
+                var lookup = facilities
                     .GroupBy(f => f.FacilityCode)
                     .ToDictionary(g => g.Key, g => g.First().Description);
 
@@ -446,7 +461,6 @@ namespace Travio.Core.Services.Hotelbeds
             }
             catch
             {
-                // If DB query fails, return empty — room facilities just won't appear
                 return new Dictionary<int, string>();
             }
         }
