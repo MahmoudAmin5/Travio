@@ -119,8 +119,9 @@ public static class ServiceCollectionExtensions
         // Configuration
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
 
-        // Repositories
+        // Repositories & Unit of Work
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Services
         services.AddLoggedScoped<IAuthService, AuthService>();
