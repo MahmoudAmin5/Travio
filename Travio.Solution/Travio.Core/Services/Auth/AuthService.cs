@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,7 +9,6 @@ using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Domain.Entities.Account_Mangement;
 using Travio.Core.Domain.Enums;
 using Travio.Core.Domain.Infrastructure.Contract;
-using Travio.Core.Domain.Specifications;
 using Travio.Core.DTOs;
 using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.EntityErrors;
@@ -20,11 +19,11 @@ namespace Travio.Core.Services.Auth
 {
     public class AuthService : IAuthService
     {
-
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IGoogleAuthService _googleAuthService;
         private readonly IGenericRepository<UserCode> _userCodeRepo;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailSender _emailSender;
         private readonly JWT _jwt;
 
@@ -34,15 +33,18 @@ namespace Travio.Core.Services.Auth
             IOptions<JWT> jwt,
             IGoogleAuthService googleAuthService,
             IGenericRepository<UserCode> userCodeRepo,
+            IUnitOfWork unitOfWork,
             IEmailSender emailSender)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _googleAuthService = googleAuthService;
             _userCodeRepo = userCodeRepo;
+            _unitOfWork = unitOfWork;
             _emailSender = emailSender;
             _jwt = jwt.Value;
         }
+
         public async Task<bool> RevokeTokenAsync(string token)
         {
             if (string.IsNullOrWhiteSpace(token)) return false;
@@ -64,12 +66,12 @@ namespace Travio.Core.Services.Auth
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
-                //_logger.LogWarning("Failed to revoke token for user {UserId}: {Errors}", user.Id, string.Join(", ", updateResult.Errors.Select(e => e.Description)));
                 return false;
             }
 
             return true;
         }
+
         public async Task<AuthDTO> RefreshTokenAsync(RefreshTokenRequestDto RefreshToken)
         {
             var authModel = new AuthDTO();
@@ -96,22 +98,14 @@ namespace Travio.Core.Services.Auth
 
             if (!refreshToken.IsActive)
             {
-                // **Reuse detection**: if token was revoked, revoke all tokens for this user (security)
-                //_logger.LogWarning("Refresh token reuse or inactive for user {UserId}", user.Id);
-
-                // revoke all tokens for this user (optional policy)
+                // Reuse detection: if token was revoked, revoke all tokens for this user (security)
                 foreach (var t in user.RefreshTokens.Where(x => x.IsActive))
                 {
                     t.RevokedOn = DateTime.UtcNow;
                     t.RevokeReason = "Revoked due to reuse detection";
                 }
 
-                var updRes = await _userManager.UpdateAsync(user);
-                if (!updRes.Succeeded)
-                {
-                    //_logger.LogError("Failed to revoke tokens on reuse detection for user {UserId}", user.Id);
-                    // Serilog will be added here soon 
-                }
+                await _userManager.UpdateAsync(user);
 
                 authModel.Message = "Inactive token";
                 return authModel;
@@ -129,8 +123,6 @@ namespace Travio.Core.Services.Auth
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
-                //_logger.LogError("Failed to store rotated refresh token for user {UserId}: {Errors}", user.Id, string.Join(", ", updateResult.Errors.Select(e => e.Description)));
-                // Serilog will be added here soon 
                 authModel.Message = "Server error";
                 return authModel;
             }
@@ -150,6 +142,7 @@ namespace Travio.Core.Services.Auth
 
             return authModel;
         }
+
         public async Task<AuthDTO> GetTokenAsync(LoginDTO model)
         {
             var authModel = new AuthDTO();
@@ -174,7 +167,6 @@ namespace Travio.Core.Services.Auth
             authModel.ExpiresOn = jwtSecurityToken.ValidTo;
             authModel.Roles = rolesList.ToList();
 
-            // reuse existing active refresh token if exists, otherwise create new one
             var active = user.RefreshTokens.FirstOrDefault(t => t.IsActive);
             if (active != null)
             {
@@ -184,12 +176,7 @@ namespace Travio.Core.Services.Auth
                 active.RevokeReason = "Rotated on login";
 
                 user.RefreshTokens.Add(newEntity);
-                var upd = await _userManager.UpdateAsync(user);
-                if (!upd.Succeeded)
-                {
-                    //_logger.LogError("Failed to rotate refresh token on login for user {UserId}", user.Id);
-                    // Serilog will be added here soon 
-                }
+                await _userManager.UpdateAsync(user);
                 authModel.RefreshToken = newPlain;
                 authModel.RefreshTokenExpiration = newEntity.ExpiresOn;
             }
@@ -198,18 +185,14 @@ namespace Travio.Core.Services.Auth
                 var plain = GenerateRandomTokenPlain();
                 var entity = CreateRefreshTokenEntity(plain, daysValid: 10);
                 user.RefreshTokens.Add(entity);
-                var upd = await _userManager.UpdateAsync(user);
-                if (!upd.Succeeded)
-                {
-                    //_logger.LogError("Failed to rotate refresh token on login for user {UserId}", user.Id);
-                    // Serilog will be added here soon 
-                }
+                await _userManager.UpdateAsync(user);
                 authModel.RefreshToken = plain;
                 authModel.RefreshTokenExpiration = entity.ExpiresOn;
             }
 
             return authModel;
         }
+
         public async Task<string> AddRoleAsync(AddRoleDTO model)
         {
             var user = await _userManager.FindByIdAsync(model.UserId);
@@ -224,6 +207,7 @@ namespace Travio.Core.Services.Auth
 
             return result.Succeeded ? string.Empty : "Something went wrong";
         }
+
         public async Task<AuthDTO> RegisterAsync(RegisterDTO model)
         {
             if (await _userManager.FindByEmailAsync(model.Email) is not null)
@@ -253,16 +237,10 @@ namespace Travio.Core.Services.Auth
 
             var jwtSecurityToken = await JwtSecurityTokenAsync(user);
 
-            // create refresh token and store its HASH
             var plain = GenerateRandomTokenPlain();
             var entity = CreateRefreshTokenEntity(plain, daysValid: 10);
             user.RefreshTokens.Add(entity);
-            var updateResult = await _userManager.UpdateAsync(user);
-            if (!updateResult.Succeeded)
-            {
-                //_logger.LogError("Failed to save refresh token for new user {UserId}", user.Id);
-                // Serilog will be added here soon 
-            }
+            await _userManager.UpdateAsync(user);
 
             return new AuthDTO
             {
@@ -276,6 +254,7 @@ namespace Travio.Core.Services.Auth
                 RefreshTokenExpiration = entity.ExpiresOn
             };
         }
+
         public async Task<JwtSecurityToken> JwtSecurityTokenAsync(ApplicationUser User)
         {
             var authClaims = new List<Claim>
@@ -305,6 +284,7 @@ namespace Travio.Core.Services.Auth
 
             return token;
         }
+
         public async Task<AuthDTO> LoginWithGoogleAsync(string idToken)
         {
             var googleUser = await _googleAuthService.VerifyTokenAsync(idToken);
@@ -312,8 +292,6 @@ namespace Travio.Core.Services.Auth
             if (user is null)
             {
                 var spaceIndex = googleUser.Name.IndexOf(' ');
-                var firstName = spaceIndex > 0 ? googleUser.Name.Substring(0, spaceIndex) : googleUser.Name;
-                var lastName = spaceIndex > 0 ? googleUser.Name.Substring(spaceIndex + 1) : string.Empty;
                 user = new ApplicationUser()
                 {
                     Email = googleUser.Email,
@@ -323,7 +301,6 @@ namespace Travio.Core.Services.Auth
                     LoginProvider = "Google",
                     ProviderKey = googleUser.ProviderKey,
                     EmailConfirmed = true
-
                 };
                 var result = await _userManager.CreateAsync(user);
                 if (!result.Succeeded)
@@ -355,38 +332,45 @@ namespace Travio.Core.Services.Auth
                 RefreshToken = plain,
                 RefreshTokenExpiration = entity.ExpiresOn
             };
-
         }
+
         public async Task<string> ForgotPasswordAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user is null) throw new NotFoundException("User not found.");
-            var OTPCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-            var spec = new ActiveUserCodesSpec(user.Id, AuthCodeType.PasswordReset);
-            var AuthCodes = await _userCodeRepo.ListAsync(spec);
 
-            foreach (var code in AuthCodes)
+            var otpCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+            var now = DateTime.UtcNow;
+            var authCode = new UserCode
             {
-                code.IsRevoked = true;
-            }
-            await _userCodeRepo.UpdateRangeAsync(AuthCodes);
-
-            var AuthCode = new UserCode()
-            {
-                Code = OtpHasher.Hash(OTPCode),
+                Code = OtpHasher.Hash(otpCode),
                 ApplicationUserId = user.Id,
                 CodeType = AuthCodeType.PasswordReset,
-                CreatedOn = DateTime.UtcNow,
-                ExpiryDate = DateTime.UtcNow.AddMinutes(15),
+                CreatedOn = now,
+                ExpiryDate = now.AddMinutes(15)
             };
-            await _userCodeRepo.AddAsync(AuthCode);
+
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                // Rule 3: Set-based bulk update without loading tracked entities into memory
+                await _userCodeRepo.GetQueryable()
+                    .Where(u => u.ApplicationUserId == user.Id &&
+                                u.CodeType == AuthCodeType.PasswordReset &&
+                                !u.IsRevoked &&
+                                !u.IsUsed &&
+                                u.ExpiryDate > now)
+                    .ExecuteUpdateAsync(s => s.SetProperty(u => u.IsRevoked, true));
+
+                await _userCodeRepo.AddAsync(authCode);
+            });
+
             var subject = "Travio - Reset Password Code";
-            var emailBody = OTPEmailGenerator.GenerateEmailBody(user.FirstName ?? "Traveler", OTPCode);
+            var emailBody = OTPEmailGenerator.GenerateEmailBody(user.FirstName ?? "Traveler", otpCode);
             await _emailSender.SendEmailAsync(user.Email, subject, emailBody);
 
             return "OTP code sent successfully to your email.";
-
         }
+
         public async Task<SendOtpResponseDto> SendEmailConfirmationAsync(SendOtpRequestDto model)
         {
             if (string.IsNullOrWhiteSpace(model.Email))
@@ -395,28 +379,38 @@ namespace Travio.Core.Services.Auth
             }
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null) throw new NotFoundException("User not found.");
-            var OTPCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString(); ;
-            var spec = new ActiveUserCodesSpec(user.Id, AuthCodeType.EmailVerification);
-            var AuthCodes = await _userCodeRepo.ListAsync(spec);
-            foreach (var code in AuthCodes)
+
+            var otpCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+            var now = DateTime.UtcNow;
+            var authCode = new UserCode
             {
-                code.IsRevoked = true;
-            }
-            await _userCodeRepo.UpdateRangeAsync(AuthCodes);
-            var AuthCode = new UserCode()
-            {
-                Code = OtpHasher.Hash(OTPCode),
+                Code = OtpHasher.Hash(otpCode),
                 ApplicationUserId = user.Id,
                 CodeType = AuthCodeType.EmailVerification,
-                CreatedOn = DateTime.UtcNow,
-                ExpiryDate = DateTime.UtcNow.AddMinutes(15),
+                CreatedOn = now,
+                ExpiryDate = now.AddMinutes(15)
             };
-            await _userCodeRepo.AddAsync(AuthCode);
+
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                // Rule 3: Bulk update via ExecuteUpdateAsync
+                await _userCodeRepo.GetQueryable()
+                    .Where(u => u.ApplicationUserId == user.Id &&
+                                u.CodeType == AuthCodeType.EmailVerification &&
+                                !u.IsRevoked &&
+                                !u.IsUsed &&
+                                u.ExpiryDate > now)
+                    .ExecuteUpdateAsync(s => s.SetProperty(u => u.IsRevoked, true));
+
+                await _userCodeRepo.AddAsync(authCode);
+            });
+
             var subject = "Travio - Confirm Email Code";
-            var emailBody = OTPEmailGenerator.GenerateEmailBody(user.FirstName ?? "Traveler", OTPCode);
+            var emailBody = OTPEmailGenerator.GenerateEmailBody(user.FirstName ?? "Traveler", otpCode);
             await _emailSender.SendEmailAsync(user.Email, subject, emailBody);
-            return new SendOtpResponseDto(VerifyOtpStatus.Success, "OTP code sent successfully to your email.", AuthCode.ExpiryDate);
+            return new SendOtpResponseDto(VerifyOtpStatus.Success, "OTP code sent successfully to your email.", authCode.ExpiryDate);
         }
+
         public async Task<VerifyOtpResponseDto> ConfirmEmailAsync(VerifyOtpRequestDto model)
         {
             if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Otp))
@@ -436,35 +430,59 @@ namespace Travio.Core.Services.Auth
             }
             return result;
         }
+
         public async Task<VerifyOtpResponseDto> VerifyOtpAsync(ApplicationUser user, string Otp, AuthCodeType CodeTyp)
         {
-            // use for Verify Otp in General not for Confirm Email only (Genaric)
             if (user is null)
             {
                 throw new NotFoundException("User not found.");
             }
-            var HashedCode = OtpHasher.Hash(Otp);
-            var spec = new VerifyOtpSpec(user.Id, HashedCode, CodeTyp);
-            var code = await _userCodeRepo.FirstOrDefaultAsync(spec);
-            if (code is null)
+            var hashedCode = OtpHasher.Hash(Otp);
+            var now = DateTime.UtcNow;
+
+            // Rule 6: Direct projection on GetQueryable()
+            var codeInfo = await _userCodeRepo.GetQueryable()
+                .AsNoTracking()
+                .Where(c => c.ApplicationUserId == user.Id &&
+                            !c.IsRevoked &&
+                            !c.IsUsed &&
+                            c.CodeType == CodeTyp &&
+                            c.Code == hashedCode &&
+                            c.ExpiryDate > now)
+                .OrderByDescending(c => c.CreatedOn)
+                .Select(c => new { c.Id, c.ExpiryDate })
+                .FirstOrDefaultAsync();
+
+            if (codeInfo is null)
             {
                 return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "Code is invalid! ");
             }
-            if (code.ExpiryDate <= DateTime.UtcNow)
+            if (codeInfo.ExpiryDate <= now)
             {
                 return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "The code is expired.");
             }
-            code.IsRevoked = true;
-            await _userCodeRepo.UpdateAsync(code);
+
+            // Rule 3: Atomic bulk update to mark code as revoked/used
+            var rowsAffected = await _userCodeRepo.GetQueryable()
+                .Where(c => c.Id == codeInfo.Id && !c.IsRevoked && !c.IsUsed)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(c => c.IsRevoked, true)
+                    .SetProperty(c => c.IsUsed, true));
+
+            if (rowsAffected == 0)
+            {
+                return new VerifyOtpResponseDto(VerifyOtpStatus.CodeExpired, "Code has already been used.");
+            }
+
             if (CodeTyp == AuthCodeType.PasswordReset)
             {
                 var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
                 return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.", resetToken);
-
             }
 
             return new VerifyOtpResponseDto(VerifyOtpStatus.Success, "OTP verified successfully.");
         }
+
         private RefreshToken CreateRefreshTokenEntity(string tokenPlain, int daysValid = 10)
         {
             return new RefreshToken
@@ -474,6 +492,7 @@ namespace Travio.Core.Services.Auth
                 ExpiresOn = DateTime.UtcNow.AddDays(daysValid)
             };
         }
+
         private static string HashToken(string token)
         {
             using var sha = SHA256.Create();
@@ -481,19 +500,19 @@ namespace Travio.Core.Services.Auth
             var hash = sha.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
         }
+
         private string GenerateRandomTokenPlain()
         {
-            var bytes = RandomNumberGenerator.GetBytes(64); // 64 bytes = strong
+            var bytes = RandomNumberGenerator.GetBytes(64);
             return Convert.ToBase64String(bytes);
         }
 
         public async Task DeleteOtps()
         {
-            // here we will delete expired OTP codes from the database
-            var spec = new GetExpiredOtpsSpec();
-            var expiredOtps = await _userCodeRepo.ListAsync(spec);
-            await _userCodeRepo.SaveChangesAsync();
-            await _userCodeRepo.DeleteRangeAsync(expiredOtps);
+            // Rule 3: Bulk delete expired OTPs directly in SQL without loading entities into memory
+            await _userCodeRepo.GetQueryable()
+                .Where(u => u.ExpiryDate < DateTime.UtcNow)
+                .ExecuteDeleteAsync();
         }
 
         public async Task<ServiceResponse<string>> ResetPasswordAsync(ResetPasswordDTO Model)
@@ -513,5 +532,4 @@ namespace Travio.Core.Services.Auth
             return new ServiceResponse<string>(data: "Password reset successfully", message: "Success");
         }
     }
-
 }
