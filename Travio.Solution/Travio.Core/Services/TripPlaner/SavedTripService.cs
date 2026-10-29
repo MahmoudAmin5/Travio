@@ -11,32 +11,23 @@ namespace Travio.Core.Services.TripPlaner;
 public class SavedTripService : ISavedTripService
 {
     private readonly IGenericRepository<SavedTrip> _tripRepo;
-    private readonly IGenericRepository<SavedTripDay> _dayRepo;
-    private readonly IGenericRepository<SavedTripActivity> _activityRepo;
-    private readonly IGenericRepository<SavedTripHotel> _hotelRepo;
 
-    public SavedTripService(
-        IGenericRepository<SavedTrip> tripRepo,
-        IGenericRepository<SavedTripDay> dayRepo,
-        IGenericRepository<SavedTripActivity> activityRepo,
-        IGenericRepository<SavedTripHotel> hotelRepo)
+    public SavedTripService(IGenericRepository<SavedTrip> tripRepo)
     {
         _tripRepo = tripRepo;
-        _dayRepo = dayRepo;
-        _activityRepo = activityRepo;
-        _hotelRepo = hotelRepo;
     }
 
     public async Task<ServiceResponse<Pagination<SavedTripSummaryDto>>> GetUserTripsAsync(int pageIndex, int pageSize, string userId)
     {
-        var allTrips = await _tripRepo.ListAsync();
-        var userTrips = allTrips
-            .Where(t => t.UserId == userId)
-            .OrderByDescending(t => t.CreatedAt)
-            .ToList();
+        var baseQuery = _tripRepo.GetQueryable()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId);
 
-        var totalCount = userTrips.Count;
-        var pagedTrips = userTrips
+        var totalCount = await baseQuery.CountAsync();
+
+        // Rule 6: Direct projection to DTO via .Select(...)
+        var pagedTrips = await baseQuery
+            .OrderByDescending(t => t.CreatedAt)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .Select(t => new SavedTripSummaryDto
@@ -49,7 +40,7 @@ public class SavedTripService : ISavedTripService
                 IsFavorite = t.IsFavorite,
                 CreatedAt = t.CreatedAt
             })
-            .ToList();
+            .ToListAsync();
 
         var pagination = new Pagination<SavedTripSummaryDto>(pageIndex, pageSize, totalCount, pagedTrips);
         return new ServiceResponse<Pagination<SavedTripSummaryDto>>(pagination, "Trips retrieved successfully.");
@@ -57,14 +48,15 @@ public class SavedTripService : ISavedTripService
 
     public async Task<ServiceResponse<Pagination<SavedTripSummaryDto>>> GetUserFavoriteTripsAsync(int pageIndex, int pageSize, string userId)
     {
-        var allTrips = await _tripRepo.ListAsync();
-        var favTrips = allTrips
-            .Where(t => t.UserId == userId && t.IsFavorite)
-            .OrderByDescending(t => t.CreatedAt)
-            .ToList();
+        var baseQuery = _tripRepo.GetQueryable()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.IsFavorite);
 
-        var totalCount = favTrips.Count;
-        var pagedTrips = favTrips
+        var totalCount = await baseQuery.CountAsync();
+
+        // Rule 6: Direct projection to DTO via .Select(...)
+        var pagedTrips = await baseQuery
+            .OrderByDescending(t => t.CreatedAt)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .Select(t => new SavedTripSummaryDto
@@ -77,7 +69,7 @@ public class SavedTripService : ISavedTripService
                 IsFavorite = t.IsFavorite,
                 CreatedAt = t.CreatedAt
             })
-            .ToList();
+            .ToListAsync();
 
         var pagination = new Pagination<SavedTripSummaryDto>(pageIndex, pageSize, totalCount, pagedTrips);
         return new ServiceResponse<Pagination<SavedTripSummaryDto>>(pagination, "Favorite trips retrieved successfully.");
@@ -85,47 +77,38 @@ public class SavedTripService : ISavedTripService
 
     public async Task<ServiceResponse<SavedTripDetailDto>> GetTripByIdAsync(int tripId, string userId)
     {
-        var trip = await _tripRepo.GetByIdAsync(tripId);
-        if (trip == null || trip.UserId != userId)
-            return new ServiceResponse<SavedTripDetailDto>("Trip not found.");
-
-        // Load related data
-        var allDays = await _dayRepo.ListAsync();
-        var tripDays = allDays.Where(d => d.SavedTripId == tripId).OrderBy(d => d.DayNumber).ToList();
-
-        var allActivities = await _activityRepo.ListAsync();
-        var allHotels = await _hotelRepo.ListAsync();
-
-        var dto = new SavedTripDetailDto
-        {
-            Id = trip.Id,
-            Title = trip.Title,
-            DestinationName = trip.DestinationName,
-            CityHeroImage = trip.CityHeroImage,
-            TotalDays = trip.TotalDays,
-            IsFavorite = trip.IsFavorite,
-            CreatedAt = trip.CreatedAt,
-            Days = tripDays.Select(d => new SavedTripDayDto
+        // Rule 6: Direct projection to DTO via .Select(...)
+        var dto = await _tripRepo.GetQueryable()
+            .AsNoTracking()
+            .Where(t => t.Id == tripId && t.UserId == userId)
+            .Select(t => new SavedTripDetailDto
             {
-                DayNumber = d.DayNumber,
-                Theme = d.Theme,
-                Activities = allActivities
-                    .Where(a => a.SavedTripDayId == d.Id)
-                    .Select(a => new SavedTripActivityDto
+                Id = t.Id,
+                Title = t.Title,
+                DestinationName = t.DestinationName,
+                CityHeroImage = t.CityHeroImage,
+                TotalDays = t.TotalDays,
+                IsFavorite = t.IsFavorite,
+                CreatedAt = t.CreatedAt,
+                Days = t.Days
+                    .OrderBy(d => d.DayNumber)
+                    .Select(d => new SavedTripDayDto
                     {
-                        ActivityType = a.ActivityType,
-                        PlaceName = a.PlaceName,
-                        SuggestedTime = a.SuggestedTime,
-                        Description = a.Description,
-                        Address = a.Address,
-                        FeaturedImage = a.FeaturedImage,
-                        Latitude = a.Latitude,
-                        Longitude = a.Longitude
-                    }).ToList()
-            }).ToList(),
-            Hotels = allHotels
-                .Where(h => h.SavedTripId == tripId)
-                .Select(h => new SavedTripHotelDto
+                        DayNumber = d.DayNumber,
+                        Theme = d.Theme,
+                        Activities = d.Activities.Select(a => new SavedTripActivityDto
+                        {
+                            ActivityType = a.ActivityType,
+                            PlaceName = a.PlaceName,
+                            SuggestedTime = a.SuggestedTime,
+                            Description = a.Description,
+                            Address = a.Address,
+                            FeaturedImage = a.FeaturedImage,
+                            Latitude = a.Latitude,
+                            Longitude = a.Longitude
+                        }).ToList()
+                    }).ToList(),
+                Hotels = t.Hotels.Select(h => new SavedTripHotelDto
                 {
                     Name = h.Name,
                     Description = h.Description,
@@ -136,31 +119,47 @@ public class SavedTripService : ISavedTripService
                     Latitude = h.Latitude,
                     Longitude = h.Longitude
                 }).ToList()
-        };
+            })
+            .FirstOrDefaultAsync();
+
+        if (dto == null)
+            return new ServiceResponse<SavedTripDetailDto>("Trip not found.");
 
         return new ServiceResponse<SavedTripDetailDto>(dto, "Trip retrieved successfully.");
     }
 
     public async Task<ServiceResponse<bool>> ToggleFavoriteAsync(int tripId, string userId)
     {
-        var trip = await _tripRepo.GetByIdAsync(tripId);
-        if (trip == null || trip.UserId != userId)
+        var currentFav = await _tripRepo.GetQueryable()
+            .AsNoTracking()
+            .Where(t => t.Id == tripId && t.UserId == userId)
+            .Select(t => (bool?)t.IsFavorite)
+            .FirstOrDefaultAsync();
+
+        if (currentFav == null)
             return new ServiceResponse<bool>("Trip not found.");
 
-        trip.IsFavorite = !trip.IsFavorite;
-        await _tripRepo.UpdateAsync(trip);
+        var newFavState = !currentFav.Value;
 
-        var message = trip.IsFavorite ? "Trip added to favorites." : "Trip removed from favorites.";
+        // Rule 3: Bulk update directly via ExecuteUpdateAsync
+        await _tripRepo.GetQueryable()
+            .Where(t => t.Id == tripId && t.UserId == userId)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsFavorite, newFavState));
+
+        var message = newFavState ? "Trip added to favorites." : "Trip removed from favorites.";
         return new ServiceResponse<bool>(true, message);
     }
 
     public async Task<ServiceResponse<bool>> DeleteTripAsync(int tripId, string userId)
     {
-        var trip = await _tripRepo.GetByIdAsync(tripId);
-        if (trip == null || trip.UserId != userId)
+        // Rule 3: Bulk delete directly via ExecuteDeleteAsync
+        var rowsDeleted = await _tripRepo.GetQueryable()
+            .Where(t => t.Id == tripId && t.UserId == userId)
+            .ExecuteDeleteAsync();
+
+        if (rowsDeleted == 0)
             return new ServiceResponse<bool>("Trip not found.");
 
-        await _tripRepo.DeleteAsync(trip);
         return new ServiceResponse<bool>(true, "Trip deleted successfully.");
     }
 }
