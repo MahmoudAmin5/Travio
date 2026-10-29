@@ -679,15 +679,21 @@ namespace Travio.Infrastructure.Migrations
 
                     b.Property<string>("Currency")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("OfferId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PNR")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PassengersJson")
                         .IsRequired()
@@ -695,15 +701,15 @@ namespace Travio.Infrastructure.Migrations
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
                     b.Property<string>("StripePaymentIntentId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -711,15 +717,27 @@ namespace Travio.Infrastructure.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PNR")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[PNR] IS NOT NULL");
 
                     b.HasIndex("StripePaymentIntentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StripePaymentIntentId] IS NOT NULL");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .IsDescending(false, true);
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "CreatedAt"), new[] { "OfferId", "PNR", "TotalPrice", "Currency", "BookingStatus" });
+
+                    b.HasIndex("UserId", "OfferId")
+                        .IsUnique()
+                        .HasFilter("[BookingStatus] = 'PendingPayment'");
 
                     b.ToTable("FlightBookings", "Booking");
                 });
@@ -787,7 +805,8 @@ namespace Travio.Infrastructure.Migrations
                         .HasColumnType("rowversion");
 
                     b.Property<string>("StripePaymentIntentId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("TotalPrice")
                         .HasPrecision(18, 2)
@@ -811,7 +830,18 @@ namespace Travio.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[HotelbedsReference] IS NOT NULL");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("StripePaymentIntentId")
+                        .IsUnique()
+                        .HasFilter("[StripePaymentIntentId] IS NOT NULL");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .IsDescending(false, true);
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "CreatedAt"), new[] { "HotelId", "HotelName", "CheckIn", "CheckOut", "TotalPrice", "Currency", "HotelbedsReference", "BookingStatus", "RoomCount" });
+
+                    b.HasIndex("UserId", "HotelId", "CheckIn", "CheckOut")
+                        .IsUnique()
+                        .HasFilter("[BookingStatus] = 'PendingPayment'");
 
                     b.ToTable("HotelBookings", "Booking");
                 });

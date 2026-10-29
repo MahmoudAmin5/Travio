@@ -19,14 +19,38 @@ namespace Travio.Infrastructure.Configrations.Booking
             // ── Primary Key ───────────────────────────────────────────────────
             builder.HasKey(e => e.Id);
 
-            // ── Indexes ───────────────────────────────────────────────────────
-            // Index on UserId for efficient user-specific booking queries
-            builder.HasIndex(b => b.UserId);
+            // ── Indexes (Optimized for SQL Execution Plans & Zero Lock Contention) ─
+            // 1. Covering Index on (UserId ASC, CreatedAt DESC) for GetUserBookingsAsync:
+            //    Eliminates Clustered Index Key Lookups, TempDB Sort operators, and GuestDataJson LOB reads.
+            builder.HasIndex(b => new { b.UserId, b.CreatedAt })
+                   .IsDescending(false, true)
+                   .IncludeProperties(b => new
+                   {
+                       b.HotelId,
+                       b.HotelName,
+                       b.CheckIn,
+                       b.CheckOut,
+                       b.TotalPrice,
+                       b.Currency,
+                       b.HotelbedsReference,
+                       b.BookingStatus,
+                       b.RoomCount
+                   });
 
-            // Unique index on HotelbedsReference (nullable — only set on confirmed bookings)
+            // 2. Unique index on HotelbedsReference (nullable — only set on confirmed bookings)
             builder.HasIndex(b => b.HotelbedsReference)
                    .IsUnique()
                    .HasFilter("[HotelbedsReference] IS NOT NULL");
+
+            // 3. Unique index on StripePaymentIntentId (eliminates nvarchar(max) Full Table Scan)
+            builder.HasIndex(b => b.StripePaymentIntentId)
+                   .IsUnique()
+                   .HasFilter("[StripePaymentIntentId] IS NOT NULL");
+
+            // 4. Unique Filtered Index to prevent concurrent duplicate PendingPayment checkouts
+            builder.HasIndex(b => new { b.UserId, b.HotelId, b.CheckIn, b.CheckOut })
+                   .IsUnique()
+                   .HasFilter("[BookingStatus] = 'PendingPayment'");
 
             // ── Property Configurations ───────────────────────────────────────
 
@@ -44,6 +68,9 @@ namespace Travio.Infrastructure.Configrations.Booking
             builder.Property(e => e.Currency)
                    .IsRequired()
                    .HasMaxLength(3); // ISO 4217 currency codes are 3 chars
+
+            builder.Property(e => e.StripePaymentIntentId)
+                   .HasMaxLength(100);
 
             builder.Property(e => e.HotelbedsReference)
                    .HasMaxLength(100);

@@ -1,4 +1,3 @@
-﻿
 using Travio.Core.Contracts.Services.Survey;
 using Travio.Core.Domain.Entities.Destinations;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -8,10 +7,12 @@ namespace Travio.Core.Services.Survey;
 public class SurveyService : ISurveyService
 {
     private readonly IGenericRepository<UserPreference> _repo;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public SurveyService(IGenericRepository<UserPreference> repo)
+    public SurveyService(IGenericRepository<UserPreference> repo, IUnitOfWork unitOfWork)
     {
         _repo = repo;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task AddUserPreferencesAsync(string userId, List<(int CategoryId, int OptionId)> preferences)
@@ -23,10 +24,9 @@ public class SurveyService : ISurveyService
             OptionId = p.OptionId
         }).ToList();
 
-        foreach (var pref in userPreferences)
+        await _unitOfWork.ExecuteAsync(async () =>
         {
-            await _repo.AddAsync(pref);
-        }
+            await _repo.AddRangeAsync(userPreferences);
+        });
     }
-
 }

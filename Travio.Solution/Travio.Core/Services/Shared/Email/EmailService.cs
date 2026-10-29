@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Travio.Core.Contracts.Services.Auth;
 using Travio.Core.Contracts.Services.Email;
 using Travio.Core.Domain.Entities.Account_Mangement;
@@ -18,9 +14,9 @@ namespace Travio.Core.Services.Shared.Email
     {
         private readonly IGenericRepository<HotelBooking> _hotelRepo;
         private readonly IGenericRepository<FlightBooking> _flightRepo;
-        private readonly UserManager<ApplicationUser> _userManager; // Used to fetch the email
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<EmailService> _logger;
-         private readonly IEmailSender _emailProvider; // Inject your actual email sender here (SendGrid, MailKit, etc.)
+        private readonly IEmailSender _emailProvider;
 
         public EmailService(
             IGenericRepository<HotelBooking> hotelRepo,
@@ -45,10 +41,22 @@ namespace Travio.Core.Services.Shared.Email
 
             try
             {
-                var booking = await _hotelRepo.GetByIdAsync(bookingId);
+                // Rule 6: Direct projection on GetQueryable()
+                var booking = await _hotelRepo.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.Id == bookingId)
+                    .Select(b => new
+                    {
+                        b.HotelName,
+                        b.CheckIn,
+                        b.CheckOut,
+                        b.RoomCount,
+                        b.HotelbedsReference
+                    })
+                    .FirstOrDefaultAsync();
+
                 if (booking == null) return;
 
-                // 1. Get the exact customer email using the UserId from the booking record
                 var user = await _userManager.FindByIdAsync(userId);
                 var customerEmail = user?.Email;
 
@@ -58,7 +66,6 @@ namespace Travio.Core.Services.Shared.Email
                     return;
                 }
 
-                // 2. Generate the Hotel HTML Template using Travio Design System
                 var htmlBody = $"""
                 <!DOCTYPE html>
                 <html>
@@ -101,8 +108,7 @@ namespace Travio.Core.Services.Shared.Email
                 </html>
                 """;
 
-                // 3. Send the email directly to the customer
-                 await _emailProvider.SendEmailAsync(customerEmail, $"Hotel Confirmation: {booking.HotelName}", htmlBody);
+                await _emailProvider.SendEmailAsync(customerEmail, $"Hotel Confirmation: {booking.HotelName}", htmlBody);
 
                 _logger.LogInformation("Hotel Ticket sent successfully to {Email}", customerEmail);
             }
@@ -122,10 +128,20 @@ namespace Travio.Core.Services.Shared.Email
 
             try
             {
-                var booking = await _flightRepo.GetByIdAsync(bookingId);
+                // Rule 6: Direct projection on GetQueryable()
+                var booking = await _flightRepo.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.Id == bookingId)
+                    .Select(b => new
+                    {
+                        b.Currency,
+                        b.TotalPrice,
+                        b.PNR
+                    })
+                    .FirstOrDefaultAsync();
+
                 if (booking == null) return;
 
-                // 1. Get the exact customer email using the UserId from the booking record
                 var user = await _userManager.FindByIdAsync(userId);
                 var customerEmail = user?.Email;
 
@@ -135,7 +151,6 @@ namespace Travio.Core.Services.Shared.Email
                     return;
                 }
 
-                // 2. Generate the Flight HTML Template using Travio Design System
                 var htmlBody = $"""
                 <!DOCTYPE html>
                 <html>
@@ -176,8 +191,7 @@ namespace Travio.Core.Services.Shared.Email
                 </html>
                 """;
 
-                // 3. Send the email directly to the customer
-                 await _emailProvider.SendEmailAsync(customerEmail, $"Flight E-Ticket (PNR: {booking.PNR})", htmlBody);
+                await _emailProvider.SendEmailAsync(customerEmail, $"Flight E-Ticket (PNR: {booking.PNR})", htmlBody);
 
                 _logger.LogInformation("Flight E-Ticket sent successfully to {Email}", customerEmail);
             }
@@ -189,4 +203,3 @@ namespace Travio.Core.Services.Shared.Email
         }
     }
 }
-

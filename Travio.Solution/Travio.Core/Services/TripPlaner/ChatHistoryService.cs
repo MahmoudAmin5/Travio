@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Travio.Core.Contracts.Services.TripPlaner;
 using Travio.Core.Domain.Entities.TripPlaner;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -11,47 +12,39 @@ public class ChatHistoryService : IChatHistoryService
 {
     private readonly IGenericRepository<ChatSession> _sessionRepo;
     private readonly IGenericRepository<ChatMessage> _messageRepo;
-    private readonly IGenericRepository<SavedTrip> _tripRepo;
 
     public ChatHistoryService(
         IGenericRepository<ChatSession> sessionRepo,
-        IGenericRepository<ChatMessage> messageRepo,
-        IGenericRepository<SavedTrip> tripRepo)
+        IGenericRepository<ChatMessage> messageRepo)
     {
         _sessionRepo = sessionRepo;
         _messageRepo = messageRepo;
-        _tripRepo = tripRepo;
     }
 
     public async Task<ServiceResponse<Pagination<ChatSessionSummaryDto>>> GetUserSessionsAsync(int pageIndex, int pageSize, string userId)
     {
-        var allSessions = await _sessionRepo.ListAsync();
-        var userSessions = allSessions
-            .Where(s => s.UserId == userId)
+        var baseQuery = _sessionRepo.GetQueryable()
+            .AsNoTracking()
+            .Where(s => s.UserId == userId);
+
+        var totalCount = await baseQuery.CountAsync();
+
+        // Rule 6: Direct projection to DTO via .Select(...)
+        var pagedSessions = await baseQuery
             .OrderByDescending(s => s.UpdatedAt)
-            .ToList();
-
-        var allTrips = await _tripRepo.ListAsync();
-
-        var totalCount = userSessions.Count;
-        var pagedSessions = userSessions
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
-            .Select(s =>
+            .Select(s => new ChatSessionSummaryDto
             {
-                var trip = allTrips.FirstOrDefault(t => t.ChatSessionId == s.Id);
-                return new ChatSessionSummaryDto
-                {
-                    Id = s.Id,
-                    ThreadId = s.ThreadId,
-                    Title = s.Title,
-                    CreatedAt = s.CreatedAt,
-                    UpdatedAt = s.UpdatedAt,
-                    HasTrip = trip != null,
-                    TripId = trip?.Id
-                };
+                Id = s.Id,
+                ThreadId = s.ThreadId,
+                Title = s.Title,
+                CreatedAt = s.CreatedAt,
+                UpdatedAt = s.UpdatedAt,
+                HasTrip = s.SavedTrip != null,
+                TripId = s.SavedTrip != null ? (int?)s.SavedTrip.Id : null
             })
-            .ToList();
+            .ToListAsync();
 
         var pagination = new Pagination<ChatSessionSummaryDto>(pageIndex, pageSize, totalCount, pagedSessions);
         return new ServiceResponse<Pagination<ChatSessionSummaryDto>>(pagination, "Sessions retrieved successfully.");
@@ -59,18 +52,22 @@ public class ChatHistoryService : IChatHistoryService
 
     public async Task<ServiceResponse<Pagination<ChatMessageDto>>> GetSessionMessagesAsync(int sessionId, int pageIndex, int pageSize, string userId)
     {
-        var session = await _sessionRepo.GetByIdAsync(sessionId);
-        if (session == null || session.UserId != userId)
+        var sessionExists = await _sessionRepo.GetQueryable()
+            .AsNoTracking()
+            .AnyAsync(s => s.Id == sessionId && s.UserId == userId);
+
+        if (!sessionExists)
             return new ServiceResponse<Pagination<ChatMessageDto>>("Session not found.");
 
-        var allMessages = await _messageRepo.ListAsync();
-        var sessionMessages = allMessages
-            .Where(m => m.ChatSessionId == sessionId)
-            .OrderBy(m => m.SentAt)
-            .ToList();
+        var baseQuery = _messageRepo.GetQueryable()
+            .AsNoTracking()
+            .Where(m => m.ChatSessionId == sessionId);
 
-        var totalCount = sessionMessages.Count;
-        var pagedMessages = sessionMessages
+        var totalCount = await baseQuery.CountAsync();
+
+        // Rule 6: Direct projection to DTO via .Select(...)
+        var pagedMessages = await baseQuery
+            .OrderBy(m => m.SentAt)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .Select(m => new ChatMessageDto
@@ -81,7 +78,7 @@ public class ChatHistoryService : IChatHistoryService
                 MessageType = m.MessageType,
                 SentAt = m.SentAt
             })
-            .ToList();
+            .ToListAsync();
 
         var pagination = new Pagination<ChatMessageDto>(pageIndex, pageSize, totalCount, pagedMessages);
         return new ServiceResponse<Pagination<ChatMessageDto>>(pagination, "Messages retrieved successfully.");
@@ -89,11 +86,14 @@ public class ChatHistoryService : IChatHistoryService
 
     public async Task<ServiceResponse<bool>> DeleteSessionAsync(int sessionId, string userId)
     {
-        var session = await _sessionRepo.GetByIdAsync(sessionId);
-        if (session == null || session.UserId != userId)
+        // Rule 3: Bulk delete directly via ExecuteDeleteAsync
+        var rowsDeleted = await _sessionRepo.GetQueryable()
+            .Where(s => s.Id == sessionId && s.UserId == userId)
+            .ExecuteDeleteAsync();
+
+        if (rowsDeleted == 0)
             return new ServiceResponse<bool>("Session not found.");
 
-        await _sessionRepo.DeleteAsync(session);
         return new ServiceResponse<bool>(true, "Session deleted successfully.");
     }
 }

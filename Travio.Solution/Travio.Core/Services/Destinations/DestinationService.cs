@@ -1,11 +1,11 @@
+using System.Linq.Expressions;
 using FluentValidation;
 using FluentValidation.Results;
-using Mapster;
+using Microsoft.EntityFrameworkCore;
 using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Domain.Entities.Destinations;
 using Travio.Core.Domain.Enums;
 using Travio.Core.Domain.Infrastructure.Contract;
-using Travio.Core.Domain.Specifications.Destinations;
 using Travio.Core.DTOs.DestinationDTO;
 using Travio.Core.EntityErrors;
 using Travio.Core.Helpers;
@@ -18,67 +18,152 @@ public class DestinationService : IDestinationService
     private readonly IGenericRepository<Country> _countryRepository;
     private readonly IGenericRepository<DestinationReview> _destinationReviewRepository;
     private readonly IValidator<DestinationReviewUpsertDto> _destinationReviewValidator;
+    private readonly IUnitOfWork _unitOfWork;
+
+    private static readonly Expression<Func<Destination, DestinationDto>> ToDestinationDto = d => new DestinationDto
+    {
+        DestinationID = d.DestinationID,
+        Name = d.Name,
+        Description = d.Description,
+        Rating = d.Rating,
+        TotalReviews = d.TotalReviews,
+        Latitude = d.Latitude,
+        Longitude = d.Longitude,
+        CityName = d.City.Name,
+        ImageUrls = d.Images.Select(img => img.ImageURL).ToList(),
+        Interests = d.DestinationInterests.Select(di => new InterestDto
+        {
+            InterestID = di.Interest.InterestID,
+            InterestName = di.Interest.InterestName
+        }).ToList()
+    };
 
     public DestinationService(
         IGenericRepository<Destination> destinationRepository,
         IGenericRepository<Country> countryRepository,
         IGenericRepository<DestinationReview> destinationReviewRepository,
-        IValidator<DestinationReviewUpsertDto> destinationReviewValidator)
+        IValidator<DestinationReviewUpsertDto> destinationReviewValidator,
+        IUnitOfWork unitOfWork)
     {
         _destinationRepository = destinationRepository;
         _countryRepository = countryRepository;
         _destinationReviewRepository = destinationReviewRepository;
         _destinationReviewValidator = destinationReviewValidator;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Pagination<DestinationDto>> GetAllAsync(int pageIndex, int pageSize, int? cityId, int? countryId, int? interestId, DestinationSortBy sortBy = DestinationSortBy.Newest)
     {
         var skip = (pageIndex - 1) * pageSize;
-        var dataSpec = new DestinationsWithFiltersSpec(cityId, interestId, countryId, skip, pageSize, sortBy);
-        var countSpec = new DestinationFilterSpec(cityId, interestId, countryId);
-        var totalItems = await _destinationRepository.CountAsync(countSpec);
-        var data = await _destinationRepository.ListAsync(dataSpec);
-        var dataDto = data.Adapt<IEnumerable<DestinationDto>>();
-        return new Pagination<DestinationDto>(pageIndex, pageSize, totalItems, dataDto.ToList());
+        var query = _destinationRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(x => (!cityId.HasValue || x.CityID == cityId) &&
+                        (!interestId.HasValue || x.DestinationInterests.Any(di => di.InterestID == interestId)) &&
+                        (!countryId.HasValue || x.City.CountryID == countryId));
+
+        var totalItems = await query.CountAsync();
+
+        var sortedQuery = sortBy switch
+        {
+            DestinationSortBy.Rating => query.OrderByDescending(x => x.Rating),
+            DestinationSortBy.RatingAsc => query.OrderBy(x => x.Rating),
+            DestinationSortBy.Name => query.OrderBy(x => x.Name),
+            DestinationSortBy.NameDesc => query.OrderByDescending(x => x.Name),
+            DestinationSortBy.Reviews => query.OrderByDescending(x => x.TotalReviews),
+            _ => query.OrderByDescending(x => x.DestinationID)
+        };
+
+        // Rule 6: Project directly to DTO via .Select(...)
+        var dataDto = await sortedQuery
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(ToDestinationDto)
+            .ToListAsync();
+
+        return new Pagination<DestinationDto>(pageIndex, pageSize, totalItems, dataDto);
     }
 
     public async Task<DestinationDto?> GetByIdAsync(int id)
     {
-        var spec = new DestinationByIdSpec(id);
-        var destination = await _destinationRepository.FirstOrDefaultAsync(spec);
-        return destination?.Adapt<DestinationDto>();
+        return await _destinationRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(x => x.DestinationID == id)
+            .Select(ToDestinationDto)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<DestinationDto>> GetTopRatedAsync(int count = 10)
     {
-        var spec = new TopRatedDestinationsSpec(count);
-        var destinations = await _destinationRepository.ListAsync(spec);
-        return destinations.Adapt<IEnumerable<DestinationDto>>();
+        return await _destinationRepository.GetQueryable()
+            .AsNoTracking()
+            .OrderByDescending(x => x.Rating)
+            .Take(count)
+            .Select(ToDestinationDto)
+            .ToListAsync();
     }
 
     public async Task<Pagination<DestinationDto>> SearchByNameAsync(string? keyword, int pageIndex, int pageSize, List<int>? interestIds = null)
     {
         var skip = (pageIndex - 1) * pageSize;
-        var dataSpec = new DestinationSearchSpec(keyword, skip, pageSize, interestIds);
-        var countSpec = new DestinationSearchCountSpec(keyword, interestIds);
-        var totalItems = await _destinationRepository.CountAsync(countSpec);
-        var data = await _destinationRepository.ListAsync(dataSpec);
-        var dataDto = data.Adapt<IEnumerable<DestinationDto>>();
-        return new Pagination<DestinationDto>(pageIndex, pageSize, totalItems, dataDto.ToList());
+        var query = _destinationRepository.GetQueryable().AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var lowerKeyword = keyword.ToLower();
+            query = query.Where(x =>
+                x.Name.ToLower().Contains(lowerKeyword) ||
+                x.Description.ToLower().Contains(lowerKeyword) ||
+                x.City.Name.ToLower().Contains(lowerKeyword) ||
+                x.City.Country.Name.ToLower().Contains(lowerKeyword) ||
+                x.City.Country.Continent.Name.ToLower().Contains(lowerKeyword) ||
+                x.DestinationInterests.Any(di =>
+                    di.Interest.InterestName.ToLower().Contains(lowerKeyword)));
+        }
+
+        if (interestIds is { Count: > 0 })
+        {
+            query = query.Where(x => x.DestinationInterests.Any(di => interestIds.Contains(di.InterestID)));
+        }
+
+        var totalItems = await query.CountAsync();
+
+        var dataDto = await query
+            .OrderByDescending(x => x.Rating)
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(ToDestinationDto)
+            .ToListAsync();
+
+        return new Pagination<DestinationDto>(pageIndex, pageSize, totalItems, dataDto);
     }
 
     public async Task<IEnumerable<DestinationDto>> GetNearbyAsync(decimal latitude, decimal longitude, double radiusKm, int count = 10)
     {
-        var spec = new NearbyDestinationsSpec(latitude, longitude, radiusKm, count);
-        var destinations = await _destinationRepository.ListAsync(spec);
-        return destinations.Adapt<IEnumerable<DestinationDto>>();
+        var degreeRadius = (decimal)(radiusKm / 111.0);
+
+        return await _destinationRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(x =>
+                x.Latitude >= latitude - degreeRadius && x.Latitude <= latitude + degreeRadius &&
+                x.Longitude >= longitude - degreeRadius && x.Longitude <= longitude + degreeRadius)
+            .OrderByDescending(x => x.Rating)
+            .Take(count)
+            .Select(ToDestinationDto)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<CountryDto>> GetFamousCountriesAsync()
     {
-        var spec = new CountriesWithDestinationsSpec();
-        var countries = await _countryRepository.ListAsync(spec);
-        return countries.Adapt<IEnumerable<CountryDto>>();
+        return await _countryRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(c => c.Cities.Any(city => city.Destinations.Any()))
+            .Select(c => new CountryDto
+            {
+                CountryID = c.CountryID,
+                Name = c.Name,
+                ImageURL = c.ImageURL
+            })
+            .ToListAsync();
     }
 
     public async Task<Pagination<DestinationReviewDto>> GetReviewsAsync(int destinationId, int pageIndex = 1, int pageSize = 10, string? currentUserId = null)
@@ -96,24 +181,30 @@ public class DestinationService : IDestinationService
         await EnsureDestinationExistsAsync(destinationId);
 
         var skip = (pageIndex - 1) * pageSize;
+        var baseQuery = _destinationReviewRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(x => x.DestinationId == destinationId && x.IsActive);
 
-        var listSpec = new DestinationReviewsByDestinationSpec(destinationId, skip, pageSize);
-        var countSpec = new ActiveDestinationReviewStatsSpec(destinationId);
+        var totalItems = await baseQuery.CountAsync();
 
-        var reviews = await _destinationReviewRepository.ListAsync(listSpec);
-        var totalItems = await _destinationReviewRepository.CountAsync(countSpec);
-
-        var items = reviews.Select(review => new DestinationReviewDto
-        {
-            ReviewId = review.ReviewId,
-            ReviewerName = $"{review.User.FirstName} {review.User.LastName}".Trim(),
-            ReviewerImageUrl = review.User.ProfilePictureURL,
-            ReviewDateUtc = review.CreatedAtUtc,
-            Rating = review.Rating,
-            Comment = review.Comment,
-            HelpfulVotes = review.HelpfulVotes,
-            IsMine = !string.IsNullOrWhiteSpace(currentUserId) && review.UserId == currentUserId
-        }).ToList();
+        // Rule 6: Direct projection to DTO via .Select(...)
+        var items = await baseQuery
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ThenByDescending(x => x.ReviewId)
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(review => new DestinationReviewDto
+            {
+                ReviewId = review.ReviewId,
+                ReviewerName = (review.User.FirstName + " " + review.User.LastName).Trim(),
+                ReviewerImageUrl = review.User.ProfilePictureURL,
+                ReviewDateUtc = review.CreatedAtUtc,
+                Rating = review.Rating,
+                Comment = review.Comment,
+                HelpfulVotes = review.HelpfulVotes,
+                IsMine = !string.IsNullOrWhiteSpace(currentUserId) && review.UserId == currentUserId
+            })
+            .ToListAsync();
 
         return new Pagination<DestinationReviewDto>(pageIndex, pageSize, totalItems, items);
     }
@@ -121,102 +212,134 @@ public class DestinationService : IDestinationService
     public async Task<DestinationReviewMutationDto> UpsertMyReviewAsync(int destinationId, string userId, DestinationReviewUpsertDto dto)
     {
         await ValidateReviewInputAsync(dto);
-        var destination = await EnsureDestinationExistsAsync(destinationId);
+        await EnsureDestinationExistsAsync(destinationId);
 
         var normalizedComment = NormalizeComment(dto.Comment);
         var now = DateTime.UtcNow;
 
-        var spec = new DestinationReviewByUserAndDestinationSpec(destinationId, userId);
-        var existingReview = await _destinationReviewRepository.FirstOrDefaultAsync(spec);
-
-        if (existingReview is null)
+        return await _unitOfWork.ExecuteAsync(async () =>
         {
-            var newReview = new DestinationReview
+            // Rule 3 Upsert Pattern: Attempt ExecuteUpdateAsync first; if rowsAffected == 0, call AddAsync
+            var rowsAffected = await _destinationReviewRepository.GetQueryable()
+                .Where(x => x.DestinationId == destinationId && x.UserId == userId && x.IsActive)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.Rating, dto.Rating)
+                    .SetProperty(r => r.Comment, normalizedComment)
+                    .SetProperty(r => r.UpdatedAtUtc, now));
+
+            int reviewId;
+            if (rowsAffected == 0)
             {
+                var newReview = new DestinationReview
+                {
+                    DestinationId = destinationId,
+                    UserId = userId,
+                    Rating = dto.Rating,
+                    Comment = normalizedComment,
+                    IsActive = true,
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                };
+
+                await _destinationReviewRepository.AddAsync(newReview);
+                await _unitOfWork.SaveChangesAsync();
+                reviewId = newReview.ReviewId;
+            }
+            else
+            {
+                reviewId = await _destinationReviewRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(x => x.DestinationId == destinationId && x.UserId == userId && x.IsActive)
+                    .Select(x => x.ReviewId)
+                    .FirstAsync();
+            }
+
+            var aggregate = await RefreshDestinationReviewAggregatesAsync(destinationId);
+
+            return new DestinationReviewMutationDto
+            {
+                ReviewId = reviewId,
                 DestinationId = destinationId,
-                UserId = userId,
                 Rating = dto.Rating,
                 Comment = normalizedComment,
-                IsActive = true,
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
+                UpdatedAtUtc = now,
+                AverageRating = aggregate.averageRating,
+                TotalReviews = aggregate.totalReviews
             };
-
-            existingReview = await _destinationReviewRepository.AddAsync(newReview);
-        }
-        else
-        {
-            existingReview.Rating = dto.Rating;
-            existingReview.Comment = normalizedComment;
-            existingReview.UpdatedAtUtc = now;
-            await _destinationReviewRepository.UpdateAsync(existingReview);
-        }
-
-        var aggregate = await RefreshDestinationReviewAggregatesAsync(destination);
-
-        return new DestinationReviewMutationDto
-        {
-            ReviewId = existingReview.ReviewId,
-            DestinationId = destinationId,
-            Rating = existingReview.Rating,
-            Comment = existingReview.Comment,
-            UpdatedAtUtc = existingReview.UpdatedAtUtc,
-            AverageRating = aggregate.averageRating,
-            TotalReviews = aggregate.totalReviews
-        };
+        });
     }
 
     public async Task<DestinationReviewMutationDto> UpdateMyReviewAsync(int destinationId, string userId, DestinationReviewUpsertDto dto)
     {
         await ValidateReviewInputAsync(dto);
-        var destination = await EnsureDestinationExistsAsync(destinationId);
+        await EnsureDestinationExistsAsync(destinationId);
 
-        var spec = new DestinationReviewByUserAndDestinationSpec(destinationId, userId);
-        var existingReview = await _destinationReviewRepository.FirstOrDefaultAsync(spec)
-            ?? throw new NotFoundException("Active review not found for this destination.");
+        var normalizedComment = NormalizeComment(dto.Comment);
+        var now = DateTime.UtcNow;
 
-        existingReview.Rating = dto.Rating;
-        existingReview.Comment = NormalizeComment(dto.Comment);
-        existingReview.UpdatedAtUtc = DateTime.UtcNow;
-
-        await _destinationReviewRepository.UpdateAsync(existingReview);
-
-        var aggregate = await RefreshDestinationReviewAggregatesAsync(destination);
-
-        return new DestinationReviewMutationDto
+        return await _unitOfWork.ExecuteAsync(async () =>
         {
-            ReviewId = existingReview.ReviewId,
-            DestinationId = destinationId,
-            Rating = existingReview.Rating,
-            Comment = existingReview.Comment,
-            UpdatedAtUtc = existingReview.UpdatedAtUtc,
-            AverageRating = aggregate.averageRating,
-            TotalReviews = aggregate.totalReviews
-        };
+            var rowsAffected = await _destinationReviewRepository.GetQueryable()
+                .Where(x => x.DestinationId == destinationId && x.UserId == userId && x.IsActive)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.Rating, dto.Rating)
+                    .SetProperty(r => r.Comment, normalizedComment)
+                    .SetProperty(r => r.UpdatedAtUtc, now));
+
+            if (rowsAffected == 0)
+            {
+                throw new NotFoundException("Active review not found for this destination.");
+            }
+
+            var reviewId = await _destinationReviewRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.DestinationId == destinationId && x.UserId == userId && x.IsActive)
+                .Select(x => x.ReviewId)
+                .FirstAsync();
+
+            var aggregate = await RefreshDestinationReviewAggregatesAsync(destinationId);
+
+            return new DestinationReviewMutationDto
+            {
+                ReviewId = reviewId,
+                DestinationId = destinationId,
+                Rating = dto.Rating,
+                Comment = normalizedComment,
+                UpdatedAtUtc = now,
+                AverageRating = aggregate.averageRating,
+                TotalReviews = aggregate.totalReviews
+            };
+        });
     }
 
     public async Task<DestinationReviewDeleteResultDto> DeleteMyReviewAsync(int destinationId, string userId)
     {
-        var destination = await EnsureDestinationExistsAsync(destinationId);
+        await EnsureDestinationExistsAsync(destinationId);
 
-        var spec = new DestinationReviewByUserAndDestinationSpec(destinationId, userId);
-        var existingReview = await _destinationReviewRepository.FirstOrDefaultAsync(spec)
-            ?? throw new NotFoundException("Active review not found for this destination.");
-
-        existingReview.IsActive = false;
-        existingReview.UpdatedAtUtc = DateTime.UtcNow;
-
-        await _destinationReviewRepository.UpdateAsync(existingReview);
-
-        var aggregate = await RefreshDestinationReviewAggregatesAsync(destination);
-
-        return new DestinationReviewDeleteResultDto
+        return await _unitOfWork.ExecuteAsync(async () =>
         {
-            DestinationId = destinationId,
-            Deleted = true,
-            AverageRating = aggregate.averageRating,
-            TotalReviews = aggregate.totalReviews
-        };
+            var now = DateTime.UtcNow;
+            var rowsAffected = await _destinationReviewRepository.GetQueryable()
+                .Where(x => x.DestinationId == destinationId && x.UserId == userId && x.IsActive)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.IsActive, false)
+                    .SetProperty(r => r.UpdatedAtUtc, now));
+
+            if (rowsAffected == 0)
+            {
+                throw new NotFoundException("Active review not found for this destination.");
+            }
+
+            var aggregate = await RefreshDestinationReviewAggregatesAsync(destinationId);
+
+            return new DestinationReviewDeleteResultDto
+            {
+                DestinationId = destinationId,
+                Deleted = true,
+                AverageRating = aggregate.averageRating,
+                TotalReviews = aggregate.totalReviews
+            };
+        });
     }
 
     private static string? NormalizeComment(string? comment)
@@ -239,61 +362,83 @@ public class DestinationService : IDestinationService
         }
     }
 
-    private async Task<Destination> EnsureDestinationExistsAsync(int destinationId)
+    private async Task EnsureDestinationExistsAsync(int destinationId)
     {
-        var destination = await _destinationRepository.GetByIdAsync(destinationId);
-        if (destination is null)
+        var exists = await _destinationRepository.GetQueryable()
+            .AsNoTracking()
+            .AnyAsync(d => d.DestinationID == destinationId);
+
+        if (!exists)
         {
             throw new NotFoundException("Destination", destinationId);
         }
-
-        return destination;
     }
 
-    private async Task<(decimal averageRating, int totalReviews)> RefreshDestinationReviewAggregatesAsync(Destination destination)
+    private async Task<(decimal averageRating, int totalReviews)> RefreshDestinationReviewAggregatesAsync(int destinationId)
     {
-        var aggregateSpec = new ActiveDestinationReviewStatsSpec(destination.DestinationID);
-        var activeReviews = await _destinationReviewRepository.ListAsync(aggregateSpec);
+        var stats = await _destinationReviewRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(x => x.DestinationId == destinationId && x.IsActive)
+            .GroupBy(x => x.DestinationId)
+            .Select(g => new
+            {
+                TotalReviews = g.Count(),
+                AverageRating = g.Average(x => (double)x.Rating)
+            })
+            .FirstOrDefaultAsync();
 
-        destination.TotalReviews = activeReviews.Count;
-        destination.Rating = activeReviews.Count == 0 ? 0 : activeReviews.Average(x => x.Rating);
+        var totalReviews = stats?.TotalReviews ?? 0;
+        var avgRating = stats?.AverageRating ?? 0.0;
 
-        await _destinationRepository.UpdateAsync(destination);
+        // Rule 3: Bulk update destination aggregates without loading tracked entity
+        await _destinationRepository.GetQueryable()
+            .Where(d => d.DestinationID == destinationId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(d => d.TotalReviews, totalReviews)
+                .SetProperty(d => d.Rating, avgRating));
 
-        return (Math.Round((decimal)destination.Rating, 1, MidpointRounding.AwayFromZero), destination.TotalReviews);
+        return (Math.Round((decimal)avgRating, 1, MidpointRounding.AwayFromZero), totalReviews);
     }
 
     public async Task<IEnumerable<DestinationDto>> GetSuggestedAsync(int destinationId, int count = 10)
     {
-        // Load the current destination with its interests and city info
-        var spec = new DestinationByIdSpec(destinationId);
-        var destination = await _destinationRepository.FirstOrDefaultAsync(spec)
+        var currentDest = await _destinationRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(x => x.DestinationID == destinationId)
+            .Select(x => new
+            {
+                x.City.CountryID,
+                ContinentID = (int?)x.City.Country.ContinentID ?? 0,
+                InterestIds = x.DestinationInterests.Select(di => di.InterestID).ToList()
+            })
+            .FirstOrDefaultAsync()
             ?? throw new NotFoundException("Destination", destinationId);
 
-        var interestIds = destination.DestinationInterests
-            .Select(di => di.InterestID)
-            .ToList();
-
-        var countryId = destination.City.CountryID;
-
-        IReadOnlyList<Destination> suggestions;
+        var interestIds = currentDest.InterestIds;
+        var countryId = currentDest.CountryID;
+        var continentId = currentDest.ContinentID;
 
         if (interestIds.Count > 0)
         {
-            // Primary: shared interests with geographic priority
-            var continentId = destination.City.Country?.ContinentID ?? 0;
-
-            var suggestedSpec = new SuggestedDestinationsSpec(
-                destinationId, interestIds, countryId, continentId, count);
-            suggestions = await _destinationRepository.ListAsync(suggestedSpec);
+            return await _destinationRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.DestinationID != destinationId &&
+                            x.DestinationInterests.Any(di => interestIds.Contains(di.InterestID)))
+                .OrderByDescending(x => x.City.CountryID == countryId ? 1 : 0)
+                .ThenByDescending(x => x.City.Country.ContinentID == continentId ? 1 : 0)
+                .ThenByDescending(x => x.DestinationInterests.Count(di => interestIds.Contains(di.InterestID)))
+                .ThenByDescending(x => x.Rating)
+                .Take(count)
+                .Select(ToDestinationDto)
+                .ToListAsync();
         }
-        else
-        {
-            // Fallback: top-rated in same country
-            var fallbackSpec = new SuggestedDestinationsFallbackSpec(destinationId, countryId, count);
-            suggestions = await _destinationRepository.ListAsync(fallbackSpec);
-        }
 
-        return suggestions.Adapt<IEnumerable<DestinationDto>>();
+        return await _destinationRepository.GetQueryable()
+            .AsNoTracking()
+            .Where(x => x.DestinationID != destinationId && x.City.CountryID == countryId)
+            .OrderByDescending(x => x.Rating)
+            .Take(count)
+            .Select(ToDestinationDto)
+            .ToListAsync();
     }
 }

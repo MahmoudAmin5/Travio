@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
 using Travio.Core.Contracts.Services.TripPlaner;
@@ -16,26 +17,20 @@ public class TripPlanerHub : Hub
     private readonly IGenericRepository<ChatSession> _sessionRepo;
     private readonly IGenericRepository<ChatMessage> _messageRepo;
     private readonly IGenericRepository<SavedTrip> _tripRepo;
-    private readonly IGenericRepository<SavedTripDay> _dayRepo;
-    private readonly IGenericRepository<SavedTripActivity> _activityRepo;
-    private readonly IGenericRepository<SavedTripHotel> _hotelRepo;
+    private readonly IUnitOfWork _unitOfWork;
 
     public TripPlanerHub(
         ITripPlanerService tripPlanerService,
         IGenericRepository<ChatSession> sessionRepo,
         IGenericRepository<ChatMessage> messageRepo,
         IGenericRepository<SavedTrip> tripRepo,
-        IGenericRepository<SavedTripDay> dayRepo,
-        IGenericRepository<SavedTripActivity> activityRepo,
-        IGenericRepository<SavedTripHotel> hotelRepo)
+        IUnitOfWork unitOfWork)
     {
         _tripPlanerService = tripPlanerService;
         _sessionRepo = sessionRepo;
         _messageRepo = messageRepo;
         _tripRepo = tripRepo;
-        _dayRepo = dayRepo;
-        _activityRepo = activityRepo;
-        _hotelRepo = hotelRepo;
+        _unitOfWork = unitOfWork;
     }
 
     private string GetUserId() =>
@@ -50,11 +45,8 @@ public class TripPlanerHub : Hub
         // 1. Notify client that AI is thinking
         await Clients.Client(connectionId).SendAsync("ReceiveStatus", "thinking");
 
-        // --- Persist: Get or create ChatSession ---
-        var chatSession = await GetOrCreateSessionAsync(userId, threadId, userMessage);
-
-        // --- Persist: Save user message ---
-        await SaveMessageAsync(chatSession.Id, "user", userMessage, "text");
+        // --- Persist: Get or create ChatSession + Save user message atomically ---
+        var chatSessionId = await GetOrCreateSessionAndSaveUserMessageAsync(userId, threadId, userMessage);
 
         var request = new AiChatRequestDto
         {
@@ -70,13 +62,17 @@ public class TripPlanerHub : Hub
             // Determine which field holds the response text (using Message or Data)
             string textToStream = response.Message ?? response.Data ?? "";
 
-            // --- Persist: Save assistant message ---
+            // --- Persist: Save assistant message & update session timestamp ---
             var messageType = response.Status == "processing" ? "status" : "text";
-            await SaveMessageAsync(chatSession.Id, "assistant", textToStream, messageType);
+            await _unitOfWork.ExecuteAsync(async () =>
+            {
+                await SaveMessageInternalAsync(chatSessionId, "assistant", textToStream, messageType);
 
-            // Update session timestamp
-            chatSession.UpdatedAt = DateTimeOffset.UtcNow;
-            await _sessionRepo.UpdateAsync(chatSession);
+                // Rule 3: Set-based update on ChatSession timestamp
+                await _sessionRepo.GetQueryable()
+                    .Where(s => s.Id == chatSessionId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.UpdatedAt, DateTimeOffset.UtcNow));
+            });
 
             // 3. Simulate streaming (Typewriter effect)
             int chunkSize = 4; // characters per chunk
@@ -117,7 +113,6 @@ public class TripPlanerHub : Hub
                     // Debugging: Send the raw status back to the client so we can see what it is
                     await Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"[Debug] Checked status: '{statusResponse.Status}'");
 
-                    // Check if completed. We also check if Data is populated, which is a strong indicator it's done!
                     if (statusResponse.Status?.ToLower() == "complete" ||
                         statusResponse.Status?.ToLower() == "completed" ||
                         statusResponse.Status?.ToLower() == "success" ||
@@ -125,14 +120,16 @@ public class TripPlanerHub : Hub
                     {
                         await Clients.Client(connectionId).SendAsync("ReceiveItineraryStatus", statusResponse);
 
-                        // --- Persist: Auto-save the completed trip ---
+                        // --- Persist: Auto-save the completed trip and itinerary message atomically ---
                         if (statusResponse.Data != null)
                         {
-                            var savedTrip = await SaveTripFromItineraryAsync(userId, chatSession.Id, statusResponse.Data);
-
-                            // Save itinerary as assistant message
-                            var itineraryJson = JsonSerializer.Serialize(statusResponse.Data);
-                            await SaveMessageAsync(chatSession.Id, "assistant", itineraryJson, "itinerary");
+                            var savedTrip = await _unitOfWork.ExecuteAsync(async () =>
+                            {
+                                var trip = await SaveTripFromItineraryInternalAsync(userId, chatSessionId, statusResponse.Data);
+                                var itineraryJson = JsonSerializer.Serialize(statusResponse.Data);
+                                await SaveMessageInternalAsync(chatSessionId, "assistant", itineraryJson, "itinerary");
+                                return trip;
+                            });
 
                             // Notify the client that the trip was saved
                             await Clients.Client(connectionId).SendAsync("TripSaved", new
@@ -151,7 +148,6 @@ public class TripPlanerHub : Hub
                         isCompleted = true;
                         break;
                     }
-                    // If still processing ("processing", "pending", etc.), loop again
                 }
 
                 if (!isCompleted && !Context.ConnectionAborted.IsCancellationRequested)
@@ -173,31 +169,49 @@ public class TripPlanerHub : Hub
 
     #region Private Persistence Helpers
 
-    private async Task<ChatSession> GetOrCreateSessionAsync(string userId, string threadId, string firstMessage)
+    private async Task<int> GetOrCreateSessionAndSaveUserMessageAsync(string userId, string threadId, string firstMessage)
     {
-        // Try to find existing session by threadId
-        var allSessions = await _sessionRepo.ListAsync();
-        var existing = allSessions.FirstOrDefault(s => s.ThreadId == threadId && s.UserId == userId);
-
-        if (existing != null)
-            return existing;
-
-        // Create a new session
-        var title = firstMessage.Length > 50 ? firstMessage[..50] + "..." : firstMessage;
-        var session = new ChatSession
+        return await _unitOfWork.ExecuteAsync(async () =>
         {
-            UserId = userId,
-            ThreadId = threadId,
-            Title = title,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
-        };
+            var now = DateTimeOffset.UtcNow;
 
-        await _sessionRepo.AddAsync(session);
-        return session;
+            // Rule 3 Upsert Pattern: Try ExecuteUpdateAsync first
+            var rowsAffected = await _sessionRepo.GetQueryable()
+                .Where(s => s.ThreadId == threadId && s.UserId == userId)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.UpdatedAt, now));
+
+            int sessionId;
+            if (rowsAffected == 0)
+            {
+                var title = firstMessage.Length > 50 ? firstMessage[..50] + "..." : firstMessage;
+                var session = new ChatSession
+                {
+                    UserId = userId,
+                    ThreadId = threadId,
+                    Title = title,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                await _sessionRepo.AddAsync(session);
+                await _unitOfWork.SaveChangesAsync();
+                sessionId = session.Id;
+            }
+            else
+            {
+                sessionId = await _sessionRepo.GetQueryable()
+                    .AsNoTracking()
+                    .Where(s => s.ThreadId == threadId && s.UserId == userId)
+                    .Select(s => s.Id)
+                    .FirstAsync();
+            }
+
+            await SaveMessageInternalAsync(sessionId, "user", firstMessage, "text");
+            return sessionId;
+        });
     }
 
-    private async Task SaveMessageAsync(int sessionId, string role, string content, string messageType)
+    private async Task SaveMessageInternalAsync(int sessionId, string role, string content, string messageType)
     {
         var message = new ChatMessage
         {
@@ -211,9 +225,8 @@ public class TripPlanerHub : Hub
         await _messageRepo.AddAsync(message);
     }
 
-    private async Task<SavedTrip> SaveTripFromItineraryAsync(string userId, int chatSessionId, ItineraryData data)
+    private async Task<SavedTrip> SaveTripFromItineraryInternalAsync(string userId, int chatSessionId, ItineraryData data)
     {
-        // Derive a title from the itinerary
         var totalDays = data.Itinerary?.Count ?? 0;
         var firstTheme = data.Itinerary?.FirstOrDefault()?.Theme;
         var title = !string.IsNullOrEmpty(data.CityName)
@@ -237,29 +250,22 @@ public class TripPlanerHub : Hub
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        await _tripRepo.AddAsync(savedTrip);
-
-        // Save days and activities
         if (data.Itinerary != null)
         {
             foreach (var dailyPlan in data.Itinerary)
             {
                 var day = new SavedTripDay
                 {
-                    SavedTripId = savedTrip.Id,
                     DayNumber = dailyPlan.Day ?? 0,
                     Theme = dailyPlan.Theme
                 };
-
-                await _dayRepo.AddAsync(day);
 
                 if (dailyPlan.Activities != null)
                 {
                     foreach (var activity in dailyPlan.Activities)
                     {
-                        var savedActivity = new SavedTripActivity
+                        day.Activities.Add(new SavedTripActivity
                         {
-                            SavedTripDayId = day.Id,
                             ActivityType = activity.ActivityType,
                             PlaceName = activity.PlaceName,
                             SuggestedTime = activity.SuggestedTime,
@@ -268,22 +274,20 @@ public class TripPlanerHub : Hub
                             FeaturedImage = activity.FeaturedImage,
                             Latitude = activity.Coordinates?.Latitude,
                             Longitude = activity.Coordinates?.Longitude
-                        };
-
-                        await _activityRepo.AddAsync(savedActivity);
+                        });
                     }
                 }
+
+                savedTrip.Days.Add(day);
             }
         }
 
-        // Save hotels
         if (data.RecommendedHotels != null)
         {
             foreach (var hotel in data.RecommendedHotels)
             {
-                var savedHotel = new SavedTripHotel
+                savedTrip.Hotels.Add(new SavedTripHotel
                 {
-                    SavedTripId = savedTrip.Id,
                     Name = hotel.Name,
                     Description = hotel.Description,
                     Rating = hotel.Rating,
@@ -292,12 +296,11 @@ public class TripPlanerHub : Hub
                     FeaturedImage = hotel.FeaturedImage,
                     Latitude = hotel.Coordinates?.Latitude,
                     Longitude = hotel.Coordinates?.Longitude
-                };
-
-                await _hotelRepo.AddAsync(savedHotel);
+                });
             }
         }
 
+        await _tripRepo.AddAsync(savedTrip);
         return savedTrip;
     }
 

@@ -1,13 +1,12 @@
-﻿using Ardalis.Specification;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Travio.Core.Domain.Infrastructure.Contract
 {
-    public interface IGenericRepository<T> : IRepositoryBase<T> where T : class
+    public interface IGenericRepository<T> where T : class
     {
+        IQueryable<T> GetQueryable();
+        Task AddAsync(T entity, CancellationToken cancellationToken = default);
+        Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
+        void Update(T entity);
+        void Delete(T entity);
+        void SaveInclude(T entity, params string[] includedProperties);
     }
 }

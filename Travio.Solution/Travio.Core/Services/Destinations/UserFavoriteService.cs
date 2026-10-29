@@ -1,7 +1,7 @@
-﻿using Travio.Core.Contracts.Services.Destination;
+using Microsoft.EntityFrameworkCore;
+using Travio.Core.Contracts.Services.Destination;
 using Travio.Core.Domain.Entities.Destinations;
 using Travio.Core.Domain.Infrastructure.Contract;
-using Travio.Core.Domain.Specifications.Favorites;
 using Travio.Core.DTOs.DestinationDTO;
 using Travio.Core.DTOs.GenericResponse;
 using Travio.Core.Helpers;
@@ -10,54 +10,58 @@ namespace Travio.Core.Services.Destinations;
 
 public class UserFavoriteService : IUserFavoriteService
 {
-
     private readonly IGenericRepository<UserFavorite> _favRepo;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UserFavoriteService(IGenericRepository<UserFavorite> favRepo)
+    public UserFavoriteService(IGenericRepository<UserFavorite> favRepo, IUnitOfWork unitOfWork)
     {
         _favRepo = favRepo;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ServiceResponse<bool>> AddFavoriteAsync(string userId, int destinationId)
     {
-        var Spec = new SpecificUserFavoriteSpec(userId, destinationId);
-        var existingFav = await _favRepo.FirstOrDefaultAsync(Spec);
-        if (existingFav is not null)
+        return await _unitOfWork.ExecuteAsync(async () =>
         {
+            var exists = await _favRepo.GetQueryable()
+                .AsNoTracking()
+                .AnyAsync(uf => uf.UserId == userId && uf.DestinationId == destinationId);
+
+            if (exists)
+            {
+                return new ServiceResponse<bool>
+                {
+                    Success = false,
+                    Message = "This destination is already in your favorites."
+                };
+            }
+
+            var addFav = new UserFavorite
+            {
+                UserId = userId,
+                DestinationId = destinationId,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            await _favRepo.AddAsync(addFav);
+
             return new ServiceResponse<bool>
             {
-                Success = false,
-                Message = "This destination is already in your favorites."
+                Success = true,
+                Data = true,
+                Message = "Favorite added successfully."
             };
-        }
-        var addFav = new UserFavorite
-        {
-            UserId = userId,
-            DestinationId = destinationId,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-        var result = await _favRepo.AddAsync(addFav);
-        if (result is null)
-        {
-            return new ServiceResponse<bool>
-            {
-                Success = false,
-                Message = "Failed to add favorite. Please try again."
-            };
-        }
-        return new ServiceResponse<bool>
-        {
-            Success = true,
-            Message = "Favorite added successfully."
-        };
+        });
     }
 
     public async Task<ServiceResponse<bool>> DeleteFavoriteAsync(string userId, int destinationId)
     {
-        var Spec = new SpecificUserFavoriteSpec(userId, destinationId);
-        var existingFav = await _favRepo.FirstOrDefaultAsync(Spec);
+        // Rule 3: Bulk delete directly via ExecuteDeleteAsync
+        var rowsDeleted = await _favRepo.GetQueryable()
+            .Where(uf => uf.UserId == userId && uf.DestinationId == destinationId)
+            .ExecuteDeleteAsync();
 
-        if (existingFav is null)
+        if (rowsDeleted == 0)
         {
             return new ServiceResponse<bool>
             {
@@ -66,10 +70,10 @@ public class UserFavoriteService : IUserFavoriteService
             };
         }
 
-        await _favRepo.DeleteAsync(existingFav);
         return new ServiceResponse<bool>
         {
             Success = true,
+            Data = true,
             Message = "Favorite deleted successfully."
         };
     }
@@ -77,10 +81,28 @@ public class UserFavoriteService : IUserFavoriteService
     public async Task<ServiceResponse<Pagination<GetFavDestinationResponse>>> GetUserFavoritesAsync(int pageIndex, int pageSize, string userId)
     {
         int skip = (pageIndex - 1) * pageSize;
-        var spec = new GetFavDestinationSpec(pageSize, skip, userId);
-        var countSpec = new GetFavDestinationCountSpec(userId);
-        var result = await _favRepo.ListAsync(spec);
-        var totalCount = await _favRepo.CountAsync(countSpec);
+        var baseQuery = _favRepo.GetQueryable()
+            .AsNoTracking()
+            .Where(uf => uf.UserId == userId);
+
+        var totalCount = await baseQuery.CountAsync();
+
+        // Rule 6: Direct projection to DTO via .Select(...)
+        var result = await baseQuery
+            .OrderByDescending(uf => uf.CreatedAt)
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(uf => new GetFavDestinationResponse
+            {
+                DestinationID = uf.DestinationId,
+                Name = uf.Destination.Name,
+                Description = uf.Destination.Description,
+                Rating = uf.Destination.Rating,
+                CityName = uf.Destination.City.Name,
+                ImageUrls = uf.Destination.Images.Select(i => i.ImageURL).ToList()
+            })
+            .ToListAsync();
+
         var data = new Pagination<GetFavDestinationResponse>(pageIndex, pageSize, totalCount, result);
         return new ServiceResponse<Pagination<GetFavDestinationResponse>>
         {

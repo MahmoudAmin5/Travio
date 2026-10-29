@@ -1,16 +1,8 @@
-﻿using Duffel.ApiClient;
-using Duffel.ApiClient.Models;
-using Duffel.ApiClient.Models.Requests;
-using Stripe;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-﻿using System.Text;
-using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Travio.Core.Contracts.Services.DuffelFlights;
+using Travio.Core.Contracts.Services.Payment;
 using Travio.Core.Domain.Entities.Duffel;
 using Travio.Core.Domain.Enums.Booking;
 using Travio.Core.Domain.Infrastructure.Contract;
@@ -24,14 +16,19 @@ namespace Travio.Core.Services.DuffelFlights
     {
         private readonly HttpClient _httpClient;
         private readonly IGenericRepository<FlightBooking> _bookingRepo;
-        private readonly IDuffelFlightBookingService _flightService;
+        private readonly IPaymentGatewayService _paymentGateway;
+        private readonly IUnitOfWork _unitOfWork;
 
-        // Inject the standard HttpClient we just configured in Program.cs
-        public DuffelFlightBookingService(HttpClient httpClient, IGenericRepository<FlightBooking> bookingRepo)
+        public DuffelFlightBookingService(
+            HttpClient httpClient,
+            IGenericRepository<FlightBooking> bookingRepo,
+            IPaymentGatewayService paymentGateway,
+            IUnitOfWork unitOfWork)
         {
             _httpClient = httpClient;
             _bookingRepo = bookingRepo;
-          
+            _paymentGateway = paymentGateway;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<ServiceResponse<List<FlightSearchResponseDto>>> SearchFlightsAsync(FlightSearchRequestDto request)
@@ -79,12 +76,11 @@ namespace Travio.Core.Services.DuffelFlights
                 var offers = jsonDoc.RootElement.GetProperty("data").GetProperty("offers").EnumerateArray();
                 var dataElement = jsonDoc.RootElement.GetProperty("data");
                 var passengerIds = new List<string>();
-                // 👇 Notice we are reading from dataElement here, not RootElement
                 var duffelPassengers = dataElement.GetProperty("passengers").EnumerateArray();
 
                 foreach (var p in duffelPassengers)
                 {
-                    passengerIds.Add(p.GetProperty("id").GetString());
+                    passengerIds.Add(p.GetProperty("id").GetString()!);
                 }
 
                 var flights = new List<FlightSearchResponseDto>();
@@ -103,10 +99,9 @@ namespace Travio.Core.Services.DuffelFlights
                     {
                         var carrier = seg.GetProperty("operating_carrier");
 
-                        // 1. Safely extract the logo, with a clean fallback placeholder
                         string logoUrl = carrier.TryGetProperty("logo_symbol_url", out var logo) && logo.ValueKind != JsonValueKind.Null
-                            ? logo.GetString()
-                            : "https://placehold.co/400x400/000000/ffffff?text=" + carrier.GetProperty("name").GetString().Replace(" ", "+");
+                            ? logo.GetString()!
+                            : "https://placehold.co/400x400/000000/ffffff?text=" + carrier.GetProperty("name").GetString()!.Replace(" ", "+");
 
                         mappedSegments.Add(new FlightSegmentDto
                         {
@@ -120,10 +115,7 @@ namespace Travio.Core.Services.DuffelFlights
                             ArrivalTime = seg.GetProperty("arriving_at").GetDateTime(),
 
                             AirlineName = carrier.GetProperty("name").GetString(),
-
-                            // --- ADD THE LOGO TO THE SEGMENT ---
                             AirlineLogoUrl = logoUrl,
-
 
                             FlightNumber = carrier.GetProperty("iata_code").GetString() + " " +
                                            seg.GetProperty("operating_carrier_flight_number").GetString(),
@@ -131,8 +123,6 @@ namespace Travio.Core.Services.DuffelFlights
                             SegmentDuration = seg.GetProperty("duration").GetString()
                         });
                     }
-
-                    // ... further down, when you assemble the main FlightSearchResponseDto ...
 
                     int calculatedStops = mappedSegments.Count - 1;
 
@@ -146,7 +136,7 @@ namespace Travio.Core.Services.DuffelFlights
                         TotalDestination = firstSlice.GetProperty("destination").GetProperty("iata_code").GetString(),
                         DestinationCityName = firstSlice.GetProperty("destination").GetProperty("city_name").GetString(),
 
-                        TotalPrice = decimal.Parse(offer.GetProperty("total_amount").GetString()),
+                        TotalPrice = decimal.Parse(offer.GetProperty("total_amount").GetString()!),
                         Currency = offer.GetProperty("total_currency").GetString(),
                         TotalDuration = firstSlice.GetProperty("duration").GetString(),
                         Stops = calculatedStops < 0 ? 0 : calculatedStops,
@@ -174,21 +164,20 @@ namespace Travio.Core.Services.DuffelFlights
                 };
             }
         }
+
         public async Task<ServiceResponse<List<TopFlightOfferDto>>> GetTopOffersAsync()
         {
             try
             {
-                // 1. Define the dynamic routes for the UI Carousel
                 var popularRoutes = new List<(string Name, string Dest, string ImageUrl)>
-        {
-            ("Paris", "CDG", "https://plus.unsplash.com/premium_photo-1719581957038-0121108b9455?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"),
-            ("Dubai", "DXB", "https://images.unsplash.com/photo-1700397801373-3c13a56d6cc3?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"),
-            ("London", "LHR", "https://images.unsplash.com/photo-1569865867048-34cfce8d58fe?q=80&w=678&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
-        };
+                {
+                    ("Paris", "CDG", "https://plus.unsplash.com/premium_photo-1719581957038-0121108b9455?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"),
+                    ("Dubai", "DXB", "https://images.unsplash.com/photo-1700397801373-3c13a56d6cc3?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"),
+                    ("London", "LHR", "https://images.unsplash.com/photo-1569865867048-34cfce8d58fe?q=80&w=678&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
+                };
 
                 var futureDate = DateTime.UtcNow.AddDays(30).ToString("yyyy-MM-dd");
 
-                // 2. Fan-out: Request all destinations from Duffel in parallel
                 var tasks = popularRoutes.Select(async route =>
                 {
                     var request = new FlightSearchRequestDto
@@ -200,16 +189,13 @@ namespace Travio.Core.Services.DuffelFlights
                         MaxStops = 1
                     };
 
-                    // Call your existing search method
                     var response = await SearchFlightsAsync(request);
 
                     if (response.Success && response.Data != null && response.Data.Any())
                     {
-                        // Grab the absolute cheapest flight for this specific destination
                         var cheapestFlight = response.Data.First();
                         var firstSegment = cheapestFlight.Segments?.FirstOrDefault();
 
-                        // 3. Map to the highly-detailed DTO
                         return new TopFlightOfferDto
                         {
                             OfferId = cheapestFlight.OfferId,
@@ -217,23 +203,19 @@ namespace Travio.Core.Services.DuffelFlights
                             ImageUrl = route.ImageUrl,
                             AirlineLogoUrl = cheapestFlight.AirlineLogoUrl,
 
-
                             Origin = "CAI",
                             OriginCityName = "Cairo",
 
                             Destination = route.Dest,
                             DestinationCityName = route.Name,
 
-
                             Duration = cheapestFlight.TotalDuration ?? "N/A",
-                            DepartureTime = firstSegment.DepartureTime,
+                            DepartureTime = firstSegment!.DepartureTime,
                             ArrivalTime = firstSegment.ArrivalTime,
 
                             FlightNumber = firstSegment?.FlightNumber ?? "Unknown",
 
-
                             Stops = cheapestFlight.Segments != null ? Math.Max(0, cheapestFlight.Segments.Count - 1) : 0,
-
 
                             CheapestPrice = cheapestFlight.TotalPrice,
                             Currency = cheapestFlight.Currency
@@ -243,17 +225,14 @@ namespace Travio.Core.Services.DuffelFlights
                     return null;
                 });
 
-
                 var results = await Task.WhenAll(tasks);
-
-
                 var topOffers = results.Where(r => r != null).ToList();
 
                 return new ServiceResponse<List<TopFlightOfferDto>>
                 {
                     Success = true,
                     Message = "Top offers retrieved successfully.",
-                    Data = topOffers
+                    Data = topOffers!
                 };
             }
             catch (Exception ex)
@@ -265,6 +244,7 @@ namespace Travio.Core.Services.DuffelFlights
                 };
             }
         }
+
         public async Task<ServiceResponse<FlightDetailsDto>> GetFlightDetailsAsync(string offerId)
         {
             try
@@ -285,11 +265,7 @@ namespace Travio.Core.Services.DuffelFlights
                 var data = jsonDoc.RootElement.GetProperty("data");
                 var firstSlice = data.GetProperty("slices").EnumerateArray().FirstOrDefault();
 
-                // 1. Parse Baggage Rules
                 int checkedBags = 0;
-                var firstPassenger = data.GetProperty("passengers").EnumerateArray().FirstOrDefault();
-                // Duffel usually puts baggage info inside the passenger or segment object depending on the airline
-                // For safety, we check the first segment's passenger array if available
                 var passengerSegment = firstSlice.GetProperty("segments").EnumerateArray().First()
                                         .GetProperty("passengers").EnumerateArray().FirstOrDefault();
 
@@ -304,7 +280,6 @@ namespace Travio.Core.Services.DuffelFlights
                     }
                 }
 
-                // 2. Parse Refund Rules Safely
                 bool isRefundable = false;
                 decimal? refundPenalty = null;
 
@@ -316,25 +291,24 @@ namespace Travio.Core.Services.DuffelFlights
 
                         if (isRefundable && refundCondition.TryGetProperty("penalty_amount", out var penalty) && penalty.ValueKind != JsonValueKind.Null)
                         {
-                            refundPenalty = decimal.Parse(penalty.GetString());
+                            refundPenalty = decimal.Parse(penalty.GetString()!);
                         }
                     }
                 }
 
-                // 3. Parse Segments and Aircraft details
                 var flightSegments = new List<FlightSegmentDetailsDto>();
                 foreach (var segment in firstSlice.GetProperty("segments").EnumerateArray())
                 {
                     var carrier = segment.GetProperty("operating_carrier");
 
                     string logoUrl = carrier.TryGetProperty("logo_symbol_url", out var logo) && logo.ValueKind != JsonValueKind.Null
-                        ? logo.GetString()
+                        ? logo.GetString()!
                         : "https://placehold.co/400x400/000000/ffffff?text=Airline";
 
                     string aircraftName = "Aircraft Info Unavailable";
                     if (segment.TryGetProperty("aircraft", out var aircraft) && aircraft.ValueKind != JsonValueKind.Null)
                     {
-                        aircraftName = aircraft.GetProperty("name").GetString();
+                        aircraftName = aircraft.GetProperty("name").GetString()!;
                     }
 
                     flightSegments.Add(new FlightSegmentDetailsDto
@@ -356,16 +330,14 @@ namespace Travio.Core.Services.DuffelFlights
                     });
                 }
 
-                // 4. Assemble the Final DTO
                 var details = new FlightDetailsDto
                 {
                     OfferId = data.GetProperty("id").GetString(),
-                    TotalPrice = decimal.Parse(data.GetProperty("total_amount").GetString()),
-                    TaxAmount = decimal.Parse(data.GetProperty("tax_amount").GetString()),
+                    TotalPrice = decimal.Parse(data.GetProperty("total_amount").GetString()!),
+                    TaxAmount = decimal.Parse(data.GetProperty("tax_amount").GetString()!),
                     Currency = data.GetProperty("total_currency").GetString(),
                     TotalDuration = firstSlice.GetProperty("duration").GetString(),
                     OriginCityName = firstSlice.GetProperty("origin").GetProperty("city_name").GetString(),
-
                     DestinationCityName = firstSlice.GetProperty("destination").GetProperty("city_name").GetString(),
                     CheckedBags = checkedBags,
                     IsRefundable = isRefundable,
@@ -394,7 +366,6 @@ namespace Travio.Core.Services.DuffelFlights
         {
             try
             {
-
                 var duffelPassengers = request.Passengers.Select(p => new
                 {
                     id = p.Id,
@@ -415,18 +386,15 @@ namespace Travio.Core.Services.DuffelFlights
                         type = "instant",
                         selected_offers = new[] { request.OfferId },
                         passengers = duffelPassengers,
-
-                       
                         payments = new[]
-                {
-                    new
-                    {
-                        type = "balance",
-                        amount = request.TotalAmount.ToString("0.00"),
-                        currency = request.Currency
-                    }
-                }
-                       
+                        {
+                            new
+                            {
+                                type = "balance",
+                                amount = request.TotalAmount.ToString("0.00"),
+                                currency = request.Currency
+                            }
+                        }
                     }
                 };
 
@@ -436,16 +404,13 @@ namespace Travio.Core.Services.DuffelFlights
                 };
 
                 var jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
-                Console.WriteLine("\n=== DUFFEL PAYLOAD ===\n" + jsonPayload + "\n======================\n");
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
 
                 var response = await _httpClient.PostAsync("air/orders", content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-
                     return new ServiceResponse<FlightOrderResponseDto>
                     {
                         Success = false,
@@ -453,18 +418,15 @@ namespace Travio.Core.Services.DuffelFlights
                     };
                 }
 
-
                 using var jsonDoc = JsonDocument.Parse(responseString);
                 var data = jsonDoc.RootElement.GetProperty("data");
 
-                // 1. Safely extract the PNR
                 string pnr = data.TryGetProperty("booking_reference", out var bookingRef) && bookingRef.ValueKind != JsonValueKind.Null
-                    ? bookingRef.GetString()
+                    ? bookingRef.GetString()!
                     : "PENDING";
 
-                // 2. Safely extract the Order ID
                 string orderId = data.TryGetProperty("id", out var idElement)
-                    ? idElement.GetString()
+                    ? idElement.GetString()!
                     : "UNKNOWN_ID";
 
                 return new ServiceResponse<FlightOrderResponseDto>
@@ -475,7 +437,6 @@ namespace Travio.Core.Services.DuffelFlights
                     {
                         DuffelOrderId = orderId,
                         PNR = pnr,
-                        // 3. Hardcode the status! If we reached this line, the ticket is officially bought.
                         BookingStatus = "Confirmed"
                     }
                 };
@@ -489,12 +450,12 @@ namespace Travio.Core.Services.DuffelFlights
                 };
             }
         }
+
         public async Task<ServiceResponse<CheckoutResponseDto>> CreateCheckoutSessionAsync(CheckoutRequestDto request)
         {
             try
             {
-
-                var offerResponse = await GetFlightDetailsAsync(request.OfferId); ;
+                var offerResponse = await GetFlightDetailsAsync(request.OfferId);
 
                 if (!offerResponse.Success || offerResponse.Data == null)
                 {
@@ -505,53 +466,97 @@ namespace Travio.Core.Services.DuffelFlights
                     };
                 }
 
-                // Extract the authentic, server-validated price
                 decimal realPrice = offerResponse.Data.TotalPrice;
                 string realCurrency = offerResponse.Data.Currency;
+                long amountInCents = (long)Math.Round(realPrice * 100m, MidpointRounding.AwayFromZero);
 
-                // 2. Stripe requires the price in the SMALLEST currency unit (cents)
-                long amountInCents = (long)(realPrice * 100);
+                var now = DateTime.UtcNow;
+                var staleCutoff = now.AddMinutes(-15);
 
-                // 3. Tell Stripe to prepare for a payment
-                var options = new PaymentIntentCreateOptions
+                // Rule 3: Clean up any expired PendingPayment checkouts (> 15 mins old) for this user + offer
+                await _bookingRepo.GetQueryable()
+                    .Where(b => b.UserId == request.UserId &&
+                                b.OfferId == request.OfferId &&
+                                b.BookingStatus == FlightBookingStatus.PendingPayment &&
+                                b.CreatedAt < staleCutoff)
+                    .ExecuteDeleteAsync();
+
+                // Rule 6: Check if an active PendingPayment booking already exists for this user + offer
+                var existingPending = await _bookingRepo.GetQueryable()
+                    .AsNoTracking()
+                    .Where(b => b.UserId == request.UserId &&
+                                b.OfferId == request.OfferId &&
+                                b.BookingStatus == FlightBookingStatus.PendingPayment)
+                    .Select(b => new { b.Id })
+                    .FirstOrDefaultAsync();
+
+                Guid bookingId;
+                if (existingPending != null)
                 {
-                    Amount = amountInCents,
-                    Currency = realCurrency.ToLower(),
-                    Metadata = new Dictionary<string, string>
+                    bookingId = existingPending.Id;
+                }
+                else
+                {
+                    var flightBooking = new FlightBooking
                     {
-                        { "OfferId", request.OfferId },
-                        { "UserId", request.UserId }
-                    }
-                };
+                        UserId = request.UserId,
+                        OfferId = request.OfferId,
+                        TotalPrice = realPrice,
+                        Currency = realCurrency,
+                        BookingStatus = FlightBookingStatus.PendingPayment,
+                        PNR = null,
+                        PassengersJson = JsonSerializer.Serialize(request.Passengers),
+                        CreatedAt = now
+                    };
 
-                var service = new PaymentIntentService();
-                PaymentIntent intent = await service.CreateAsync(options);
-
-                // 4. Save the Pending Booking to your SQL Database using Ardalis
-                var flightBooking = new FlightBooking
-                {
-                    UserId = request.UserId,
-                    OfferId = request.OfferId,
-                    TotalPrice = realPrice, // Save the REAL price
-                    Currency = realCurrency, // Save the REAL currency
-                    StripePaymentIntentId = intent.Id,
-                    BookingStatus = FlightBookingStatus.PendingPayment,
-                    PNR = "PEND_" + Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
-                    PassengersJson = JsonSerializer.Serialize(request.Passengers)
-                };
-
-                await _bookingRepo.AddAsync(flightBooking);
-
-                return new ServiceResponse<CheckoutResponseDto>
-                {
-                    Success = true,
-                    Message = "Checkout session created successfully.",
-                    Data = new CheckoutResponseDto
+                    await _unitOfWork.ExecuteAsync(async () =>
                     {
-                        ClientSecret = intent.ClientSecret,
-                        StripeIntentId = intent.Id
-                    }
-                };
+                        await _bookingRepo.AddAsync(flightBooking);
+                    });
+
+                    bookingId = flightBooking.Id;
+                }
+
+                try
+                {
+                    // Uses deterministic Stripe IdempotencyKey tied to bookingId + "Flight"
+                    var piResult = await _paymentGateway.CreatePaymentIntentAsync(
+                        amountInCents,
+                        realCurrency.ToLowerInvariant(),
+                        bookingId,
+                        "Flight");
+
+                    // Rule 3: Set-based update to link StripePaymentIntentId without rewriting PassengersJson
+                    await _bookingRepo.GetQueryable()
+                        .Where(b => b.Id == bookingId)
+                        .ExecuteUpdateAsync(s => s
+                            .SetProperty(b => b.StripePaymentIntentId, piResult.Id)
+                            .SetProperty(b => b.UpdatedAt, DateTime.UtcNow));
+
+                    return new ServiceResponse<CheckoutResponseDto>
+                    {
+                        Success = true,
+                        Message = "Checkout session created successfully.",
+                        Data = new CheckoutResponseDto
+                        {
+                            ClientSecret = piResult.ClientSecret,
+                            StripeIntentId = piResult.Id
+                        }
+                    };
+                }
+                catch (Exception stripeEx)
+                {
+                    // Compensating cleanup: remove orphaned PendingPayment record if Stripe initialization fails
+                    await _bookingRepo.GetQueryable()
+                        .Where(b => b.Id == bookingId && b.BookingStatus == FlightBookingStatus.PendingPayment)
+                        .ExecuteDeleteAsync();
+
+                    return new ServiceResponse<CheckoutResponseDto>
+                    {
+                        Success = false,
+                        Message = $"Payment setup failed: {stripeEx.Message}"
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -564,5 +569,3 @@ namespace Travio.Core.Services.DuffelFlights
         }
     }
 }
-
-

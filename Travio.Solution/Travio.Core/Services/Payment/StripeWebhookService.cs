@@ -1,4 +1,5 @@
 using Hangfire;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Stripe;
 using System.Text.Json;
@@ -10,7 +11,6 @@ using Travio.Core.Domain.Entities.Duffel;
 using Travio.Core.Domain.Entities.Hotelbeds;
 using Travio.Core.Domain.Enums.Booking;
 using Travio.Core.Domain.Infrastructure.Contract;
-using Travio.Core.Domain.Specifications.Duffel;
 using Travio.Core.DTOs.DuffelFlightsDTOs.Requests;
 
 namespace Travio.Core.Services.Payment
@@ -53,17 +53,11 @@ namespace Travio.Core.Services.Payment
                 return await ProcessHotelBookingAsync(paymentIntent);
             }
 
-            // Default to Flight for backward compatibility
-            return await ProcessFlightBookingAsync(stripeIntentId);
+            return await ProcessFlightBookingAsync(paymentIntent);
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // HOTEL BOOKING — COMPLETE REWRITE
-        // FIX CRITICAL-1: No longer calls CreateBookingAsync (which created duplicate rows).
-        //                 Instead calls FulfillBookingFromWebhookAsync which UPDATES existing row.
-        // FIX CRITICAL-4: No more fake "Guest User" fallback — FulfillBookingFromWebhookAsync
-        //                 fails and triggers refund if GuestDataJson is corrupt.
-        // FIX MAJOR-5: Uses IPaymentGatewayService for refunds instead of new RefundService().
+        // HOTEL BOOKING — Atomic Lock Acquisition, Stale-Lease Recovery & Idempotent Refund
         // ═══════════════════════════════════════════════════════════════════
 
         private async Task<bool> ProcessHotelBookingAsync(PaymentIntent paymentIntent)
@@ -76,44 +70,54 @@ namespace Travio.Core.Services.Payment
                 return false;
             }
 
-            var booking = await _hotelRepo.GetByIdAsync(bookingId);
-            if (booking == null)
+            // Rule 6: Lightweight projection to verify existence and inspect status + UserId
+            var bookingMeta = await _hotelRepo.GetQueryable()
+                .AsNoTracking()
+                .Where(b => b.Id == bookingId)
+                .Select(b => new { b.Id, b.UserId, b.BookingStatus, b.UpdatedAt })
+                .FirstOrDefaultAsync();
+
+            if (bookingMeta == null)
             {
                 _logger.LogError("Webhook failed: No hotel booking found for BookingId {BookingId}, Intent {IntentId}.", bookingId, stripeIntentId);
                 return false;
             }
 
-            // ── 1. Idempotency Check ─────────────────────────────────────────
-            if (booking.BookingStatus != HotelBookingStatus.PendingPayment)
+            var now = DateTime.UtcNow;
+            var staleLeaseThreshold = now.AddMinutes(-3);
+
+            // 1. Idempotency & Stale-Lease Check
+            var canClaim = bookingMeta.BookingStatus == HotelBookingStatus.PendingPayment ||
+                          (bookingMeta.BookingStatus == HotelBookingStatus.ProcessingWebhook &&
+                           bookingMeta.UpdatedAt.HasValue &&
+                           bookingMeta.UpdatedAt.Value < staleLeaseThreshold);
+
+            if (!canClaim)
             {
-                _logger.LogInformation("Webhook ignored: Hotel booking {BookingId} status is {Status} (not PendingPayment).",
-                    bookingId, booking.BookingStatus);
+                _logger.LogInformation("Webhook ignored: Hotel booking {BookingId} status is {Status}.",
+                    bookingId, bookingMeta.BookingStatus);
                 return true;
             }
 
-            // ── 2. The Lock (Optimistic Concurrency via RowVersion) ──────────
-            // Set status to ProcessingWebhook and attempt to save.
-            // If another thread already changed the RowVersion, a DbUpdateConcurrencyException is thrown.
-            booking.BookingStatus = HotelBookingStatus.ProcessingWebhook;
-            booking.UpdatedAt = DateTime.UtcNow;
-            try
+            // 2. Atomic Set-Based Lock Acquisition (Rule 3: ExecuteUpdateAsync)
+            //    Executes a single atomic UPDATE statement with an exclusive row lock on PK_HotelBookings,
+            //    automatically incrementing SQL Server RowVersion and eliminating SELECT-then-UPDATE races.
+            var rowsClaimed = await _hotelRepo.GetQueryable()
+                .Where(b => b.Id == bookingId &&
+                           (b.BookingStatus == HotelBookingStatus.PendingPayment ||
+                           (b.BookingStatus == HotelBookingStatus.ProcessingWebhook && b.UpdatedAt < staleLeaseThreshold)))
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(b => b.BookingStatus, HotelBookingStatus.ProcessingWebhook)
+                    .SetProperty(b => b.UpdatedAt, now));
+
+            if (rowsClaimed == 0)
             {
-                await _hotelRepo.UpdateAsync(booking);
-                await _hotelRepo.SaveChangesAsync();
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
-            {
-                // Another thread won the race — this is expected behavior, not an error.
-                _logger.LogWarning("RACE CONDITION AVOIDED: Another thread is processing Hotel Intent {IntentId}.", stripeIntentId);
-                return true; // Return 200 OK to Stripe so it doesn't retry
+                _logger.LogWarning("RACE CONDITION AVOIDED: Another thread claimed Hotel Intent {IntentId} for Booking {BookingId}.",
+                    stripeIntentId, bookingId);
+                return true;
             }
 
-            // ── 3. FIX CRITICAL-1 + CRITICAL-4: Call FulfillBookingFromWebhookAsync ──
-            // This method:
-            //   - Reads the existing booking from DB
-            //   - Deserializes GuestDataJson (FAILS if corrupt — no fake names)
-            //   - Calls Hotelbeds Booking API directly
-            //   - UPDATES the existing row (no duplicate INSERT)
+            // 3. Supplier Fulfillment via Hotelbeds API
             var hotelResult = await _hotelbedsService.FulfillBookingFromWebhookAsync(bookingId);
 
             if (!hotelResult.Success)
@@ -121,24 +125,21 @@ namespace Travio.Core.Services.Payment
                 _logger.LogCritical("Hotelbeds booking FAILED for Intent {IntentId}, BookingId {BookingId}. Reason: {Reason}",
                     stripeIntentId, bookingId, hotelResult.Message);
 
-                // ── COMPENSATING TRANSACTION: Refund the payment ─────────────
-                // FIX MAJOR-5: Use IPaymentGatewayService instead of new RefundService()
+                // Compensating Transaction: Issue idempotent refund tied to bookingId
                 var refundResult = await _paymentGateway.RefundPaymentAsync(
-                    stripeIntentId, "requested_by_customer");
+                    stripeIntentId, "requested_by_customer", bookingId);
 
-                // Update booking status with failure details
-                // Re-read the booking since FulfillBookingFromWebhookAsync may have modified it
-                booking = await _hotelRepo.GetByIdAsync(bookingId);
-                if (booking is not null)
-                {
-                    booking.BookingStatus = refundResult.Success
-                        ? HotelBookingStatus.RefundIssued
-                        : HotelBookingStatus.SupplierFailed;
-                    booking.FailureReason = hotelResult.Message;
-                    booking.UpdatedAt = DateTime.UtcNow;
-                    await _hotelRepo.UpdateAsync(booking);
-                    await _hotelRepo.SaveChangesAsync();
-                }
+                var finalFailureStatus = refundResult.Success
+                    ? HotelBookingStatus.RefundIssued
+                    : HotelBookingStatus.SupplierFailed;
+
+                // Rule 3: Set-based update of failure status without loading or overwriting GuestDataJson
+                await _hotelRepo.GetQueryable()
+                    .Where(b => b.Id == bookingId)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(b => b.BookingStatus, finalFailureStatus)
+                        .SetProperty(b => b.FailureReason, hotelResult.Message)
+                        .SetProperty(b => b.UpdatedAt, DateTime.UtcNow));
 
                 if (!refundResult.Success)
                 {
@@ -147,10 +148,13 @@ namespace Travio.Core.Services.Payment
                         stripeIntentId, refundResult.ErrorMessage);
                 }
 
-                return false;
+                return true;
             }
 
-            // ── 4. Success — FulfillBookingFromWebhookAsync already updated the row ──
+            // 4. Success — Enqueue confirmation email job via Hangfire
+            _backgroundJobClient.Enqueue<IEmailService>(emailService =>
+                emailService.SendHotelTicketAsync(bookingId, bookingMeta.UserId));
+
             _logger.LogInformation("Hotel booking CONFIRMED. BookingId: {BookingId}, Reference: {Ref}.",
                 bookingId, hotelResult.Data?.BookingReference);
 
@@ -158,51 +162,73 @@ namespace Travio.Core.Services.Payment
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // FLIGHT BOOKING — Unchanged (uses existing pattern)
+        // FLIGHT BOOKING — Atomic Lock Acquisition, Stale-Lease Recovery & Idempotent Refund
         // ═══════════════════════════════════════════════════════════════════
 
-
-        private async Task<bool> ProcessFlightBookingAsync(string stripeIntentId)
+        private async Task<bool> ProcessFlightBookingAsync(PaymentIntent paymentIntent)
         {
-            var spec = new BookingByStripeIntentIdSpec(stripeIntentId);
-            var booking = await _flightRepo.FirstOrDefaultAsync(spec);
+            var stripeIntentId = paymentIntent.Id;
+            var bookingIdStr = paymentIntent.Metadata.GetValueOrDefault("BookingId");
+            Guid.TryParse(bookingIdStr, out var metadataBookingId);
+
+            // Rule 6: Direct projection on GetQueryable() using PK or Unique Filtered Index IX_FlightBookings_StripePaymentIntentId
+            var booking = await _flightRepo.GetQueryable()
+                .AsNoTracking()
+                .Where(b => (metadataBookingId != Guid.Empty && b.Id == metadataBookingId) ||
+                            b.StripePaymentIntentId == stripeIntentId)
+                .Select(b => new
+                {
+                    b.Id,
+                    b.UserId,
+                    b.OfferId,
+                    b.TotalPrice,
+                    b.Currency,
+                    b.PassengersJson,
+                    b.BookingStatus,
+                    b.UpdatedAt
+                })
+                .FirstOrDefaultAsync();
 
             if (booking == null)
             {
-                _logger.LogError($"Webhook failed: No flight booking found for Intent {stripeIntentId}");
+                _logger.LogError("Webhook failed: No flight booking found for Intent {IntentId}", stripeIntentId);
                 return false;
             }
 
-            // 👇 1. THE IDEMPOTENCY GUARD: Ignore duplicate Stripe webhooks immediately
-            if (booking.BookingStatus == FlightBookingStatus.Confirmed ||
-        booking.BookingStatus == FlightBookingStatus.RefundRequest ||
-        booking.BookingStatus == FlightBookingStatus.Failed)
+            var now = DateTime.UtcNow;
+            var staleLeaseThreshold = now.AddMinutes(-3);
+
+            // 1. Idempotency & Stale-Lease Check
+            var canClaim = booking.BookingStatus == FlightBookingStatus.PendingPayment ||
+                          (booking.BookingStatus == FlightBookingStatus.ProcessingWebhook &&
+                           booking.UpdatedAt.HasValue &&
+                           booking.UpdatedAt.Value < staleLeaseThreshold);
+
+            if (!canClaim)
             {
+                _logger.LogInformation("Webhook ignored: Flight booking {BookingId} is in status {Status}.",
+                    booking.Id, booking.BookingStatus);
                 return true;
             }
 
-            // 👇 2. RESTORE YOUR LOCK: Check if another thread is currently processing it
-            if (booking.BookingStatus == FlightBookingStatus.ProcessingWebhook)
-            {
-                _logger.LogInformation($"Webhook ignored. Flight booking is currently being processed by another thread.");
-                return true;
-            }
+            // 2. Atomic Set-Based Lock Acquisition (Rule 3: ExecuteUpdateAsync)
+            var rowsClaimed = await _flightRepo.GetQueryable()
+                .Where(b => b.Id == booking.Id &&
+                           (b.BookingStatus == FlightBookingStatus.PendingPayment ||
+                           (b.BookingStatus == FlightBookingStatus.ProcessingWebhook && b.UpdatedAt < staleLeaseThreshold)))
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(b => b.BookingStatus, FlightBookingStatus.ProcessingWebhook)
+                    .SetProperty(b => b.UpdatedAt, now));
 
-            // 👇 3. CLAIM THE LOCK: Tell the database "I am working on this!"
-            booking.BookingStatus = FlightBookingStatus.ProcessingWebhook;
-            try
+            if (rowsClaimed == 0)
             {
-                await _flightRepo.UpdateAsync(booking);
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
-            {
-                _logger.LogWarning($"RACE CONDITION AVOIDED: Another thread just claimed Intent {stripeIntentId}.");
+                _logger.LogWarning("RACE CONDITION AVOIDED: Another thread just claimed Flight Intent {IntentId}.", stripeIntentId);
                 return true;
             }
 
             var savedPassengers = string.IsNullOrEmpty(booking.PassengersJson)
                 ? new List<PassengerDetailsDto>()
-                : JsonSerializer.Deserialize<List<PassengerDetailsDto>>(booking.PassengersJson);
+                : JsonSerializer.Deserialize<List<PassengerDetailsDto>>(booking.PassengersJson) ?? new List<PassengerDetailsDto>();
 
             var orderRequest = new FlightOrderRequestDto
             {
@@ -216,60 +242,48 @@ namespace Travio.Core.Services.Payment
 
             if (!duffelResult.Success)
             {
-                _logger.LogCritical($"Duffel booking failed for Intent {stripeIntentId}. Reason: {duffelResult.Message}");
+                _logger.LogCritical("Duffel booking failed for Intent {IntentId}. Reason: {Reason}", stripeIntentId, duffelResult.Message);
 
-                // Process the refund first (talk to Stripe)
                 bool isRefunded = false;
                 try
                 {
-                    var refundResult = await _paymentGateway.RefundPaymentAsync(stripeIntentId, "requested_by_customer");
+                    var refundResult = await _paymentGateway.RefundPaymentAsync(stripeIntentId, "requested_by_customer", booking.Id);
                     isRefunded = refundResult.Success;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogCritical($"Refund failed for Flight Intent {stripeIntentId}. Error: {ex.Message}");
+                    _logger.LogCritical(ex, "Refund failed for Flight Intent {IntentId}.", stripeIntentId);
                 }
 
-                // RE-FETCH THE BOOKING TO GET THE FRESH ROW VERSION
-                booking = await _flightRepo.FirstOrDefaultAsync(new BookingByStripeIntentIdSpec(stripeIntentId));
+                var failureStatus = isRefunded
+                    ? FlightBookingStatus.RefundRequest
+                    : FlightBookingStatus.Failed;
 
-                // Apply the correct failure status and save
-                if (booking != null)
-                {
-                    booking.BookingStatus = isRefunded
-                        ? FlightBookingStatus.RefundRequest
-                        : FlightBookingStatus.Failed;
+                // Rule 3: Set-based update of failure state
+                await _flightRepo.GetQueryable()
+                    .Where(b => b.Id == booking.Id)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(b => b.BookingStatus, failureStatus)
+                        .SetProperty(b => b.FailureReason, duffelResult.Message)
+                        .SetProperty(b => b.UpdatedAt, DateTime.UtcNow));
 
-                    try
-                    {
-                        await _flightRepo.UpdateAsync(booking);
-                    }
-                    catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
-                    {
-                        _logger.LogWarning($"Concurrency avoided: Another thread already updated the failure status for Intent {stripeIntentId}.");
-                    }
-                }
-
-                // Return TRUE so Stripe marks the event as handled and stops retrying
                 return true;
             }
 
-            booking.PNR = duffelResult.Data.PNR;
-            booking.BookingStatus = FlightBookingStatus.Confirmed;
+            var confirmedPnr = duffelResult.Data.PNR;
 
-            // 👇 2. THE SUCCESS CONCURRENCY CATCH: Safely handle race conditions
-            try
+            // Rule 3: Set-based update of confirmation state (updates only PNR, BookingStatus, UpdatedAt)
+            var updatedRows = await _flightRepo.GetQueryable()
+                .Where(b => b.Id == booking.Id && b.BookingStatus != FlightBookingStatus.Confirmed)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(b => b.PNR, confirmedPnr)
+                    .SetProperty(b => b.BookingStatus, FlightBookingStatus.Confirmed)
+                    .SetProperty(b => b.UpdatedAt, DateTime.UtcNow));
+
+            if (updatedRows > 0)
             {
-                await _flightRepo.UpdateAsync(booking);
-
                 _backgroundJobClient.Enqueue<IEmailService>(emailService =>
                     emailService.SendFlightTicketAsync(booking.Id, booking.UserId));
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
-            {
-                // Thread 1 already saved this perfectly. We can safely ignore Thread 2.
-                _logger.LogWarning($"Concurrency avoided: Another thread already confirmed Flight Intent {stripeIntentId}.");
-                return true;
             }
 
             return true;
